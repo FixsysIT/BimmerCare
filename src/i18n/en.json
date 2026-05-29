@@ -67,6 +67,7 @@
     "replace_needed": "Replace needed",
     "no_fault": "No fault",
     "fault_present": "Fault present",
+    "confirmed_failed": "Confirmed failed",
     "replaced": "Replaced"
   },
   "reason": {
@@ -94,6 +95,7 @@
     "monitor": "Monitor",
     "noFault": "No fault",
     "faultPresent": "Fault present",
+    "confirmed": "Confirmed failed",
     "replaced": "Replaced"
   },
   "register": {

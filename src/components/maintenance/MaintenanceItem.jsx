@@ -22,7 +22,7 @@ const DIAGNOSIS_OPTS = [
   { result: 'monitor', color: 'monitor', key: 'diagnosis.monitor' },  // logs a monitor event
   { result: 'no_fault', color: 'green', key: 'diagnosis.noFault' },
   { result: 'fault_present', color: 'orange', key: 'diagnosis.faultPresent' },
-  { result: 'replaced', color: 'green', key: 'diagnosis.replaced' },  // replaced = fixed → green
+  { result: 'confirmed_failed', color: 'red', key: 'diagnosis.confirmed' },  // defect → red / Nu doen
 ];
 
 // active = which result is currently logged (not which colour — two greens exist)

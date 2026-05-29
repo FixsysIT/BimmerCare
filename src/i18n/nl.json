@@ -67,6 +67,7 @@
     "replace_needed": "Vervangen nodig",
     "no_fault": "Geen fout",
     "fault_present": "Fout aanwezig",
+    "confirmed_failed": "Defect bevestigd",
     "replaced": "Vervangen"
   },
   "reason": {
@@ -94,6 +95,7 @@
     "monitor": "Monitor",
     "noFault": "Geen fout",
     "faultPresent": "Fout aanwezig",
+    "confirmed": "Defect bevestigd",
     "replaced": "Vervangen"
   },
   "register": {
