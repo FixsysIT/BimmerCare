@@ -1019,7 +1019,10 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 250, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Klassieke N5x oliegelekkage. Inspecteer rond oliefilterhuis. Vervangen bij lekkage.',
-      priority: PRIORITIES.PREVENTIVE, parts: [],
+      priority: PRIORITIES.PREVENTIVE,
+      parts: [
+        { name: 'Oil Filter Housing Gasket Set', oemNumber: '', altBrand: 'Elring', altNumber: '', estimatedPrice: 15.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'estimate', sourceNote: 'verify before ordering' },
+      ],
     }),
     item(vehicleId, {
       name: 'Expansion Tank + Cap', category: 'Koeling',
@@ -1049,7 +1052,11 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 120, source: SOURCES.COMMUNITY_PREVENTIVE,
       sourceNote: 'Spanrol + looprol(len). Inspecteer op speling/geluid. Meenemen bij multiriem-vervanging.',
-      priority: PRIORITIES.PREVENTIVE, parts: [],
+      priority: PRIORITIES.PREVENTIVE,
+      parts: [
+        { name: 'Belt Tensioner', oemNumber: '11287571015', altBrand: 'INA', altNumber: '534 0264 10', estimatedPrice: 45.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'BMW' },
+        { name: 'Deflection / Idler Pulley', oemNumber: '', altBrand: 'INA', altNumber: '', estimatedPrice: 30.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'estimate', sourceNote: 'verify before ordering' },
+      ],
     }),
     item(vehicleId, {
       name: 'Brake Hoses', category: 'Remmen',
