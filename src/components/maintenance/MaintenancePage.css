@@ -469,6 +469,11 @@
 
 .seg-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
 
+/* interval "Markeer als vervangen" — same pill shape as the rest, subtle
+   green action hint so it doesn't visually deviate from condition/diagnosis */
+.seg-btn.seg-action { color: var(--status-green); border-color: var(--status-green); }
+.seg-btn.seg-action:hover { background: var(--status-green-bg); }
+
 .seg-btn.seg-active.seg-green  { color: var(--status-green);   border-color: var(--status-green);   background: var(--status-green-bg); }
 .seg-btn.seg-active.seg-orange { color: var(--status-orange);  border-color: var(--status-orange);  background: var(--status-orange-bg); }
 .seg-btn.seg-active.seg-red    { color: var(--status-red);     border-color: var(--status-red);     background: var(--status-red-bg); }

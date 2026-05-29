@@ -140,7 +140,11 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
       {/* Always-visible quick actions */}
       <div className="maint-quick" onClick={(e) => e.stopPropagation()}>
         {strategy === 'interval' && item.baselineState !== 'never' && (
-          <button className="btn btn-primary btn-sm" onClick={onRegister}>{t('maintenance.markReplaced')}</button>
+          <div className="seg">
+            <button type="button" className="seg-btn seg-action" onClick={onRegister}>
+              {t('maintenance.markReplaced')}
+            </button>
+          </div>
         )}
         {strategy === 'condition' && (
           <Pills opts={CONDITION_OPTS} activeResult={activeResult} onPick={pick} t={t} />
