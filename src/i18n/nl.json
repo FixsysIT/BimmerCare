@@ -24,7 +24,19 @@
     "orange": "Waarschuwing",
     "red": "Verlopen",
     "grey": "Geen Data",
-    "allClear": "Niets urgent — alles rustig."
+    "allClear": "Niets urgent — alles rustig.",
+    "alerts": "Recente meldingen",
+    "noAlerts": "Geen recente statuswijzigingen.",
+    "ackAll": "Alles gelezen",
+    "more": "meer",
+    "openMaintenance": "Onderhoud openen",
+    "settingsExport": "Instellingen / Export"
+  },
+  "events": {
+    "new": "Nieuw",
+    "moved": "Verplaatst",
+    "expired": "Vervallen",
+    "attention": "Aandacht"
   },
   "maintenance": {
     "title": "Onderhoud",
@@ -344,6 +356,8 @@
     "no_data": "Geen data geregistreerd",
     "never_replaced": "Nog nooit vervangen",
     "inspection_needed": "Inspectie nodig",
-    "monitor": "Bewaken — alleen bij defect"
+    "monitor": "Bewaken — alleen bij defect",
+    "replacement_window_expired": "Vervangingsinterval verlopen — opnieuw bewaken",
+    "no_fault_expired": "Diagnose verlopen — opnieuw controleren"
   }
 }

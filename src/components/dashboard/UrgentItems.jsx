@@ -11,12 +11,14 @@ const TABS = [
   { key: 'all', match: ['red', 'orange', 'inspect'] },
 ];
 
-export default function UrgentItems({ items, onOpen }) {
+export default function UrgentItems({ items, onOpen, max }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState('red');
 
   const active = TABS.find((x) => x.key === tab) || TABS[0];
-  const list = (items || []).filter((i) => active.match.includes(i.calculatedStatus?.status));
+  const matched = (items || []).filter((i) => active.match.includes(i.calculatedStatus?.status));
+  const list = max ? matched.slice(0, max) : matched;
+  const hiddenCount = matched.length - list.length;
 
   return (
     <div className="urgent-items">
@@ -57,6 +59,11 @@ export default function UrgentItems({ items, onOpen }) {
               <StatusBadge status={item.calculatedStatus.status} reason={item.calculatedStatus.statusReason} compact />
             </button>
           ))}
+          {hiddenCount > 0 && (
+            <button type="button" className="urgent-more" onClick={() => onOpen?.(active.match[0])}>
+              +{hiddenCount} {t('dashboard.more', 'meer')}
+            </button>
+          )}
         </div>
       )}
     </div>

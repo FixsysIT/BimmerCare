@@ -99,6 +99,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 280,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'No fixed interval. Replace on misfire. Community does preventive at ~100k. Always check before blaming injectors.',
+      replacementOkValidKm: 60000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'Ignition Coil (×6)', oemNumber: '12137571644', altBrand: 'Delphi', altNumber: 'GN10572', estimatedPrice: 30.00, bmwfansUrl: '', source: 'BMW' },
@@ -142,6 +143,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 400,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'In-tank unit, integrated with fuel pressure regulator. Not standard serviceable. Only replace on fuel pressure issues. Monitor item — not disabled.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'Fuel Filter', oemNumber: '16117163295', altBrand: '', altNumber: '', estimatedPrice: 120.00, bmwfansUrl: '', source: 'BMW' },
@@ -184,6 +186,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 180,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'No fixed interval. Replace on VANOS fault codes or rough idle. Community does preventive at ~100k.',
+      replacementOkValidKm: 100000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'VANOS Solenoid (×2)', oemNumber: '11367585425', altBrand: 'Pierburg', altNumber: '', estimatedPrice: 45.00, bmwfansUrl: '', source: 'BMW' },
@@ -605,6 +608,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 1500,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Replace on leak or excessive play. Expensive job. Symptoms: power steering fluid loss, wandering steering.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'Steering Rack (reman)', oemNumber: '32106793457', altBrand: 'ZF', altNumber: '', estimatedPrice: 600.00, bmwfansUrl: '', source: 'BMW' },
@@ -822,6 +826,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 300,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Replace on noise only. Humming/droning that changes with speed = bearing. Can last 200k+ or fail at 80k.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'Wheel Bearing Front', oemNumber: '31206867256', altBrand: 'FAG', altNumber: '713 6496 00', estimatedPrice: 80.00, bmwfansUrl: '', source: 'BMW' },
@@ -844,6 +849,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 250,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Inspect for torn rubber boot. Grease splatter on inner wheel = torn boot. Replace boot or full axle.',
+      replacementOkValidKm: 80000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'CV Boot Kit', oemNumber: '31607545107', altBrand: 'GKN', altNumber: '', estimatedPrice: 35.00, bmwfansUrl: '', source: 'BMW' },
@@ -939,6 +945,8 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 3000,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: '€300-550 each (×6). Use ONLY Index 11+ from VDO/Vitesco. Each individually coded to DME. ALWAYS check coils + plugs FIRST.',
+      replacementOkValidKm: 150000,
+      diagnosisOkValidMonths: 3,
       priority: PRIORITIES.CRITICAL,
       parts: [
         { name: 'Piezo Fuel Injector (×6)', oemNumber: '13537589048', altBrand: 'VDO/Vitesco (Index 11+)', altNumber: '', estimatedPrice: 425.00, bmwfansUrl: '', source: 'BMW' },
@@ -960,6 +968,8 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 700,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Monitor fuel pressure values via ISTA. Common N53 failure. Symptoms: long crank, stalling, fuel pressure codes.',
+      replacementOkValidKm: 120000,
+      diagnosisOkValidMonths: 3,
       priority: PRIORITIES.CRITICAL,
       parts: [
         { name: 'High-Pressure Fuel Pump', oemNumber: '13517616170', altBrand: '', altNumber: '', estimatedPrice: 450.00, bmwfansUrl: '', source: 'BMW' },
@@ -981,6 +991,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 500,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Monitor via ISTA. Failure causes lean burn issues and MIL. N53-specific component.',
+      replacementOkValidKm: 100000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'NOx Sensor', oemNumber: '11787587130', altBrand: 'Continental/VDO', altNumber: '', estimatedPrice: 350.00, bmwfansUrl: '', source: 'BMW' },
@@ -1002,6 +1013,7 @@ export function getDefaultItems(vehicleId) {
       estimatedTotalCost: 1800,
       source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'NOx storage cat specific to N53 lean burn. Very expensive. Monitor via ISTA.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'NOx Storage Catalytic Converter', oemNumber: '18307645280', altBrand: '', altNumber: '', estimatedPrice: 1200.00, bmwfansUrl: '', source: 'BMW' },
@@ -1140,6 +1152,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 250, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Alleen bij foutcodes/mengselproblemen/emissie. Uitlezen via ISTA.',
+      replacementOkValidKm: 120000,
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {
@@ -1150,6 +1163,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 200, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Alleen bij codes/rough idle/mengselproblemen.',
+      replacementOkValidKm: 100000,
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {
@@ -1160,6 +1174,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 400, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'On-failure. Vervangen bij startproblemen.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {
@@ -1170,6 +1185,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 500, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'On-failure. Laadspanning meten bij laadproblemen.',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {
@@ -1180,6 +1196,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 150, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'Laadproblemen, accuregistratie, energy-management foutcodes.',
+      replacementOkValidKm: 120000,
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {
@@ -1190,6 +1207,7 @@ export function getDefaultItems(vehicleId) {
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
       estimatedTotalCost: 200, source: SOURCES.CONDITION_DIAGNOSIS,
       sourceNote: 'On-failure. Handig voor kostenlog (lampen/modules).',
+      replacementOkValidKm: 150000,
       priority: PRIORITIES.COMFORT, parts: [],
     }),
   ];

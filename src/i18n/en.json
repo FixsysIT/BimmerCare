@@ -24,7 +24,19 @@
     "orange": "Warning",
     "red": "Overdue",
     "grey": "No Data",
-    "allClear": "Nothing urgent — all clear."
+    "allClear": "Nothing urgent — all clear.",
+    "alerts": "Recent alerts",
+    "noAlerts": "No recent status changes.",
+    "ackAll": "Mark all read",
+    "more": "more",
+    "openMaintenance": "Open maintenance",
+    "settingsExport": "Settings / Export"
+  },
+  "events": {
+    "new": "New",
+    "moved": "Moved",
+    "expired": "Expired",
+    "attention": "Attention"
   },
   "maintenance": {
     "title": "Maintenance",
@@ -344,6 +356,8 @@
     "no_data": "No data recorded",
     "never_replaced": "Never replaced",
     "inspection_needed": "Inspection needed",
-    "monitor": "Monitor — replace on failure"
+    "monitor": "Monitor — replace on failure",
+    "replacement_window_expired": "Replacement window expired — monitor again",
+    "no_fault_expired": "Diagnosis expired — recheck"
   }
 }

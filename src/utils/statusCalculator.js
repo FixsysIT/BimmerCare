@@ -98,8 +98,26 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
     const svc = lastOfType(item, 'service');
     const newest = newestEvent([diag, svc]);
     if (newest) {
-      // Real replacement → OK (replaced), regardless of any older diagnosis.
-      if (newest.type === 'service') return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+      // Real replacement → OK while inside the replacement window. A replaced
+      // part eventually wears again, so past replacementOkValidKm (or optional
+      // replacementOkValidMonths) it drops back to Monitor — never red from km.
+      if (newest.type === 'service') {
+        const kmSince = (currentMileage != null && newest.mileage != null)
+          ? currentMileage - newest.mileage : null;
+        const ageM = eventAgeMonths(newest, currentDate);
+        const kmExpired = item.replacementOkValidKm != null && kmSince != null
+          && kmSince >= item.replacementOkValidKm;
+        const monthsExpired = item.replacementOkValidMonths != null && ageM != null
+          && ageM >= item.replacementOkValidMonths;
+        if (kmExpired || monthsExpired) {
+          const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+          r.status = STATUS.MONITOR;
+          r.statusReason = STATUS_REASONS.REPLACEMENT_EXPIRED;
+          r.message = 'replacement window expired — monitor';
+          return r;
+        }
+        return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+      }
 
       // Diagnosis "no fault" is only valid for a while — a clean check goes
       // stale (it's not a repair). Past the window → back to Monitor.
@@ -109,7 +127,7 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
         if (age !== null && age >= limit) {
           const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
           r.status = STATUS.MONITOR;
-          r.statusReason = STATUS_REASONS.MONITOR;
+          r.statusReason = STATUS_REASONS.NO_FAULT_EXPIRED;
           r.message = `no_fault recheck — older than ${limit} months`;
           return r;
         }

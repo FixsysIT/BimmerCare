@@ -8,6 +8,7 @@ import PartsPage from './components/parts/PartsPage';
 import SettingsPage from './components/settings/SettingsPage';
 import { useVehicle } from './hooks/useVehicle';
 import { useMaintenance } from './hooks/useMaintenance';
+import { useStatusEvents } from './hooks/useStatusEvents';
 import { useAutoBackup } from './hooks/useAutoBackup';
 import { useStorage } from './hooks/useStorage';
 import { STORAGE_KEYS } from './utils/constants';
@@ -32,6 +33,7 @@ export default function App() {
   }, [itemsLoading, items, vehicle, initItems]);
 
   const { lastBackup, shouldRemind, trackChange, exportBackup } = useAutoBackup(vehicle, items, settings);
+  const { events: statusEvents, acknowledge, acknowledgeAll } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);
 
   const handleRegister = (itemId, entry) => {
     registerMaintenance(itemId, entry);
@@ -68,6 +70,9 @@ export default function App() {
               statusCounts={statusCounts}
               urgentItems={urgentItems}
               itemsWithStatus={itemsWithStatus}
+              statusEvents={statusEvents}
+              acknowledge={acknowledge}
+              acknowledgeAll={acknowledgeAll}
             />
           } />
           <Route path="maintenance" element={
@@ -103,6 +108,7 @@ export default function App() {
               resetToDefaults={resetToDefaults}
               addItem={addItem}
               startBaseline={startBaseline}
+              statusEvents={statusEvents}
             />
           } />
         </Route>

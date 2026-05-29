@@ -1,4 +1,4 @@
-import { EXPORT_VERSION, APP_VERSION, CATALOG_VERSION } from './constants';
+import { EXPORT_VERSION, APP_VERSION, CATALOG_VERSION, DIAGNOSIS_OK_VALID_MONTHS } from './constants';
 import { tItem, tCategory } from './translate';
 import { calculateStatus, lastOfType } from './statusCalculator';
 import { getDefaultItems } from '../data/defaultItems';
@@ -124,7 +124,7 @@ export function generateHistoryExport(items) {
 
 // Full debug snapshot: definitions + history + computed statuses + baseline
 // + catalog version tracking.
-export function generateDebugExport(vehicle, items, settings) {
+export function generateDebugExport(vehicle, items, settings, statusEvents = []) {
   const currentKm = vehicle?.currentMileage ?? null;
   const list = items || [];
   const defaults = getDefaultItems(vehicle?.vehicleId || 'debug');
@@ -133,16 +133,38 @@ export function generateDebugExport(vehicle, items, settings) {
   const computedStatuses = list.map((i) => {
     const cs = calculateStatus(i, currentKm, vehicle);
     const isOnFailure = i.replacementStrategy === 'on-failure' || i.intervalType === 'diagnosis';
+    let onFailure = {};
+    if (isOnFailure) {
+      const lastDiag = lastOfType(i, 'diagnosis');
+      const lastSvc = lastOfType(i, 'service');
+      const kmSinceReplacement = (lastSvc?.mileage != null && currentKm != null)
+        ? currentKm - lastSvc.mileage : null;
+      const replacementExpiresAtKm = (lastSvc?.mileage != null && i.replacementOkValidKm != null)
+        ? lastSvc.mileage + i.replacementOkValidKm : null;
+      let noFaultExpiresAt = null;
+      if (lastDiag?.result === 'no_fault' && (lastDiag.date || lastDiag.createdAt)) {
+        const months = i.diagnosisOkValidMonths ?? DIAGNOSIS_OK_VALID_MONTHS;
+        const d = new Date(lastDiag.date || lastDiag.createdAt);
+        d.setMonth(d.getMonth() + months);
+        noFaultExpiresAt = d.toISOString().slice(0, 10);
+      }
+      onFailure = {
+        lastDiagnosisEvent: lastDiag ?? null,
+        lastServiceEvent: lastSvc ?? null,
+        replacementOkValidKm: i.replacementOkValidKm ?? null,
+        replacementOkValidMonths: i.replacementOkValidMonths ?? null,
+        diagnosisOkValidMonths: i.diagnosisOkValidMonths ?? null,
+        kmSinceReplacement,
+        replacementExpiresAtKm,
+        noFaultExpiresAt,
+      };
+    }
     return {
       id: i.id, name: i.name, strategy: i.replacementStrategy, intervalType: i.intervalType,
       status: cs.status, statusReason: cs.statusReason, message: cs.message,
       source: cs.source ?? null,                       // history | manualOverride | legacyManualStatus | interval | default
       lastRelevantHistoryEvent: cs.sourceEvent ?? null,
-      // on-failure items separate the diagnosis check from the actual repair
-      ...(isOnFailure ? {
-        lastDiagnosisEvent: lastOfType(i, 'diagnosis') ?? null,
-        lastServiceEvent: lastOfType(i, 'service') ?? null,
-      } : {}),
+      ...onFailure,
     };
   });
   const history = [];
@@ -168,6 +190,7 @@ export function generateDebugExport(vehicle, items, settings) {
     history,
     computedStatuses,
     baseline,
+    statusEvents: statusEvents || [],
   };
 }
 

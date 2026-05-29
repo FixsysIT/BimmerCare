@@ -113,6 +113,8 @@ export const STATUS_REASONS = {
   NEVER_REPLACED: 'never_replaced',
   INSPECTION_NEEDED: 'inspection_needed',
   MONITOR: 'monitor',
+  REPLACEMENT_EXPIRED: 'replacement_window_expired',
+  NO_FAULT_EXPIRED: 'no_fault_expired',
 };
 
 // Default VAT percentage
@@ -137,7 +139,12 @@ export const STORAGE_KEYS = {
   SETTINGS: 'bimmercare_settings',
   LAST_BACKUP: 'bimmercare_last_backup',
   CHANGE_COUNT: 'bimmercare_change_count',
+  STATUS_EVENTS: 'bimmercare_status_events',
+  STATUS_SNAPSHOT: 'bimmercare_status_snapshot',
 };
+
+// Max status-transition events kept (newest wins).
+export const MAX_STATUS_EVENTS = 50;
 
 // Backup defaults
 export const BACKUP_DEFAULTS = {

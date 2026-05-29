@@ -30,6 +30,7 @@ export default function SettingsPage({
   resetToDefaults,
   addItem,
   startBaseline,
+  statusEvents = [],
 }) {
   const { t, i18n } = useTranslation();
   const fileRef = useRef(null);
@@ -150,7 +151,7 @@ export default function SettingsPage({
     showToast(t('settings.exported', 'Geëxporteerd'));
   };
   const handleExportDebug = () => {
-    downloadJSON(generateDebugExport(vehicle, maintenanceItems || [], settings), `bimmercare-debug-${dateStr}.json`);
+    downloadJSON(generateDebugExport(vehicle, maintenanceItems || [], settings, statusEvents), `bimmercare-debug-${dateStr}.json`);
     showToast(t('settings.exported', 'Geëxporteerd'));
   };
 
