@@ -5,6 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // Served from a project subpath on GitHub Pages: https://saddikh.github.io/BimmerCare/
 export default defineConfig({
   base: '/BimmerCare/',
+  // build timestamp so the UI can show when the live build was produced
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     VitePWA({

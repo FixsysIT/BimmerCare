@@ -3,11 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { Roundel } from './icons';
 import { navItems, settingsItem } from './navConfig';
 import LangToggle from './LangToggle';
+import { APP_VERSION } from '../../utils/constants';
 import './Sidebar.css';
+
+/* global __BUILD_TIME__ */
+const BUILD_ISO = typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : null;
 
 export default function Sidebar() {
   const { t } = useTranslation();
   const { Icon: SettingsIcon } = settingsItem;
+  const buildLabel = BUILD_ISO
+    ? new Date(BUILD_ISO).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : null;
 
   return (
     <aside className="sidebar">
@@ -44,6 +51,10 @@ export default function Sidebar() {
           <SettingsIcon />
         </NavLink>
         <LangToggle />
+      </div>
+
+      <div className="sidebar-version" title={BUILD_ISO || ''}>
+        v{APP_VERSION}{buildLabel ? ` · ${buildLabel}` : ''}
       </div>
     </aside>
   );

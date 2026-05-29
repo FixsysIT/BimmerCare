@@ -142,19 +142,24 @@
   margin-top: 0.5rem;
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.5rem;
 }
 
-.sidebar-footer .lang-toggle { flex: 1; }
+/* gear + language are equal: same flex, height, shape */
+.sidebar-footer .footer-icon-btn,
+.sidebar-footer .lang-toggle {
+  flex: 1 1 0;
+  width: auto;
+  height: 40px;
+  border-radius: var(--radius-md);
+  justify-content: center;
+}
 
 .footer-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
@@ -173,4 +178,12 @@
   color: var(--bmw-blue-light);
   border-color: var(--border-active);
   background: var(--bmw-blue-glow);
+}
+
+.sidebar-version {
+  margin-top: 0.6rem;
+  text-align: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
 }

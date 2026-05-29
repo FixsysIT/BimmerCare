@@ -126,7 +126,7 @@ export const DIAGNOSIS_OK_VALID_MONTHS = 6;
 
 // Export version
 export const EXPORT_VERSION = '1.0';
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1';
 
 // Catalog version — bump when default items/metadata change, so existing
 // stored data can be merged up via Settings → "Catalogus bijwerken".
