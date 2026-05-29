@@ -1,0 +1,23 @@
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-main {
+  min-height: 100vh;
+  padding: 1rem 1rem 5.5rem;   /* bottom gap clears mobile tab bar */
+}
+
+.app-content {
+  max-width: 1040px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Desktop: fixed sidebar + offset content. No more header/sidebar overlap. */
+@media (min-width: 1024px) {
+  .app-main {
+    /* clears the floating sidebar island (1.25rem gap + 244px + gap) */
+    margin-left: 288px;
+    padding: 2.25rem 2.5rem 2.5rem;
+  }
+}

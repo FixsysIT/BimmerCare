@@ -1,0 +1,523 @@
+/* ═══════════════════════════════════════════════
+   BimmerCare Design System — BMW M Cockpit
+   ═══════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  /* Backgrounds — OLED black, layered glass on top */
+  --bg-primary: #05050C;
+  --bg-surface: #0D0F19;
+  --bg-elevated: #14172590;
+  --bg-glass: rgba(13, 15, 25, 0.55);
+  --bg-glass-strong: rgba(13, 15, 25, 0.78);
+
+  /* BMW accent */
+  --bmw-blue: #1E7AD4;
+  --bmw-blue-light: #4BA6F5;
+  --bmw-blue-glow: rgba(30, 122, 212, 0.32);
+
+  /* BMW M tricolor (light blue → dark blue → red) */
+  --m-lightblue: #2E9CF0;
+  --m-darkblue: #1B3D8F;
+  --m-red: #E60A2A;
+  --m-stripe: linear-gradient(90deg, var(--m-lightblue) 0%, var(--m-lightblue) 33%, var(--m-darkblue) 33%, var(--m-darkblue) 66%, var(--m-red) 66%, var(--m-red) 100%);
+
+  /* Status */
+  --status-green: #2EE68A;
+  --status-orange: #FFA726;
+  --status-red: #FF5252;
+  --status-grey: #8892A0;
+  --status-inspect: #38BDF8;
+  --status-monitor: #A78BFA;
+  --status-green-bg: rgba(46, 230, 138, 0.12);
+  --status-orange-bg: rgba(255, 167, 38, 0.12);
+  --status-red-bg: rgba(255, 82, 82, 0.12);
+  --status-grey-bg: rgba(136, 146, 160, 0.1);
+  --status-inspect-bg: rgba(56, 189, 248, 0.12);
+  --status-monitor-bg: rgba(167, 139, 250, 0.12);
+
+  /* Text */
+  --text-primary: #F2F6FB;
+  --text-secondary: #A5B0C2;
+  --text-muted: #66728A;
+
+  /* Borders — semi-transparent metallic edges */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --border-active: rgba(75, 166, 245, 0.6);
+
+  /* Spacing, radius, shadows */
+  --radius-sm: 9px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --blur: blur(24px);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 56px rgba(0, 0, 0, 0.62);
+  --shadow-glow: 0 0 0 1px var(--border-active), 0 8px 34px var(--bmw-blue-glow);
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 0.16s var(--ease);
+  --t-med: 0.28s var(--ease);
+
+  /* Typography */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-gauge: 'Outfit', var(--font);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  background-color: var(--bg-primary);
+}
+
+/* Fixed ambient lighting — BMW blue + M-red glows drifting behind the glass */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 78% -8%, rgba(30, 122, 212, 0.18), transparent 60%),
+    radial-gradient(820px 520px at -8% 4%, rgba(27, 61, 143, 0.16), transparent 55%),
+    radial-gradient(700px 500px at 50% 112%, rgba(230, 10, 42, 0.08), transparent 60%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Gauge typography — technical, tabular numerals */
+.mileage-value, .counter-value, .ring-value, .form-totals strong {
+  font-family: var(--font-gauge);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── Glass utility ───────────────────────────── */
+
+.glass-panel {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012) 40%),
+    var(--bg-glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ── Typography ──────────────────────────────── */
+
+h1, h2, h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 0.85em;
+  border-radius: 2px;
+  background: var(--m-stripe);
+}
+
+/* ── Cards ───────────────────────────────────── */
+
+.card {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01) 42%),
+    var(--bg-glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform var(--t-med), border-color var(--t-med), box-shadow var(--t-med);
+}
+
+/* ── Form Elements ───────────────────────────── */
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.7rem 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+  outline: none;
+}
+
+input:hover, select:hover, textarea:hover { background: rgba(255, 255, 255, 0.06); }
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--border-active);
+  background: rgba(30, 122, 212, 0.06);
+  box-shadow: 0 0 0 3px var(--bmw-blue-glow), 0 0 22px var(--bmw-blue-glow);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B949E' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+/* Native option popup defaults to white on Windows — force dark, readable */
+select option,
+select optgroup {
+  background: #14161f;
+  color: var(--text-primary);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.form-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.form-error {
+  color: var(--status-red);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.form-totals {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.form-totals strong {
+  color: var(--bmw-blue-light);
+}
+
+/* ── Buttons ─────────────────────────────────── */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(0.985); }
+
+.btn-sm {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+}
+
+/* sheen sweep on tactile buttons */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.6s var(--ease);
+}
+.btn-primary:hover::before { transform: translateX(120%); }
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--bmw-blue-light), var(--bmw-blue));
+  color: white;
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px var(--bmw-blue-glow), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #5fb2ff, var(--bmw-blue-light));
+  box-shadow: 0 8px 26px var(--bmw-blue-glow), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-danger {
+  background: rgba(255, 23, 68, 0.1);
+  color: var(--status-red);
+  border-color: rgba(255, 23, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 23, 68, 0.2);
+}
+
+/* ── Language toggle (shared: sidebar + mobile header) ── */
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: var(--font);
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+
+.lang-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+  transform: translateY(-1px);
+}
+
+.sidebar-footer .lang-toggle { width: 100%; justify-content: center; }
+
+/* ── Dashboard extras ────────────────────────── */
+
+.mileage-label {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mileage-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--bmw-blue-light);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow: 0 0 22px var(--bmw-blue-glow);
+}
+
+.status-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.status-counter {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  background-clip: padding-box;
+  overflow: hidden;
+  transition: transform 0.18s ease;
+}
+
+.status-counter:hover { transform: translateY(-2px); }
+
+.counter-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.counter-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.35rem;
+  color: var(--text-secondary);
+}
+
+.urgent-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.urgent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.urgent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  cursor: default;
+}
+
+.urgent-item:hover {
+  transform: translateX(3px);
+  border-color: var(--border-strong);
+}
+
+.urgent-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.urgent-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.urgent-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.urgent-message {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Scrollbar ───────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ── Responsive ──────────────────────────────── */
+
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .status-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

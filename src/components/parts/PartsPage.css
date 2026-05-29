@@ -1,0 +1,92 @@
+.parts-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.parts-search {
+  width: 100%;
+}
+
+.parts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.part-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.part-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.part-icon {
+  font-size: 1.25rem;
+}
+
+.part-name {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.part-for {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.part-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.part-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.part-label {
+  color: var(--text-muted);
+  min-width: 80px;
+  font-size: 0.75rem;
+}
+
+.part-value {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.part-oem {
+  font-family: monospace;
+  color: var(--bmw-blue-light);
+}
+
+.part-link {
+  color: var(--bmw-blue-light);
+  text-decoration: none;
+  font-size: 0.8125rem;
+}
+
+.part-link:hover {
+  text-decoration: underline;
+}
+
+.part-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+  padding: 0.5rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}

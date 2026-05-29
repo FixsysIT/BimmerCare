@@ -1,0 +1,72 @@
+/* Floating island — detached pill hovering above the bottom edge */
+.app-nav {
+  display: flex;
+  justify-content: space-around;
+  gap: 0.25rem;
+  padding: 0.45rem 0.5rem;
+  background: var(--bg-glass-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: fixed;
+  bottom: calc(0.9rem + env(safe-area-inset-bottom));
+  left: 0.9rem;
+  right: 0.9rem;
+  z-index: 100;
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  transition: color var(--t-fast), background var(--t-fast);
+  min-width: 56px;
+  flex: 1;
+}
+
+.nav-item:hover { color: var(--text-secondary); }
+
+.nav-item.nav-active {
+  color: var(--bmw-blue-light);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(30, 122, 212, 0.22), transparent 70%);
+}
+
+.nav-item.nav-active::before {
+  content: '';
+  position: absolute;
+  top: -0.45rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--bmw-blue-light);
+  box-shadow: 0 0 12px var(--bmw-blue-light);
+}
+
+.nav-icon {
+  display: inline-flex;
+  line-height: 1;
+  transition: transform var(--t-med);
+}
+
+.nav-item.nav-active .nav-icon { transform: scale(1.12) translateY(-1px); }
+
+.nav-label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Desktop uses the sidebar; hide the bottom bar */
+@media (min-width: 1024px) {
+  .app-nav { display: none; }
+}
