@@ -159,10 +159,20 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
     return mk(STATUS.MONITOR, STATUS_REASONS.MONITOR, 'Monitor — replace on failure', 'default');
   }
 
-  // CONDITION — latest 'inspection' event is the source
+  // CONDITION — newest of {inspection, service} event is the source.
+  // A 'service'/replaced event resets the wear clock; an 'inspection' event
+  // reports the observed condition.
   if (isCondition(item)) {
-    const e = lastOfType(item, 'inspection');
-    if (e) return fromEvent(e, STATUS_REASONS.INSPECTION_NEEDED);
+    const insp = lastOfType(item, 'inspection');
+    const svc = lastOfType(item, 'service');
+    const newest = newestEvent([insp, svc]);
+    if (newest) {
+      // a replacement resets the km indicator: count from the service entry
+      if (newest.type === 'service' && item.intervalKm) {
+        return { ...calculateCondition(item, newest, currentMileage, currentDate), source: 'history' };
+      }
+      return fromEvent(newest, STATUS_REASONS.INSPECTION_NEEDED);
+    }
     if (item.manualStatus) return manualResult(item, true);
     // No inspection logged — fall back to the km indicator if we have any
     // service/baseline entry, otherwise it simply needs a look.

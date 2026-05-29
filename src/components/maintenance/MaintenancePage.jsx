@@ -37,8 +37,8 @@ export default function MaintenancePage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // one click logs the event — no reason prompt
-  const handleLog = (item, type, result) => logEvent(item.id, { type, result });
+  // pill picks open a small modal (date/mileage/note); opts carries those
+  const handleLog = (item, type, result, opts = {}) => logEvent(item.id, { type, result, ...opts });
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('urgency');
   const [registerItem, setRegisterItem] = useState(null);
@@ -140,6 +140,7 @@ export default function MaintenancePage({
               onRegister={() => setRegisterItem(item)}
               onEdit={() => setEditItem(item)}
               onLog={handleLog}
+              currentMileage={currentMileage}
               onSetBaseline={(state) => updateItem(item.id, { baselineState: state })}
             />
           ))

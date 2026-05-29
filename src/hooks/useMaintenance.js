@@ -137,19 +137,20 @@ export function useMaintenance(vehicle) {
   // source (statusCalculator reads the latest typed event). We no longer mirror
   // onto manualStatus. `lastResult` is just a UI cache for the active pill.
   // Clearing any legacy manualStatus so history wins cleanly.
-  const logEvent = useCallback((itemId, { type, result, note = '' }) => {
+  const logEvent = useCallback((itemId, { type, result, note = '', date, mileage }) => {
     if (!items) return;
-    const today = new Date().toISOString().split('T')[0];
+    const day = date || new Date().toISOString().split('T')[0];
+    const km = mileage ?? currentMileage ?? null;
     setItems(items.map((item) => {
       if (item.id !== itemId) return item;
       return {
         ...item,
         history: [...(item.history || []), {
           id: uuidv4(),
-          type,                       // 'inspection' | 'diagnosis'
-          result,                     // ok | monitor | worn | replace_needed | no_fault | fault_present | replaced
-          date: today,
-          mileage: currentMileage ?? null,
+          type,                       // 'inspection' | 'diagnosis' | 'service'
+          result,                     // ok | monitor | worn | replace_needed | no_fault | fault_present | confirmed_failed | replaced
+          date: day,                  // backdatable
+          mileage: km,
           notes: note,
           createdAt: new Date().toISOString(),
         }],

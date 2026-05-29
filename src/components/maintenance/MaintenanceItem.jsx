@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import EventLogModal from './EventLogModal';
 import StatusBadge from '../shared/StatusBadge';
 import SourceBadge from '../shared/SourceBadge';
 import { CATEGORY_ICONS } from '../../utils/constants';
@@ -17,6 +18,8 @@ const CONDITION_OPTS = [
   { result: 'monitor', color: 'monitor', key: 'condition.monitor' },
   { result: 'worn', color: 'orange', key: 'condition.worn' },
   { result: 'replace_needed', color: 'red', key: 'condition.replace' },
+  // real repair → service event (same capability as diagnosis items)
+  { result: 'replaced', color: 'green', key: 'diagnosis.replaced', type: 'service' },
 ];
 const DIAGNOSIS_OPTS = [
   { result: 'monitor', color: 'monitor', key: 'diagnosis.monitor' },  // logs a monitor event
@@ -48,9 +51,10 @@ function Pills({ opts, activeResult, onPick, t }) {
   );
 }
 
-export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSetBaseline }) {
+export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSetBaseline, currentMileage }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const [pending, setPending] = useState(null); // {type, result, label} → opens log modal
   const cs = item.calculatedStatus;
   const strategy = item.replacementStrategy || 'interval';
   const isDiag = strategy === 'on-failure' || item.intervalType === 'diagnosis';
@@ -89,9 +93,14 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
     }
   }
 
-  // every pick logs a history event — history is the status source.
-  // an option may override the event type (e.g. "Onderdeel vervangen" = service).
-  const pick = (o) => onLog(item, o.type || (isDiag ? 'diagnosis' : 'inspection'), o.result);
+  // picking an option opens the log modal (date backdatable + mileage + note),
+  // then writes a history event. an option may override the event type
+  // (e.g. "Onderdeel vervangen" = service).
+  const pick = (o) => setPending({
+    type: o.type || (isDiag ? 'diagnosis' : 'inspection'),
+    result: o.result,
+    label: t(o.key),
+  });
 
   return (
     <div className="card maint-card">
@@ -233,6 +242,20 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
             <button className="btn btn-secondary btn-sm" onClick={onEdit}>{t('maintenance.edit')}</button>
           </div>
         </div>
+      )}
+
+      {pending && (
+        <EventLogModal
+          isOpen={!!pending}
+          onClose={() => setPending(null)}
+          item={item}
+          currentMileage={currentMileage}
+          resultLabel={pending.label}
+          onSave={(opts) => {
+            onLog(item, pending.type, pending.result, opts);
+            setPending(null);
+          }}
+        />
       )}
     </div>
   );
