@@ -23,6 +23,8 @@ const DIAGNOSIS_OPTS = [
   { result: 'no_fault', color: 'green', key: 'diagnosis.noFault' },
   { result: 'fault_present', color: 'orange', key: 'diagnosis.faultPresent' },
   { result: 'confirmed_failed', color: 'red', key: 'diagnosis.confirmed' },  // defect → red / Nu doen
+  // Real repair, not a diagnosis → writes a 'service' history event.
+  { result: 'replaced', color: 'green', key: 'diagnosis.replaced', type: 'service' },
 ];
 
 // active = which result is currently logged (not which colour — two greens exist)
@@ -69,8 +71,9 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
     progress = { pct, color: STATUS_COLORS[cs.status] || 'var(--status-green)' };
   }
 
-  // every pick logs a history event — history is the status source
-  const pick = (o) => onLog(item, isDiag ? 'diagnosis' : 'inspection', o.result);
+  // every pick logs a history event — history is the status source.
+  // an option may override the event type (e.g. "Onderdeel vervangen" = service).
+  const pick = (o) => onLog(item, o.type || (isDiag ? 'diagnosis' : 'inspection'), o.result);
 
   return (
     <div className="card maint-card">

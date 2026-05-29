@@ -1,6 +1,6 @@
 import { EXPORT_VERSION, APP_VERSION, CATALOG_VERSION } from './constants';
 import { tItem, tCategory } from './translate';
-import { calculateStatus } from './statusCalculator';
+import { calculateStatus, lastOfType } from './statusCalculator';
 import { getDefaultItems } from '../data/defaultItems';
 import { missingDefaultNames, itemsMissingLayer } from './mergeDefaults';
 
@@ -132,11 +132,17 @@ export function generateDebugExport(vehicle, items, settings) {
   const missingMeta = itemsMissingLayer(list);
   const computedStatuses = list.map((i) => {
     const cs = calculateStatus(i, currentKm, vehicle);
+    const isOnFailure = i.replacementStrategy === 'on-failure' || i.intervalType === 'diagnosis';
     return {
       id: i.id, name: i.name, strategy: i.replacementStrategy, intervalType: i.intervalType,
       status: cs.status, statusReason: cs.statusReason, message: cs.message,
       source: cs.source ?? null,                       // history | manualOverride | legacyManualStatus | interval | default
       lastRelevantHistoryEvent: cs.sourceEvent ?? null,
+      // on-failure items separate the diagnosis check from the actual repair
+      ...(isOnFailure ? {
+        lastDiagnosisEvent: lastOfType(i, 'diagnosis') ?? null,
+        lastServiceEvent: lastOfType(i, 'service') ?? null,
+      } : {}),
     };
   });
   const history = [];

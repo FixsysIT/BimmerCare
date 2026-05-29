@@ -96,7 +96,7 @@
     "noFault": "No fault",
     "faultPresent": "Fault present",
     "confirmed": "Confirmed failed",
-    "replaced": "Replaced"
+    "replaced": "Part replaced"
   },
   "register": {
     "title": "Register Maintenance",

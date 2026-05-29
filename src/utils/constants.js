@@ -118,6 +118,10 @@ export const STATUS_REASONS = {
 // Default VAT percentage
 export const DEFAULT_VAT_PERCENT = 21;
 
+// How long a diagnosis "no fault" result keeps an on-failure item green before
+// it drops back to Monitor (a clean check goes stale; it's not a repair).
+export const DIAGNOSIS_OK_VALID_MONTHS = 6;
+
 // Export version
 export const EXPORT_VERSION = '1.0';
 export const APP_VERSION = '1.0.0';

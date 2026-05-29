@@ -1,5 +1,5 @@
 import { differenceInDays, differenceInMonths, addMonths, addDays, format } from 'date-fns';
-import { STATUS, STATUS_REASONS, STATUS_ORDER, INTERVAL_TYPES } from './constants';
+import { STATUS, STATUS_REASONS, STATUS_ORDER, INTERVAL_TYPES, DIAGNOSIS_OK_VALID_MONTHS } from './constants';
 
 function isOnFailure(item) {
   return item.replacementStrategy === 'on-failure' || item.intervalType === INTERVAL_TYPES.DIAGNOSIS;
@@ -22,10 +22,24 @@ const RESULT_STATUS = {
 };
 
 /* Latest history entry of a given type (inspection|diagnosis|service|baseline). */
-function lastOfType(item, type) {
+export function lastOfType(item, type) {
   const evs = (item.history || []).filter((h) => h.type === type);
   if (!evs.length) return null;
   return [...evs].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))[0];
+}
+
+/* Age of an event in whole months relative to `now`. null if no date. */
+function eventAgeMonths(e, now) {
+  const d = e.createdAt || e.date;
+  if (!d) return null;
+  return differenceInMonths(now, new Date(d));
+}
+
+/* Most recent of a set of events by createdAt/date. */
+function newestEvent(events) {
+  const list = events.filter(Boolean);
+  if (!list.length) return null;
+  return [...list].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))[0];
 }
 
 /* Status derived from a logged inspection/diagnosis event. */
@@ -76,10 +90,32 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
   // 1. genuine explicit override beats history for any strategy
   if (hasExplicitOverride(item)) return manualResult(item, false);
 
-  // DIAGNOSIS / on-failure — latest 'diagnosis' event is the source
+  // DIAGNOSIS / on-failure — newest of {diagnosis, service} event is the source.
+  // A 'service'/replaced event is a real repair (OK); a 'diagnosis' event is
+  // only a check. on-failure items never go red from km.
   if (isOnFailure(item)) {
-    const e = lastOfType(item, 'diagnosis');
-    if (e) return fromEvent(e, STATUS_REASONS.DIAGNOSIS);
+    const diag = lastOfType(item, 'diagnosis');
+    const svc = lastOfType(item, 'service');
+    const newest = newestEvent([diag, svc]);
+    if (newest) {
+      // Real replacement → OK (replaced), regardless of any older diagnosis.
+      if (newest.type === 'service') return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+
+      // Diagnosis "no fault" is only valid for a while — a clean check goes
+      // stale (it's not a repair). Past the window → back to Monitor.
+      if (newest.result === 'no_fault') {
+        const age = eventAgeMonths(newest, currentDate);
+        const limit = item.diagnosisOkValidMonths ?? DIAGNOSIS_OK_VALID_MONTHS;
+        if (age !== null && age >= limit) {
+          const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+          r.status = STATUS.MONITOR;
+          r.statusReason = STATUS_REASONS.MONITOR;
+          r.message = `no_fault recheck — older than ${limit} months`;
+          return r;
+        }
+      }
+      return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+    }
     if (item.manualStatus) return manualResult(item, true);
     return mk(STATUS.MONITOR, STATUS_REASONS.MONITOR, 'Monitor — replace on failure', 'default');
   }
