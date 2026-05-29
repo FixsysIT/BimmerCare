@@ -135,7 +135,7 @@ export function generateDebugExport(vehicle, items, settings) {
     return {
       id: i.id, name: i.name, strategy: i.replacementStrategy, intervalType: i.intervalType,
       status: cs.status, statusReason: cs.statusReason, message: cs.message,
-      source: cs.source ?? null,                       // history | manualOverride | interval | default
+      source: cs.source ?? null,                       // history | manualOverride | legacyManualStatus | interval | default
       lastRelevantHistoryEvent: cs.sourceEvent ?? null,
     };
   });

@@ -82,6 +82,7 @@ export function useMaintenance(vehicle) {
         history: [...item.history, newEntry],
         manualStatus: null, // Reset manual status on new service
         manualStatusNote: null,
+        manualOverride: false, // history is the source now
         baselineState: null, // a logged service supersedes any baseline assertion
         updatedAt: new Date().toISOString(),
       };
@@ -115,6 +116,7 @@ export function useMaintenance(vehicle) {
         }],
         manualStatus: null,
         manualStatusNote: null,
+        manualOverride: false,
         baselineState: null,
         updatedAt: new Date().toISOString(),
       };
@@ -153,6 +155,7 @@ export function useMaintenance(vehicle) {
         }],
         manualStatus: null,
         manualStatusNote: null,
+        manualOverride: false, // logging an event drops any prior override; history wins
         lastResult: result,
         baselineState: null,
         updatedAt: new Date().toISOString(),
@@ -160,7 +163,9 @@ export function useMaintenance(vehicle) {
     }));
   }, [items, currentMileage, setItems]);
 
-  // Set manual status (quick override / clear back to computed)
+  // Set manual status — a genuine explicit override that beats history.
+  // manualOverride flags it so the engine ranks it above any history event.
+  // Passing status=null clears the override back to computed/history.
   const setManualStatus = useCallback((itemId, status, note = '') => {
     if (!items) return;
     setItems(items.map((item) => {
@@ -169,6 +174,7 @@ export function useMaintenance(vehicle) {
         ...item,
         manualStatus: status,
         manualStatusNote: note,
+        manualOverride: !!status,
         lastResult: status ? item.lastResult : null,  // clearing → drop highlight
         updatedAt: new Date().toISOString(),
       };

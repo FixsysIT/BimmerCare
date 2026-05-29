@@ -9,14 +9,14 @@ function isCondition(item) {
 }
 
 /* Build a result with nulled numeric fields. `source` tells where the status
-   came from: history | manualOverride | interval | default. */
+   came from: history | manualOverride | legacyManualStatus | interval | default. */
 function mk(status, statusReason, message, source = 'default') {
   return { status, statusReason, remainingKm: null, remainingDays: null, dueByKm: null, dueByDate: null, message, source, sourceEvent: null };
 }
 
 // inspection/diagnosis result → status colour (history is the source)
 const RESULT_STATUS = {
-  ok: 'green', no_fault: 'green', replaced: 'green',
+  ok: 'green', no_fault: 'green', replaced: 'green', resolved: 'green',
   monitor: 'monitor', worn: 'orange', fault_present: 'orange',
   replace_needed: 'red', confirmed_failed: 'red',
 };
@@ -39,10 +39,24 @@ function fromEvent(e, fallbackReason) {
   return r;
 }
 
-/* Legacy explicit override: pre-P2.1 data carried manualStatus without a
-   matching history event. Respect it so nothing changes visually. */
-function legacyManual(item) {
-  return mk(item.manualStatus, STATUS_REASONS.MANUAL, item.manualStatusNote || 'Manual override', 'manualOverride');
+/* manualStatus result.
+   - `legacy` true  → pre-P2.1 / fallback data carrying manualStatus without a
+     matching history event. Respected so nothing changes visually, but it
+     LOSES to a real history event. source = 'legacyManualStatus'.
+   - `legacy` false → genuine explicit override (item.manualOverride flag set by
+     setManualStatus). WINS over history. source = 'manualOverride'. */
+function manualResult(item, legacy) {
+  return mk(
+    item.manualStatus,
+    STATUS_REASONS.MANUAL,
+    item.manualStatusNote || 'Manual override',
+    legacy ? 'legacyManualStatus' : 'manualOverride',
+  );
+}
+
+/* A genuine, explicit manual override that should beat history. */
+function hasExplicitOverride(item) {
+  return !!item.manualStatus && item.manualOverride === true;
 }
 
 /**
@@ -52,23 +66,29 @@ function legacyManual(item) {
  *   - condition  → latest history entry of type 'inspection'
  *   - on-failure → latest history entry of type 'diagnosis'
  *   - interval   → latest service/baseline history entry (km/time math)
- * manualStatus is only honoured as a legacy override when there is no matching
- * history event (pre-P2.1 data); new quick actions write history, not a mirror.
+ * Precedence (every strategy):
+ *   1. explicit manual override (item.manualOverride === true) — wins over all.
+ *   2. matching history event — the real source of truth.
+ *   3. legacy manualStatus (set, but no override flag) — respected as fallback.
+ *   4. interval math / strategy default.
  */
 export function calculateStatus(item, currentMileage, vehicle = null, currentDate = new Date()) {
-  // DIAGNOSIS / on-failure
+  // 1. genuine explicit override beats history for any strategy
+  if (hasExplicitOverride(item)) return manualResult(item, false);
+
+  // DIAGNOSIS / on-failure — latest 'diagnosis' event is the source
   if (isOnFailure(item)) {
     const e = lastOfType(item, 'diagnosis');
     if (e) return fromEvent(e, STATUS_REASONS.DIAGNOSIS);
-    if (item.manualStatus) return legacyManual(item);
+    if (item.manualStatus) return manualResult(item, true);
     return mk(STATUS.MONITOR, STATUS_REASONS.MONITOR, 'Monitor — replace on failure', 'default');
   }
 
-  // CONDITION
+  // CONDITION — latest 'inspection' event is the source
   if (isCondition(item)) {
     const e = lastOfType(item, 'inspection');
     if (e) return fromEvent(e, STATUS_REASONS.INSPECTION_NEEDED);
-    if (item.manualStatus) return legacyManual(item);
+    if (item.manualStatus) return manualResult(item, true);
     // No inspection logged — fall back to the km indicator if we have any
     // service/baseline entry, otherwise it simply needs a look.
     const last = getLastHistoryEntry(item);
@@ -82,7 +102,7 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
   // No synthetic purchase-km baseline (that caused bogus "overdue" reds).
   const lastEntry = getLastHistoryEntry(item);
   if (!lastEntry) {
-    if (item.manualStatus) return legacyManual(item);
+    if (item.manualStatus) return manualResult(item, true);
     if (item.baselineState === 'never') return mk(STATUS.RED, STATUS_REASONS.NEVER_REPLACED, 'Never replaced — replacement needed', 'default');
     return mk(STATUS.GREY, STATUS_REASONS.NO_DATA, 'No data — set a baseline', 'default');
   }
