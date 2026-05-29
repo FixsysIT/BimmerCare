@@ -89,5 +89,10 @@ export function useStatusEvents(itemsWithStatus, currentMileage) {
     setEvents((prev) => (prev || []).map((e) => ({ ...e, acknowledged: true })));
   }, [setEvents]);
 
-  return { events: events || [], acknowledge, acknowledgeAll };
+  // ack every event for one item (used when the user opens/handles that item)
+  const acknowledgeItem = useCallback((itemId) => {
+    setEvents((prev) => (prev || []).map((e) => (e.itemId === itemId ? { ...e, acknowledged: true } : e)));
+  }, [setEvents]);
+
+  return { events: events || [], acknowledge, acknowledgeAll, acknowledgeItem };
 }

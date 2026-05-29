@@ -33,7 +33,7 @@ export default function App() {
   }, [itemsLoading, items, vehicle, initItems]);
 
   const { lastBackup, shouldRemind, trackChange, exportBackup } = useAutoBackup(vehicle, items, settings);
-  const { events: statusEvents, acknowledge, acknowledgeAll } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);
+  const { events: statusEvents, acknowledgeItem } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);
 
   const handleRegister = (itemId, entry) => {
     registerMaintenance(itemId, entry);
@@ -71,8 +71,7 @@ export default function App() {
               urgentItems={urgentItems}
               itemsWithStatus={itemsWithStatus}
               statusEvents={statusEvents}
-              acknowledge={acknowledge}
-              acknowledgeAll={acknowledgeAll}
+              acknowledgeItem={acknowledgeItem}
             />
           } />
           <Route path="maintenance" element={

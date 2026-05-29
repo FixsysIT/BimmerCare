@@ -4,112 +4,29 @@
   gap: 1.25rem;
 }
 
-/* ── Cockpit (desktop: fit one viewport, no page scroll) ──────── */
-.dashboard.cockpit { gap: 1rem; }
-
-@media (min-width: 1024px) {
-  .dashboard.cockpit {
-    height: calc(100vh - 5rem);   /* app-main vertical padding ≈ 4.75rem */
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto 1fr auto;
-    grid-template-areas:
-      "hero   hero"
-      "rings  alerts"
-      "urgent alerts"
-      "actions actions";
-    gap: 1rem 1.25rem;
-    overflow: hidden;
-  }
-  .dash-hero { grid-area: hero; }
-  .dash-rings { grid-area: rings; }
-  .dash-alerts { grid-area: alerts; min-height: 0; }
-  .dash-urgent { grid-area: urgent; min-height: 0; }
-  .dash-actions { grid-area: actions; }
-
-  /* panels that hold lists must be able to shrink + scroll internally */
-  .dash-alerts .alerts-panel,
-  .dash-urgent .urgent-items {
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .dash-alerts .alerts-list,
-  .dash-urgent .urgent-list { overflow: auto; min-height: 0; }
-
-  /* compact cockpit hero — no full 340px banner */
-  .cockpit .hero-card { min-height: 150px; padding: 1.1rem 1.3rem; }
-  .cockpit .hero-odo .mileage-value { font-size: 2.1rem; }
-  .cockpit .hero-info { gap: 0.45rem; }
-}
-
 .dash-actions {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-/* ── Alerts panel ────────────────────────────── */
-.alerts-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.alerts-badge {
+/* "Nieuw" marker on an urgent item whose status just changed */
+.urgent-new {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 1.2rem;
-  height: 1.2rem;
-  margin-left: 0.4rem;
-  padding: 0 0.35rem;
-  font-size: 0.7rem;
+  gap: 0.2rem;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  color: #fff;
-  background: var(--status-orange);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--m-lightblue, #6cb6ff);
+  background: rgba(108, 182, 255, 0.14);
+  border: 1px solid rgba(108, 182, 255, 0.4);
   border-radius: var(--radius-pill);
+  vertical-align: middle;
 }
-.alerts-ackall {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  padding: 0.2rem 0.55rem;
-  cursor: pointer;
-}
-.alerts-ackall:hover { color: var(--text-primary); border-color: var(--border-strong); }
-.alerts-empty { color: var(--text-muted); font-size: 0.85rem; padding: 0.4rem 0; }
-.alerts-list { display: flex; flex-direction: column; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
-.alert-row {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.55rem;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-}
-.alert-row.alert-ack { opacity: 0.55; }
-.alert-dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; }
-.alert-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.alert-line { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); }
-.alert-kind { font-weight: 800; }
-.alert-sub { font-size: 0.7rem; color: var(--text-secondary); }
-.alert-dismiss {
-  flex: 0 0 auto;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-  padding: 0.2rem;
-}
-.alert-dismiss:hover { color: var(--text-primary); }
 
 .urgent-more {
   align-self: flex-start;

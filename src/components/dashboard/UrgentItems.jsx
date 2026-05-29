@@ -11,7 +11,7 @@ const TABS = [
   { key: 'all', match: ['red', 'orange', 'inspect'] },
 ];
 
-export default function UrgentItems({ items, onOpen, max }) {
+export default function UrgentItems({ items, onOpen, max, changedItems, onAckItem }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState('red');
 
@@ -47,12 +47,17 @@ export default function UrgentItems({ items, onOpen, max }) {
               key={item.id}
               type="button"
               className="urgent-item card"
-              onClick={() => onOpen?.(item.calculatedStatus.status)}
+              onClick={() => { onAckItem?.(item.id); onOpen?.(item.calculatedStatus.status); }}
             >
               <div className="urgent-left">
                 <span className="urgent-icon">{CATEGORY_ICONS[item.category] || '🔧'}</span>
                 <div>
-                  <span className="urgent-name">{tItem(t, item.name)}</span>
+                  <span className="urgent-name">
+                    {tItem(t, item.name)}
+                    {changedItems?.has(item.id) && (
+                      <span className="urgent-new">✦ {t('events.new', 'Nieuw')}</span>
+                    )}
+                  </span>
                   <span className="urgent-message">{item.calculatedStatus.message}</span>
                 </div>
               </div>
