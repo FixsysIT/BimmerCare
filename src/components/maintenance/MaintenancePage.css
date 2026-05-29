@@ -359,6 +359,12 @@
 .maint-message.status-inspect { background: var(--status-inspect-bg); color: var(--status-inspect); }
 .maint-message.status-monitor { background: var(--status-monitor-bg); color: var(--status-monitor); }
 
+.maint-submessage {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0.75rem 0;
+}
+
 .maint-progress {
   height: 4px;
   background: var(--bg-elevated);

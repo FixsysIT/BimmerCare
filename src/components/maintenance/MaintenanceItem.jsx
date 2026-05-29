@@ -70,6 +70,24 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
     const pct = Math.max(0, Math.min(100, ((item.intervalKm - cs.remainingKm) / item.intervalKm) * 100));
     progress = { pct, color: STATUS_COLORS[cs.status] || 'var(--status-green)' };
   }
+  // replacement-window bar for on-failure items that were replaced
+  if (cs.replacementOkValidKm && cs.replacementRemainingKm !== null) {
+    const used = cs.replacementOkValidKm - cs.replacementRemainingKm;
+    const pct = Math.max(0, Math.min(100, (used / cs.replacementOkValidKm) * 100));
+    progress = { pct, color: STATUS_COLORS[cs.status] || 'var(--status-green)' };
+  }
+
+  // on-failure replaced items get a friendly "until Monitor" message + subtext
+  let message = cs.message;
+  let subMessage = null;
+  if (cs.replacementOkValidKm != null && cs.sourceEvent?.type === 'service') {
+    if (cs.replacementExpired) {
+      message = t('maintenance.monitorReplacedAgo', { km: (cs.kmSinceReplacement ?? 0).toLocaleString() });
+    } else {
+      message = t('maintenance.kmUntilMonitor', { km: (cs.replacementRemainingKm ?? 0).toLocaleString() });
+      subMessage = t('maintenance.monitorFromKm', { km: (cs.replacementExpiresAtKm ?? 0).toLocaleString() });
+    }
+  }
 
   // every pick logs a history event — history is the status source.
   // an option may override the event type (e.g. "Onderdeel vervangen" = service).
@@ -94,7 +112,8 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
         </div>
       </div>
 
-      <div className={`maint-message status-${cs.status}`}>{cs.message}</div>
+      <div className={`maint-message status-${cs.status}`}>{message}</div>
+      {subMessage && <div className="maint-submessage">{subMessage}</div>}
 
       {progress && (
         <div className="maint-progress">

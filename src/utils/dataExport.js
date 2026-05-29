@@ -141,6 +141,10 @@ export function generateDebugExport(vehicle, items, settings, statusEvents = [])
         ? currentKm - lastSvc.mileage : null;
       const replacementExpiresAtKm = (lastSvc?.mileage != null && i.replacementOkValidKm != null)
         ? lastSvc.mileage + i.replacementOkValidKm : null;
+      const replacementRemainingKm = (replacementExpiresAtKm != null && currentKm != null)
+        ? Math.max(0, replacementExpiresAtKm - currentKm) : null;
+      const replacementExpired = (kmSinceReplacement != null && i.replacementOkValidKm != null)
+        ? kmSinceReplacement >= i.replacementOkValidKm : false;
       let noFaultExpiresAt = null;
       if (lastDiag?.result === 'no_fault' && (lastDiag.date || lastDiag.createdAt)) {
         const months = i.diagnosisOkValidMonths ?? DIAGNOSIS_OK_VALID_MONTHS;
@@ -155,7 +159,9 @@ export function generateDebugExport(vehicle, items, settings, statusEvents = [])
         replacementOkValidMonths: i.replacementOkValidMonths ?? null,
         diagnosisOkValidMonths: i.diagnosisOkValidMonths ?? null,
         kmSinceReplacement,
+        replacementRemainingKm,
         replacementExpiresAtKm,
+        replacementExpired,
         noFaultExpiresAt,
       };
     }

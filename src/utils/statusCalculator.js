@@ -102,21 +102,42 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
       // part eventually wears again, so past replacementOkValidKm (or optional
       // replacementOkValidMonths) it drops back to Monitor — never red from km.
       if (newest.type === 'service') {
-        const kmSince = (currentMileage != null && newest.mileage != null)
-          ? currentMileage - newest.mileage : null;
+        const lastServiceKm = newest.mileage ?? null;
+        const kmSince = (currentMileage != null && lastServiceKm != null)
+          ? currentMileage - lastServiceKm : null;
+        const validKm = item.replacementOkValidKm ?? null;
+        const expiresAtKm = (lastServiceKm != null && validKm != null) ? lastServiceKm + validKm : null;
+        const remainingKm = (expiresAtKm != null && currentMileage != null) ? expiresAtKm - currentMileage : null;
         const ageM = eventAgeMonths(newest, currentDate);
-        const kmExpired = item.replacementOkValidKm != null && kmSince != null
-          && kmSince >= item.replacementOkValidKm;
+        const kmExpired = validKm != null && kmSince != null && kmSince >= validKm;
         const monthsExpired = item.replacementOkValidMonths != null && ageM != null
           && ageM >= item.replacementOkValidMonths;
-        if (kmExpired || monthsExpired) {
-          const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+        const expired = kmExpired || monthsExpired;
+
+        const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS); // green + sourceEvent
+        // replacement-window metadata for the UI / debug export
+        r.lastServiceKm = lastServiceKm;
+        r.kmSinceReplacement = kmSince;
+        r.replacementOkValidKm = validKm;
+        r.replacementExpiresAtKm = expiresAtKm;
+        r.replacementRemainingKm = expired ? 0 : (remainingKm != null ? Math.max(0, remainingKm) : null);
+        r.replacementExpired = expired;
+        // generic remaining/dueBy so any consumer can render a bar
+        r.remainingKm = r.replacementRemainingKm;
+        r.dueByKm = expiresAtKm;
+
+        if (expired) {
           r.status = STATUS.MONITOR;
           r.statusReason = STATUS_REASONS.REPLACEMENT_EXPIRED;
-          r.message = 'replacement window expired — monitor';
-          return r;
+          r.message = kmSince != null
+            ? `Monitor — replaced ${kmSince.toLocaleString()} km ago`
+            : 'replacement window expired — monitor';
+        } else {
+          r.message = remainingKm != null
+            ? `${remainingKm.toLocaleString()} km until Monitor`
+            : 'replaced';
         }
-        return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+        return r;
       }
 
       // Diagnosis "no fault" is only valid for a while — a clean check goes
