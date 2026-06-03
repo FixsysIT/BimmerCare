@@ -565,6 +565,8 @@
   border-radius: 5px;
   align-self: center;
 }
+/* context = STRONGLY ADVISED: solid fill so it visibly outranks a plain add-on */
+.bundle-tag-context { color: #1b1205; background: var(--status-orange, #E8A33D); }
 .bundle-tag-addon   { color: var(--m-blue, #2E6DB4);     background: rgba(46, 109, 180, 0.14); }
 .bundle-tag-inspect { color: var(--status-inspect, #3FB6C8); background: rgba(63, 182, 200, 0.14); }
 .bundle-tag-reminder{ color: var(--status-orange, #E8A33D); background: rgba(232, 163, 61, 0.14); }
@@ -579,9 +581,15 @@
   padding-left: 0.4rem;
 }
 .bundle-attach-reminder { font-size: 0.82rem; color: var(--status-orange, #E8A33D); }
+.bundle-label-context { color: var(--status-orange, #E8A33D); font-weight: 800; }
 .bundle-label-addon   { color: var(--m-blue, #2E6DB4); }
 .bundle-label-inspect { color: var(--status-inspect, #3FB6C8); }
 .bundle-label-reminder{ color: var(--status-orange, #E8A33D); }
+/* context attachment block: subtle warm tint + accent so it reads stronger */
+.bundle-attach-block:has(.bundle-label-context) {
+  border-left: 2px solid var(--status-orange, #E8A33D);
+  padding-left: 0.5rem;
+}
 
 .maint-bundle-badge {
   margin-left: 0.5rem;

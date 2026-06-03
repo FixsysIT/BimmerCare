@@ -8,7 +8,7 @@ import { BUNDLES, ROLES } from '../data/bundles';
  * conditionalAddon / inspectOnly) and the bundle's reason.
  */
 
-const ROLE_RANK = { [ROLES.MUST]: 3, [ROLES.ADDON]: 2, [ROLES.INSPECT]: 1 };
+const ROLE_RANK = { [ROLES.MUST]: 4, [ROLES.CONTEXT]: 3, [ROLES.ADDON]: 2, [ROLES.INSPECT]: 1 };
 
 // Collect raw {name, role, reason} suggestions for an item across all bundles.
 function rawLinks(item) {

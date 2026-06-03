@@ -131,7 +131,7 @@ export default function MaintenancePage({
         });
       } else {
         const att = clusterAttachments([item.name], allItems);
-        const hasAtt = att.addons.length || att.inspect.length || att.reminders.length;
+        const hasAtt = att.context.length || att.addons.length || att.inspect.length || att.reminders.length;
         plan.push({ kind: hasAtt ? 'solo' : 'card', item, attachments: att });
       }
     });

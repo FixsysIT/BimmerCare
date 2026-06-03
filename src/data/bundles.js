@@ -16,17 +16,26 @@
  *  - trigger + `adds` : directional. Servicing a TRIGGER item suggests the
  *               adds, each with its own role.
  *
- * Member roles (see CompanionPicker):
- *  - mustReplace      : checkbox, checked by default, logs service/replaced.
- *  - conditionalAddon : checkbox, UNchecked by default, logs only when ticked.
- *  - inspectOnly      : hint text only, no checkbox, logs nothing.
+ * Member roles (see CompanionPicker), strongest → weakest:
+ *  - mustReplace     (VERPLICHT)        checkbox checked by default, true
+ *                    do-together job, logs service/replaced.
+ *  - mustWhenContext (STERK AANGERADEN) checkbox shown UNchecked; skipping is
+ *                    bad if the condition is true (old/brittle/worn/due).
+ *                    Stronger styling than a plain add-on. Logs only when ticked.
+ *  - optionalAddon   (ADD-ON)           checkbox UNchecked, cheap convenience
+ *                    combo. Weak styling. Logs only when ticked.
+ *  - inspectOnly     (INSPECT)          hint text only, no checkbox, logs nothing.
+ *
+ * Only `mustReplace` links join a visual cluster (bundleView.js); context /
+ * addon / inspect attach as read-only rows under the cluster.
  *
  * `reminder` is a free operation that isn't a catalog item (e.g. battery coding).
  */
 
 export const ROLES = {
   MUST: 'mustReplace',
-  ADDON: 'conditionalAddon',
+  CONTEXT: 'mustWhenContext',
+  ADDON: 'optionalAddon',
   INSPECT: 'inspectOnly',
 };
 
@@ -95,9 +104,18 @@ export const BUNDLES = [
     },
   },
   {
+    id: 'ac-service-cabin-filter',
+    trigger: ['A/C Service'],
+    adds: [{ name: 'Cabin Filter (×2)', role: ROLES.ADDON }],
+    reason: {
+      nl: 'Airco toch gedaan? Microfilter is een goedkope combo.',
+      en: 'A/C done anyway? Cabin filter is a cheap combo.',
+    },
+  },
+  {
     id: 'front-end-refresh',
     trigger: ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'],
-    adds: [{ name: 'Stabilizer Links Front (×2)', role: ROLES.ADDON }],
+    adds: [{ name: 'Stabilizer Links Front (×2)', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Voorzijde toch open. Goedkope stabilisatorstangen meenemen als ze speling/oud zijn.',
       en: 'Front end already open. Take the cheap stabiliser links if worn/old.',
@@ -107,8 +125,8 @@ export const BUNDLES = [
     id: 'cooling-rubber-addons',
     trigger: ['Water Pump (electric)', 'Thermostat', 'Coolant Flush'],
     adds: [
-      { name: 'Coolant Hoses', role: ROLES.ADDON },
-      { name: 'Expansion Tank + Cap', role: ROLES.ADDON },
+      { name: 'Coolant Hoses', role: ROLES.CONTEXT },
+      { name: 'Expansion Tank + Cap', role: ROLES.CONTEXT },
     ],
     reason: {
       nl: 'Koelsysteem is toch leeg. Brosse slang of oud expansievat? Direct meenemen.',
@@ -118,7 +136,7 @@ export const BUNDLES = [
   {
     id: 'valvecover-vacuum-lines',
     trigger: ['Valve Cover Gasket + PCV'],
-    adds: [{ name: 'Vacuum Lines (N53)', role: ROLES.ADDON }],
+    adds: [{ name: 'Vacuum Lines (N53)', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Bovenop de motor bezig en vacuümlijnen bros? €40 slangkit meepakken.',
       en: 'Working on top of the engine and vacuum lines brittle? Grab the ~€40 hose kit.',
@@ -127,7 +145,7 @@ export const BUNDLES = [
   {
     id: 'oil-leak-with-oil-service',
     trigger: ['Oil Pan Gasket', 'Oil Filter Housing Gasket'],
-    adds: [{ name: 'Engine Oil + Filter', role: ROLES.ADDON }],
+    adds: [{ name: 'Engine Oil + Filter', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Oliezone wordt geopend/vervuild. Combineer met de oliebeurt als die eraan komt.',
       en: 'Oil zone gets opened/contaminated. Combine with the oil service if it is due soon.',
@@ -136,7 +154,7 @@ export const BUNDLES = [
   {
     id: 'tires-protection',
     trigger: ['Tires (×4)'],
-    adds: [{ name: 'Wheel Alignment', role: ROLES.ADDON }],
+    adds: [{ name: 'Wheel Alignment', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Nieuwe banden op ongelijnd onderstel = geld weggooien. Bescherm die €800.',
       en: 'New tyres on a misaligned chassis = money down the drain. Protect that €800.',

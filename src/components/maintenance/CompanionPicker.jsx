@@ -14,6 +14,7 @@ export default function CompanionPicker({ companions = [], selected, onChange, r
 
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const must = companions.filter((c) => c.role === ROLES.MUST);
+  const context = companions.filter((c) => c.role === ROLES.CONTEXT);
   const addons = companions.filter((c) => c.role === ROLES.ADDON);
   const inspect = companions.filter((c) => c.role === ROLES.INSPECT);
 
@@ -36,6 +37,18 @@ export default function CompanionPicker({ companions = [], selected, onChange, r
         <div className="companion-section">
           <span className="companion-section-label companion-must">{t('register.companionMust')}</span>
           {must.map((c) => <Row key={c.id} c={c} />)}
+        </div>
+      )}
+
+      {context.length > 0 && (
+        <div className="companion-section">
+          <span className="companion-section-label companion-context">{t('register.companionContext')}</span>
+          {context.map((c) => (
+            <div key={c.id} className="companion-addon-row">
+              <Row c={c} />
+              {c.reasonI18n?.[lang] && <span className="companion-reason">{c.reasonI18n[lang]}</span>}
+            </div>
+          ))}
         </div>
       )}
 

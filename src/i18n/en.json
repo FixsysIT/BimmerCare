@@ -135,11 +135,17 @@
     "companionsHint": "Tick what was done in the same visit — no separate cost, status only.",
     "companionNote": "Together with {{name}}",
     "companionMust": "Must do together",
-    "companionAddon": "Smart add-ons (optional)",
+    "companionContext": "Strongly advised (if condition applies)",
+    "companionAddon": "Add-on (optional)",
     "companionInspect": "Inspect only",
+    "bundleContext": "Strongly advised — if worn/old/brittle",
     "bundleAddon": "Add-on (optional, not counted)",
     "bundleInspect": "Inspect (check only)",
-    "bundleReminder": "Reminder"
+    "bundleReminder": "Reminder",
+    "tagContext": "Strongly advised",
+    "tagAddon": "Add-on",
+    "tagInspect": "Inspect",
+    "tagReminder": "Reminder"
   },
   "costs": {
     "title": "Costs",

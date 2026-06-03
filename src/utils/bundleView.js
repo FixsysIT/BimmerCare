@@ -76,26 +76,31 @@ export function clusterTitle(rootId) {
  */
 export function clusterAttachments(memberNames, allItems) {
   const inCluster = new Set(memberNames);
-  const addons = new Map();   // name → {name, item, reason}
+  const context = new Map(); // mustWhenContext → {name, cost, reason}
+  const addons = new Map();   // optionalAddon → {name, cost, reason}
   const inspect = new Map();  // name → reason
   const reminders = [];
   const seenReminder = new Set();
+  const row = (c) => ({ name: c.name, estimatedTotalCost: c.estimatedTotalCost, reasonI18n: c.reasonI18n });
 
   for (const name of memberNames) {
     const item = (allItems || []).find((i) => i.name === name);
     if (!item) continue;
     for (const c of getCompanions(item, allItems)) {
       if (inCluster.has(c.name)) continue;
-      if (c.role === ROLES.ADDON && !addons.has(c.name)) {
-        addons.set(c.name, { name: c.name, estimatedTotalCost: c.estimatedTotalCost, reasonI18n: c.reasonI18n });
-      } else if (c.role === ROLES.INSPECT && !inspect.has(c.name)) {
-        inspect.set(c.name, c.reasonI18n);
-      }
+      if (c.role === ROLES.CONTEXT && !context.has(c.name)) context.set(c.name, row(c));
+      else if (c.role === ROLES.ADDON && !addons.has(c.name)) addons.set(c.name, row(c));
+      else if (c.role === ROLES.INSPECT && !inspect.has(c.name)) inspect.set(c.name, c.reasonI18n);
     }
     for (const r of getReminders(item)) {
       const key = r.nl || r.en;
       if (!seenReminder.has(key)) { seenReminder.add(key); reminders.push(r); }
     }
   }
-  return { addons: [...addons.values()], inspect: [...inspect.keys()], reminders };
+  return {
+    context: [...context.values()],
+    addons: [...addons.values()],
+    inspect: [...inspect.keys()],
+    reminders,
+  };
 }

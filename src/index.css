@@ -567,6 +567,7 @@ label {
   letter-spacing: 0.04em;
 }
 .companion-must { color: var(--status-red, #E2453B); }
+.companion-context { color: var(--status-orange, #E8A33D); font-weight: 800; }
 .companion-addon { color: var(--m-blue, #2E6DB4); }
 .companion-inspect { color: var(--text-muted); }
 .companion-row {

@@ -135,11 +135,17 @@
     "companionsHint": "Vink aan wat in dezelfde beurt is gedaan — geen losse kosten, alleen status bijgewerkt.",
     "companionNote": "Samen met {{name}}",
     "companionMust": "Verplicht meenemen",
-    "companionAddon": "Slimme add-ons (optioneel)",
+    "companionContext": "Sterk aangeraden (bij conditie)",
+    "companionAddon": "Add-on (optioneel)",
     "companionInspect": "Alleen inspecteren",
+    "bundleContext": "Sterk aangeraden — als versleten/oud/bros",
     "bundleAddon": "Add-on (optioneel, niet meegerekend)",
     "bundleInspect": "Inspect (alleen controleren)",
-    "bundleReminder": "Reminder"
+    "bundleReminder": "Reminder",
+    "tagContext": "Sterk aangeraden",
+    "tagAddon": "Add-on",
+    "tagInspect": "Inspect",
+    "tagReminder": "Reminder"
   },
   "costs": {
     "title": "Kosten",
