@@ -36,7 +36,9 @@ export default function MaintenancePage({
   // a status deep-link from the dashboard should show that status across all layers
   const statusParam = searchParams.get('status');
   const [statusFilter, setStatusFilter] = useState(statusParam || 'all');
-  const [layerTab, setLayerTab] = useState(statusParam ? 'all' : LAYERS.ACTIVE);
+  // default to the full overview so bundle groups + context are visible; the
+  // pill tabs handle quick layer switching. (deep-link from dashboard also = all)
+  const [layerTab, setLayerTab] = useState('all');
   // adjust filters when the deep-link param changes (no effect — React render-time pattern)
   const [prevStatusParam, setPrevStatusParam] = useState(statusParam);
   if (statusParam !== prevStatusParam) {
@@ -165,7 +167,7 @@ export default function MaintenancePage({
             key={tabItem.key}
             type="button"
             className={`layer-tab ${layerTab === tabItem.key ? 'layer-tab-active' : ''}`}
-            onClick={() => setLayerTab(tabItem.key)}
+            onClick={() => { setLayerTab(tabItem.key); setStatusFilter('all'); }}
           >
             {t(tabItem.label)} <span className="layer-tab-count">{layerCounts[tabItem.key] ?? 0}</span>
           </button>
@@ -174,16 +176,6 @@ export default function MaintenancePage({
 
       <div className="filter-bar">
         <div className="filter-group">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="all">{t('maintenance.all')}</option>
-            <option value="red">{t('statusLabel.red')}</option>
-            <option value="orange">{t('statusLabel.orange')}</option>
-            <option value="inspect">{t('statusLabel.inspect')}</option>
-            <option value="monitor">{t('statusLabel.monitor')}</option>
-            <option value="green">{t('statusLabel.green')}</option>
-            <option value="grey">{t('statusLabel.grey')}</option>
-          </select>
-
           <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="all">{t('maintenance.all')}</option>
             {Object.values(CATEGORIES).map((cat) => (
