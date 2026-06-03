@@ -26,10 +26,11 @@ export default function BundleGroup({ title, attachments = {}, children }) {
         <div className="bundle-attachments">
           {addons.length > 0 && (
             <div className="bundle-attach-block">
-              <span className="bundle-attach-label">{t('register.companionAddon')}</span>
+              <span className="bundle-attach-label bundle-label-addon">{t('register.bundleAddon')}</span>
               {addons.map((a) => (
                 <div key={a.name} className="bundle-attach-row">
-                  <span className="bundle-attach-name">➕ {tItem(t, a.name)}</span>
+                  <span className="bundle-attach-tag bundle-tag-addon">Add-on</span>
+                  <span className="bundle-attach-name">{tItem(t, a.name)}</span>
                   {a.estimatedTotalCost > 0 && <span className="bundle-attach-cost">~€{a.estimatedTotalCost}</span>}
                   {a.reasonI18n?.[lang] && <span className="bundle-attach-reason">{a.reasonI18n[lang]}</span>}
                 </div>
@@ -38,15 +39,26 @@ export default function BundleGroup({ title, attachments = {}, children }) {
           )}
           {inspect.length > 0 && (
             <div className="bundle-attach-block">
-              <span className="bundle-attach-label">{t('register.companionInspect')}</span>
+              <span className="bundle-attach-label bundle-label-inspect">{t('register.bundleInspect')}</span>
               {inspect.map((name) => (
-                <span key={name} className="bundle-attach-hint">🔍 {tItem(t, name)}</span>
+                <span key={name} className="bundle-attach-row bundle-inspect-row">
+                  <span className="bundle-attach-tag bundle-tag-inspect">Inspect</span>
+                  <span className="bundle-attach-name">{tItem(t, name)}</span>
+                </span>
               ))}
             </div>
           )}
-          {reminders.map((r, i) => (
-            <span key={i} className="bundle-attach-reminder">{r[lang] || r.en}</span>
-          ))}
+          {reminders.length > 0 && (
+            <div className="bundle-attach-block">
+              <span className="bundle-attach-label bundle-label-reminder">{t('register.bundleReminder')}</span>
+              {reminders.map((r, i) => (
+                <span key={i} className="bundle-attach-row bundle-attach-reminder">
+                  <span className="bundle-attach-tag bundle-tag-reminder">Reminder</span>
+                  <span>{r[lang] || r.en}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

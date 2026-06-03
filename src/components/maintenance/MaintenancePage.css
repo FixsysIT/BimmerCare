@@ -555,15 +555,33 @@
   gap: 0.4rem;
   font-size: 0.85rem;
 }
+.bundle-attach-tag {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.05rem 0.35rem;
+  border-radius: 5px;
+  align-self: center;
+}
+.bundle-tag-addon   { color: var(--m-blue, #2E6DB4);     background: rgba(46, 109, 180, 0.14); }
+.bundle-tag-inspect { color: var(--status-inspect, #3FB6C8); background: rgba(63, 182, 200, 0.14); }
+.bundle-tag-reminder{ color: var(--status-orange, #E8A33D); background: rgba(232, 163, 61, 0.14); }
+.bundle-attach-name { color: var(--text-primary, #fff); }
+/* inspect = a check, never a completed task: muted, no tick, no strike-through */
+.bundle-inspect-row .bundle-attach-name { color: var(--text-muted); font-style: italic; }
 .bundle-attach-cost { color: var(--text-muted); font-size: 0.8rem; }
 .bundle-attach-reason {
   flex-basis: 100%;
   font-size: 0.75rem;
   color: var(--text-muted);
-  padding-left: 1.2rem;
+  padding-left: 0.4rem;
 }
-.bundle-attach-hint { font-size: 0.85rem; color: var(--text-muted); }
 .bundle-attach-reminder { font-size: 0.82rem; color: var(--status-orange, #E8A33D); }
+.bundle-label-addon   { color: var(--m-blue, #2E6DB4); }
+.bundle-label-inspect { color: var(--status-inspect, #3FB6C8); }
+.bundle-label-reminder{ color: var(--status-orange, #E8A33D); }
 
 .maint-bundle-badge {
   margin-left: 0.5rem;

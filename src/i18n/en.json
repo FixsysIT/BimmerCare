@@ -136,7 +136,10 @@
     "companionNote": "Together with {{name}}",
     "companionMust": "Must do together",
     "companionAddon": "Smart add-ons (optional)",
-    "companionInspect": "Inspect only"
+    "companionInspect": "Inspect only",
+    "bundleAddon": "Add-on (optional, not counted)",
+    "bundleInspect": "Inspect (check only)",
+    "bundleReminder": "Reminder"
   },
   "costs": {
     "title": "Costs",

@@ -136,7 +136,10 @@
     "companionNote": "Samen met {{name}}",
     "companionMust": "Verplicht meenemen",
     "companionAddon": "Slimme add-ons (optioneel)",
-    "companionInspect": "Alleen inspecteren"
+    "companionInspect": "Alleen inspecteren",
+    "bundleAddon": "Add-on (optioneel, niet meegerekend)",
+    "bundleInspect": "Inspect (alleen controleren)",
+    "bundleReminder": "Reminder"
   },
   "costs": {
     "title": "Kosten",
