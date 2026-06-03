@@ -51,8 +51,9 @@ function Pills({ opts, activeResult, onPick, t }) {
   );
 }
 
-export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, companions = [], reminders = [], currentMileage }) {
-  const { t } = useTranslation();
+export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, companions = [], reminders = [], badge = null, currentMileage }) {
+  const { t, i18n } = useTranslation();
+  const badgeLang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(null); // {type, result, label} → opens log modal
   const [editEntry, setEditEntry] = useState(null); // history entry being edited
@@ -110,7 +111,10 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
         <div className="maint-left">
           <span className="maint-icon">{CATEGORY_ICONS[item.category] || '🔧'}</span>
           <div className="maint-info">
-            <span className="maint-name">{tItem(t, item.name)}</span>
+            <span className="maint-name">
+              {tItem(t, item.name)}
+              {badge && <span className="maint-bundle-badge">🔗 {badge[badgeLang] || badge.en}</span>}
+            </span>
             <span className="maint-sub">
               {tCategory(t, item.category)} · {t(`strategy.${strategy}`)}
               {intervalText ? ` · ${intervalText}` : ''}

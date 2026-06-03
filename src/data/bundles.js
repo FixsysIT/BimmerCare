@@ -34,6 +34,7 @@ export const BUNDLES = [
   // ── HARD-MUST do-together groups ──────────────────
   {
     id: 'belt-drive-service',
+    title: { nl: 'Riemaandrijving', en: 'Belt drive' },
     group: ['Serpentine Belt', 'Idler Pulley / Tensioner'],
     reason: {
       nl: 'Riem eraf = spanrol/looprol meenemen. Goedkope delen, zelfde plek, anders dubbel werk.',
@@ -42,6 +43,7 @@ export const BUNDLES = [
   },
   {
     id: 'cooling-pump-thermostat',
+    title: { nl: 'Koelsysteem', en: 'Cooling system' },
     group: ['Water Pump (electric)', 'Thermostat', 'Coolant Flush'],
     reason: {
       nl: 'Zelfde koelsysteem: coolant eruit, daarna ontluchten. Waterpomp los doen is dom.',
@@ -50,6 +52,7 @@ export const BUNDLES = [
   },
   {
     id: 'front-brake-service',
+    title: { nl: 'Remmen voor', en: 'Front brakes' },
     group: ['Brake Discs Front', 'Brake Pads Front'],
     reason: {
       nl: 'Nieuwe schijven met oude blokken is beun. Wear-sensor zit al als part bij de blokken.',
@@ -58,6 +61,7 @@ export const BUNDLES = [
   },
   {
     id: 'rear-brake-service',
+    title: { nl: 'Remmen achter', en: 'Rear brakes' },
     group: ['Brake Discs Rear', 'Brake Pads Rear'],
     reason: {
       nl: 'Zelfde verhaal achter. Schijf = blokken mee.',
@@ -68,6 +72,7 @@ export const BUNDLES = [
   // ── HARD-MUST-AFTER (geometry changed → align) ────
   {
     id: 'front-suspension-alignment',
+    title: { nl: 'Vooronderstel + uitlijnen', en: 'Front suspension + alignment' },
     trigger: ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'],
     adds: [{ name: 'Wheel Alignment', role: ROLES.MUST }],
     reason: {

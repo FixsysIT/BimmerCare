@@ -501,3 +501,77 @@
 .seg-btn.seg-active.seg-orange { color: var(--status-orange);  border-color: var(--status-orange);  background: var(--status-orange-bg); }
 .seg-btn.seg-active.seg-red    { color: var(--status-red);     border-color: var(--status-red);     background: var(--status-red-bg); }
 .seg-btn.seg-active.seg-monitor{ color: var(--status-monitor); border-color: var(--status-monitor); background: var(--status-monitor-bg); }
+
+/* ── Visual bundle grouping (presentation only) ───── */
+.bundle-group {
+  border: 1px solid var(--m-blue, #2E6DB4);
+  border-radius: 14px;
+  padding: 0.5rem;
+  background: rgba(46, 109, 180, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.bundle-group-header {
+  display: flex;
+  align-items: center;
+  padding: 0.15rem 0.35rem;
+}
+.bundle-group-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--m-blue, #2E6DB4);
+  letter-spacing: 0.01em;
+}
+.bundle-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.bundle-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.5rem 0.35rem 0.2rem;
+  border-top: 1px dashed rgba(46, 109, 180, 0.3);
+}
+.bundle-attach-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.bundle-attach-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.bundle-attach-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+.bundle-attach-cost { color: var(--text-muted); font-size: 0.8rem; }
+.bundle-attach-reason {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-left: 1.2rem;
+}
+.bundle-attach-hint { font-size: 0.85rem; color: var(--text-muted); }
+.bundle-attach-reminder { font-size: 0.82rem; color: var(--status-orange, #E8A33D); }
+
+.maint-bundle-badge {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--m-blue, #2E6DB4);
+  background: rgba(46, 109, 180, 0.12);
+  border-radius: 6px;
+  padding: 0.05rem 0.4rem;
+  white-space: nowrap;
+}
