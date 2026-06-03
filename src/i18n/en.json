@@ -16,18 +16,25 @@
     "currentBudget": "Current budget (€)",
     "monthlyContribution": "Monthly contribution (€)",
     "safetyBuffer": "Safety buffer (€)",
-    "maxMonthlySpend": "Max. per month (€)",
-    "planningStartDate": "Planning start date",
     "availableNow": "Available now",
     "monthlySaving": "Monthly saving",
-    "thisMonth": "This month",
-    "scheduledFor": "Scheduled for {{date}}",
-    "pullForward": "Pull forward with oil leak",
-    "tiresOverride": "Do tyres first anyway (override block)",
     "diagnosisGate": "Confirm diagnosis before expensive replacement",
-    "noBudget": "Doesn't fit budget/planning",
-    "empty": "Nothing to plan — all OK.",
     "needMileage": "Set the mileage first to plan.",
+    "appointments": "Garage appointments",
+    "addAppointment": "Add appointment",
+    "noAppointments": "No appointment yet — add one to plan around a date.",
+    "expectedBudget": "Expected budget",
+    "overrideBudget": "Fixed budget (optional)",
+    "notePlaceholder": "Note (e.g. MOT + major service)",
+    "removeAppointment": "Remove appointment",
+    "doNow": "DO AT THIS APPOINTMENT",
+    "combine": "SMART TO COMBINE",
+    "push": "NOT NOW / PUSH",
+    "blocked": "BLOCKED / NOT SMART BEFORE PREREQUISITE",
+    "diagnoseOnly": "DIAGNOSIS ONLY — don't spend yet",
+    "oilCombineReason": "Oil zone is opened anyway — combine to avoid double labour and wasted oil.",
+    "cannotWait": "Oil too far over interval — can't wait for the leak repair.",
+    "overrideLocal": "Plan anyway for MOT/safety",
     "urgency": {
       "replace_needed": "REPLACE NEEDED",
       "worn": "WORN",
@@ -37,8 +44,8 @@
       "ok": "OK"
     },
     "block": {
-      "tires": "Suspension/alignment first",
-      "alignment": "Replace steering parts first"
+      "tires": "Not smart before front suspension/alignment. New tyres can wear unevenly.",
+      "alignment": "Not before control arms/tie rods if those are open."
     }
   },
   "dashboard": {

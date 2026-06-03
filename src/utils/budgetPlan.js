@@ -1,34 +1,24 @@
-import { addMonths, format } from 'date-fns';
+import { differenceInMonths } from 'date-fns';
 import { clusterIdOf, clusterTitle } from './bundleView';
 
 /**
- * Budget Plan engine — PLANNING ONLY.
+ * Budget Plan engine — appointment-based PLANNING ONLY.
  *
- * Turns maintenance items + bundles into prioritized repair JOBS, detects
- * blockers, and schedules them against an available budget + monthly savings.
- * Never touches maintenance data, history, the bundle picker, or cards.
- *
- *  - jobs   : a mustReplace bundle cluster = one job; single items = single jobs.
- *  - urgency: replace_needed > worn > inspection_needed > due_soon > monitor > ok
- *  - score  : urgency + risk (safety / engine-damage high, comfort low)
- *  - blockers: tires need suspension/steering/alignment done first; expensive
- *    diagnosis-driven parts wait for a confirmed diagnosis.
- *  - scheduler: spend (currentBudget - safetyBuffer), add monthlyContribution
- *    each month, highest-priority unblocked job first, push if it doesn't fit.
+ * Plans repair jobs around real garage appointments. For each appointment it
+ * works out the budget available on that date, then advises what to DO now,
+ * what is SMART to COMBINE, what to PUSH, and what is BLOCKED until a
+ * prerequisite is fixed. Never touches maintenance data, history, the bundle
+ * picker, or cards.
  */
 
 export const URGENCY_RANK = { replace_needed: 5, worn: 4, inspection_needed: 3, due_soon: 2, monitor: 1, ok: 0 };
+const HIGH_URGENCY = new Set(['replace_needed', 'worn', 'inspection_needed']);
 
-// Items whose replacement is expensive and diagnosis-driven — don't plan spend
-// until the status is a confirmed replace_needed.
 const DIAGNOSIS_GATED = new Set([
   'Piezo Fuel Injectors (×6)', 'High-Pressure Fuel Pump (HPFP)', 'NOx Catalytic Converter', 'NOx Sensor',
 ]);
-
-// Open suspension/steering/alignment blocks tyres (geometry must be right first).
 const TIRE_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)', 'Wheel Alignment', 'Steering Rack'];
-
-// Oil service can be pulled forward when an oil-zone leak job is planned.
+const ALIGNMENT_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'];
 const OIL_LEAK_ITEMS = new Set(['Oil Pan Gasket', 'Oil Filter Housing Gasket']);
 
 const SAFETY_CATS = new Set(['Remmen', 'Onderstel', 'Aandrijving', 'Banden', 'Stuur', 'Wielen']);
@@ -43,165 +33,164 @@ function itemUrgency(item) {
   if (cs.status === 'inspect') return 'inspection_needed';
   if (cs.status === 'orange') return 'due_soon';
   if (cs.status === 'monitor' || r === 'monitor') return 'monitor';
-  return 'ok'; // green / grey (no data → not a spend yet)
+  return 'ok';
 }
-
 function riskWeight(item) {
   const c = item.category;
   if (SAFETY_CATS.has(c) || ENGINE_CATS.has(c)) return 3;
   if (COMFORT_CATS.has(c)) return 0;
   return 1;
 }
-
 const maxUrgency = (a, b) => (URGENCY_RANK[a] >= URGENCY_RANK[b] ? a : b);
+const isOpenUrg = (u) => URGENCY_RANK[u] >= URGENCY_RANK.due_soon;
 
-/** Group items into planning jobs (mustReplace cluster = one job). */
+function makeJob(id, title, members, extra = {}) {
+  const urgency = members.reduce((u, m) => maxUrgency(u, itemUrgency(m)), 'ok');
+  const risk = members.reduce((r, m) => Math.max(r, riskWeight(m)), 0);
+  const cost = members.reduce((c, m) => c + (m.estimatedTotalCost || 0), 0);
+  return {
+    id, title, members,
+    memberNames: members.map((m) => m.name),
+    urgency, risk, cost,
+    score: URGENCY_RANK[urgency] * 100 + risk * 10,
+    category: members[0]?.category,
+    blocked: false, blockReasons: [], diagnosisGated: false,
+    overridden: false, reasonKey: null, cannotWait: false,
+    ...extra,
+  };
+}
+
 function buildJobs(items) {
-  const byCluster = new Map(); // clusterId → [items]
+  const byCluster = new Map();
   const singles = [];
   for (const it of items) {
     const cid = clusterIdOf(it.name);
-    if (cid) {
-      if (!byCluster.has(cid)) byCluster.set(cid, []);
-      byCluster.get(cid).push(it);
-    } else {
-      singles.push(it);
-    }
+    if (cid) { if (!byCluster.has(cid)) byCluster.set(cid, []); byCluster.get(cid).push(it); }
+    else singles.push(it);
   }
-
   const jobs = [];
-  const mkJob = (id, title, members) => {
-    const urgency = members.reduce((u, m) => maxUrgency(u, itemUrgency(m)), 'ok');
-    const risk = members.reduce((r, m) => Math.max(r, riskWeight(m)), 0);
-    const cost = members.reduce((c, m) => c + (m.estimatedTotalCost || 0), 0);
-    return {
-      id, title, members,
-      memberNames: members.map((m) => m.name),
-      urgency,
-      risk,
-      cost,
-      score: URGENCY_RANK[urgency] * 100 + risk * 10,
-      category: members[0]?.category,
-      blocked: false, blockReasons: [], diagnosisGated: false, pullForward: false,
-      monthOffset: null, scheduledDate: null, unschedulable: false,
-    };
-  };
-
-  for (const [cid, members] of byCluster) {
-    const title = clusterTitle(cid);
-    jobs.push(mkJob(`cluster:${cid}`, title, members));
-  }
-  for (const it of singles) {
-    jobs.push(mkJob(`item:${it.name}`, null, [it]));
-  }
+  for (const [cid, members] of byCluster) jobs.push(makeJob(`cluster:${cid}`, clusterTitle(cid), members));
+  for (const it of singles) jobs.push(makeJob(`item:${it.name}`, null, [it]));
   return jobs;
 }
 
-/** Detect blockers + diagnosis gating, using the urgency of every item. */
-function applyBlockers(jobs, items, overrides) {
-  const urgencyByName = new Map(items.map((i) => [i.name, itemUrgency(i)]));
-  const isOpen = (name) => URGENCY_RANK[urgencyByName.get(name) ?? 'ok'] >= URGENCY_RANK.due_soon;
+/**
+ * Couple an oil service with an open oil-zone leak repair so the oil zone is
+ * only opened once. If oil is severely overdue (red), keep it separate and flag
+ * "cannot wait for the leak repair".
+ */
+function coupleOilLeak(jobs) {
+  const oilIdx = jobs.findIndex((j) => j.members.length === 1 && j.memberNames[0] === 'Engine Oil + Filter');
+  if (oilIdx < 0) return jobs;
+  const oilJob = jobs[oilIdx];
+  if (!isOpenUrg(oilJob.urgency)) return jobs; // oil not due → nothing to couple
+
+  const gasketJobs = jobs.filter((j) => j.memberNames.some((n) => OIL_LEAK_ITEMS.has(n)) && isOpenUrg(j.urgency));
+  if (!gasketJobs.length) return jobs;
+
+  const oilSevere = (oilJob.members[0].calculatedStatus?.status === 'red'); // km exceeded
+  if (oilSevere) { oilJob.cannotWait = true; return jobs; }
+
+  // build one combined job; drop the separate oil + gasket jobs
+  const members = [...gasketJobs.flatMap((j) => j.members), ...oilJob.members];
+  const combined = makeJob('combined:oil-leak', {
+    nl: 'Carterpakking + motorolie + oliefilter',
+    en: 'Oil pan gasket + oil + filter',
+  }, members, { reasonKey: 'oilCombine' });
+  const drop = new Set([oilJob.id, ...gasketJobs.map((j) => j.id)]);
+  return [...jobs.filter((j) => !drop.has(j.id)), combined];
+}
+
+function applyBlockers(jobs, items, jobOverrides) {
+  const urgByName = new Map(items.map((i) => [i.name, itemUrgency(i)]));
+  const isOpen = (name) => isOpenUrg(urgByName.get(name) ?? 'ok');
 
   for (const job of jobs) {
     const names = new Set(job.memberNames);
 
-    // diagnosis-gated expensive items: only plan spend when confirmed replace_needed
     if (job.memberNames.some((n) => DIAGNOSIS_GATED.has(n)) && job.urgency !== 'replace_needed') {
       job.diagnosisGated = true;
     }
-
-    // tyres need suspension/steering/alignment sorted first (unless overridden)
-    if (names.has('Tires (×4)') && !overrides?.tiresFirst) {
+    if (names.has('Tires (×4)')) {
       const open = TIRE_BLOCKERS.filter((n) => !names.has(n) && isOpen(n));
       if (open.length) { job.blocked = true; job.blockReasons.push({ type: 'tires', items: open }); }
     }
-
-    // standalone wheel alignment blocked by open control arms / tie rods
     if (names.has('Wheel Alignment') && job.members.length === 1) {
-      const open = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'].filter((n) => isOpen(n));
+      const open = ALIGNMENT_BLOCKERS.filter((n) => isOpen(n));
       if (open.length) { job.blocked = true; job.blockReasons.push({ type: 'alignment', items: open }); }
     }
-
-    // oil service can be pulled forward when an oil-zone leak job is planned
-    if (names.has('Engine Oil + Filter') && job.members.length === 1) {
-      const leakOpen = items.some((i) => OIL_LEAK_ITEMS.has(i.name) && isOpen(i.name));
-      if (leakOpen) { job.pullForward = true; job.score += 25; }
-    }
+    if (job.blocked && jobOverrides?.[job.id]) job.overridden = true;
   }
 }
 
-/** Greedy budget scheduler over months. */
-function scheduleJobs(jobs, settings, startDate) {
-  const available = (settings.currentBudget || 0) - (settings.safetyBuffer || 0);
-  const monthly = settings.monthlyContribution || 0;
-  const maxMonthly = settings.maxMonthlySpend || null;
+/** Budget available on an appointment date (or its explicit override). */
+function appointmentBudget(appt, settings, today) {
+  if (appt.budgetOverride !== undefined && appt.budgetOverride !== null && appt.budgetOverride !== '') {
+    return Number(appt.budgetOverride);
+  }
+  const monthsUntil = appt.date ? Math.max(0, differenceInMonths(new Date(appt.date), today)) : 0;
+  return (settings.currentBudget || 0) + (settings.monthlyContribution || 0) * monthsUntil - (settings.safetyBuffer || 0);
+}
 
-  const queue = jobs
-    .filter((j) => !j.blocked && !j.diagnosisGated && j.urgency !== 'monitor' && j.urgency !== 'ok')
+/** Plan one appointment: doen / combineren / doorschuiven / geblokkeerd. */
+function planAppointment(appt, jobs, settings, today) {
+  const monthsUntil = appt.date ? Math.max(0, differenceInMonths(new Date(appt.date), today)) : 0;
+  const budget = appointmentBudget(appt, settings, today);
+
+  const schedulable = jobs
+    .filter((j) => !j.diagnosisGated && j.urgency !== 'monitor' && j.urgency !== 'ok' && (!j.blocked || j.overridden))
     .sort((a, b) => b.score - a.score || a.cost - b.cost);
 
-  let month = 0;
-  let balance = available;
-  let spentThisMonth = 0;
+  const doen = []; const combineren = []; const doorschuiven = [];
+  let spent = 0;
+  const placed = new Set();
 
-  for (const job of queue) {
-    let guard = 0;
-    while ((balance < job.cost || (maxMonthly && spentThisMonth + job.cost > maxMonthly)) && guard < 240) {
-      month++; balance += monthly; spentThisMonth = 0; guard++;
-      if (monthly <= 0 && balance < job.cost) break; // can never afford with no savings
-    }
-    if (balance < job.cost) { job.unschedulable = true; continue; }
-    balance -= job.cost; spentThisMonth += job.cost;
-    job.monthOffset = month;
-    job.scheduledDate = format(addMonths(startDate, month), 'yyyy-MM-dd');
+  // pass 1 — high urgency that fits
+  for (const j of schedulable) {
+    if (!HIGH_URGENCY.has(j.urgency)) continue;
+    if (spent + j.cost <= budget) { doen.push(j); spent += j.cost; placed.add(j.id); }
+    else { doorschuiven.push(j); placed.add(j.id); }
   }
-}
+  // pass 2 — lower urgency that still fits → smart to combine
+  for (const j of schedulable) {
+    if (placed.has(j.id)) continue;
+    if (spent + j.cost <= budget) { combineren.push(j); spent += j.cost; }
+    else doorschuiven.push(j);
+  }
 
-const SECTIONS = ['nuDoen', 'binnen30', 'binnen3m', 'kanWachten', 'geblokkeerd', 'alleenDiagnose'];
+  const geblokkeerd = jobs.filter((j) => j.blocked && !j.overridden);
 
-function bucketOf(job) {
-  if (job.blocked) return 'geblokkeerd';
-  if (job.diagnosisGated || job.urgency === 'monitor') return 'alleenDiagnose';
-  if (job.unschedulable) return 'kanWachten';
-  if (job.monthOffset === 0 && (job.urgency === 'replace_needed' || job.urgency === 'worn')) return 'nuDoen';
-  if (job.monthOffset === 0) return 'binnen30';
-  if (job.monthOffset <= 3) return 'binnen3m';
-  return 'kanWachten';
+  return { ...appt, monthsUntil, budget, spent, doen, combineren, doorschuiven, geblokkeerd };
 }
 
 /**
- * Build the full budget plan.
- * @returns { sections: {key: job[]}, summary, jobs }
+ * @returns { jobs, appointments[], diagnoseOnly[], summary }
  */
-export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date(), overrides = {}) {
+export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date(), jobOverrides = {}) {
   const active = (itemsWithStatus || []).filter((i) => !i.isDisabled && itemUrgency(i) !== 'ok');
-  const startDate = settings.planningStartDate ? new Date(settings.planningStartDate) : today;
 
-  const jobs = buildJobs(active);
-  applyBlockers(jobs, itemsWithStatus || [], overrides);
-  scheduleJobs(jobs, settings, startDate);
+  let jobs = buildJobs(active);
+  jobs = coupleOilLeak(jobs);
+  applyBlockers(jobs, itemsWithStatus || [], jobOverrides);
 
-  const sections = Object.fromEntries(SECTIONS.map((s) => [s, []]));
-  for (const job of jobs) sections[bucketOf(job)].push(job);
-  // keep each section ordered by score (urgency) then schedule
-  for (const s of SECTIONS) sections[s].sort((a, b) => b.score - a.score || (a.monthOffset ?? 99) - (b.monthOffset ?? 99));
+  // plan ALL appointments (even a freshly added one without a date yet, so its
+  // date field stays editable); dateless ones sort last and budget from "now".
+  const appts = (settings.appointments || [])
+    .slice()
+    .sort((a, b) => (a.date ? new Date(a.date) : Infinity) - (b.date ? new Date(b.date) : Infinity))
+    .map((a) => planAppointment(a, jobs, settings, today));
 
-  const available = (settings.currentBudget || 0) - (settings.safetyBuffer || 0);
-  const thisMonthSpend = jobs.filter((j) => j.monthOffset === 0).reduce((c, j) => c + j.cost, 0);
+  const diagnoseOnly = jobs.filter((j) => j.diagnosisGated || j.urgency === 'monitor');
 
   return {
     jobs,
-    sections,
+    appointments: appts,
+    diagnoseOnly,
     summary: {
       currentBudget: settings.currentBudget || 0,
-      availableNow: available,
+      availableNow: (settings.currentBudget || 0) - (settings.safetyBuffer || 0),
       safetyBuffer: settings.safetyBuffer || 0,
       monthly: settings.monthlyContribution || 0,
-      maxMonthly: settings.maxMonthlySpend || null,
-      thisMonthSpend,
-      planningStartDate: format(startDate, 'yyyy-MM-dd'),
     },
   };
 }
-
-export { SECTIONS };
