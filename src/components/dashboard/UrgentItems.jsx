@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import StatusBadge from '../shared/StatusBadge';
 import { CATEGORY_ICONS, STATUS_ORDER } from '../../utils/constants';
 import { tItem } from '../../utils/translate';
+import { formatMaintenanceStatus } from '../../utils/statusFormat';
 
 // Priority ranking: most severe status first, then closest-to-due / most overdue.
 // Within a status, lower "remaining" = higher prio (overdue is negative → top).
@@ -30,7 +31,7 @@ const TABS = [
   { key: 'all', match: ['red', 'orange', 'inspect'] },
 ];
 
-export default function UrgentItems({ items, onOpen, max, changedItems, onAckItem }) {
+export default function UrgentItems({ items, onOpen, max, changedItems, onAckItem, currentMileage }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState('red');
 
@@ -79,7 +80,7 @@ export default function UrgentItems({ items, onOpen, max, changedItems, onAckIte
                       <span className="urgent-new">✦ {t('events.new', 'Nieuw')}</span>
                     )}
                   </span>
-                  <span className="urgent-message">{item.calculatedStatus.message}</span>
+                  <span className="urgent-message">{formatMaintenanceStatus(item, currentMileage, new Date(), t)}</span>
                 </div>
               </div>
               <div className="urgent-right">

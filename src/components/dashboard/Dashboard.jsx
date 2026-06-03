@@ -47,9 +47,7 @@ export default function Dashboard({
         <VehicleCard
           vehicle={vehicle}
           counts={statusCounts}
-          onUpdateMileage={() => setMileageModalOpen(true)}
           onChip={goFilter}
-          onSettings={() => navigate('/settings')}
         />
       </motion.div>
 
@@ -63,6 +61,7 @@ export default function Dashboard({
           onOpen={goFilter}
           changedItems={changedItems}
           onAckItem={acknowledgeItem}
+          currentMileage={vehicle?.currentMileage}
         />
       </motion.div>
 
@@ -72,6 +71,9 @@ export default function Dashboard({
         </button>
         <button className="btn btn-secondary btn-sm" onClick={() => navigate('/maintenance')}>
           {t('dashboard.openMaintenance', 'Onderhoud openen')}
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/budget')}>
+          {t('dashboard.openBudget', 'Budgetplan')}
         </button>
         <button className="btn btn-secondary btn-sm" onClick={exportChecklist}>
           {t('settings.exportChecklist', 'Garage checklist')}
