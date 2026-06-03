@@ -74,11 +74,12 @@ export function clusterTitle(rootId) {
  * conditional add-ons (name + cost + reason), inspect-only hints, reminders.
  * `memberNames` are the cluster's own items (excluded from add-ons).
  */
-export function clusterAttachments(memberNames, allItems) {
+export function clusterAttachments(memberNames, allItems, currentMileage = null) {
   const inCluster = new Set(memberNames);
-  const context = new Map(); // mustWhenContext → {name, cost, reason}
-  const addons = new Map();   // optionalAddon → {name, cost, reason}
+  const context = new Map(); // mustWhenContext, recommended → {name, cost, reason}
+  const addons = new Map();   // optionalAddon, recommended → {name, cost, reason}
   const inspect = new Map();  // name → reason
+  const notNeeded = new Map(); // context/addon currently OK → full item (for remaining text)
   const reminders = [];
   const seenReminder = new Set();
   const row = (c) => ({ name: c.name, estimatedTotalCost: c.estimatedTotalCost, reasonI18n: c.reasonI18n });
@@ -86,21 +87,33 @@ export function clusterAttachments(memberNames, allItems) {
   for (const name of memberNames) {
     const item = (allItems || []).find((i) => i.name === name);
     if (!item) continue;
-    for (const c of getCompanions(item, allItems)) {
+    for (const c of getCompanions(item, allItems, currentMileage)) {
       if (inCluster.has(c.name)) continue;
-      if (c.role === ROLES.CONTEXT && !context.has(c.name)) context.set(c.name, row(c));
-      else if (c.role === ROLES.ADDON && !addons.has(c.name)) addons.set(c.name, row(c));
-      else if (c.role === ROLES.INSPECT && !inspect.has(c.name)) inspect.set(c.name, c.reasonI18n);
+      if (c.role === ROLES.INSPECT) { if (!inspect.has(c.name)) inspect.set(c.name, c.reasonI18n); continue; }
+      if (c.role === ROLES.CONTEXT || c.role === ROLES.ADDON) {
+        // context-aware: only advise when the companion's own status warrants it;
+        // otherwise drop it to the subtle "not needed now" list.
+        if (c.recommend) {
+          const bucket = c.role === ROLES.CONTEXT ? context : addons;
+          if (!bucket.has(c.name)) bucket.set(c.name, row(c));
+        } else if (!notNeeded.has(c.name)) {
+          notNeeded.set(c.name, c);
+        }
+      }
     }
     for (const r of getReminders(item)) {
       const key = r.nl || r.en;
       if (!seenReminder.has(key)) { seenReminder.add(key); reminders.push(r); }
     }
   }
+  // a companion recommended via one member shouldn't also appear as "not needed"
+  for (const n of [...context.keys(), ...addons.keys()]) notNeeded.delete(n);
+
   return {
     context: [...context.values()],
     addons: [...addons.values()],
     inspect: [...inspect.keys()],
+    notNeeded: [...notNeeded.values()],
     reminders,
   };
 }

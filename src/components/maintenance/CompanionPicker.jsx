@@ -14,8 +14,9 @@ export default function CompanionPicker({ companions = [], selected, onChange, r
 
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const must = companions.filter((c) => c.role === ROLES.MUST);
-  const context = companions.filter((c) => c.role === ROLES.CONTEXT);
-  const addons = companions.filter((c) => c.role === ROLES.ADDON);
+  // context-aware: only offer context/addons whose own status warrants it
+  const context = companions.filter((c) => c.role === ROLES.CONTEXT && c.recommend !== false);
+  const addons = companions.filter((c) => c.role === ROLES.ADDON && c.recommend !== false);
   const inspect = companions.filter((c) => c.role === ROLES.INSPECT);
 
   const toggle = (id) =>

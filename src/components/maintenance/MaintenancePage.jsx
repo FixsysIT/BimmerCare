@@ -129,16 +129,18 @@ export default function MaintenancePage({
           root,
           title: clusterTitle(root),
           members,
-          attachments: clusterAttachments(members.map((m) => m.name), allItems),
+          attachments: clusterAttachments(members.map((m) => m.name), allItems, currentMileage),
         });
       } else {
-        const att = clusterAttachments([item.name], allItems);
+        const att = clusterAttachments([item.name], allItems, currentMileage);
+        // a card only becomes a "solo" group for real attachments — not for a
+        // bare "not needed now" note (that would add noise to every card).
         const hasAtt = att.context.length || att.addons.length || att.inspect.length || att.reminders.length;
         plan.push({ kind: hasAtt ? 'solo' : 'card', item, attachments: att });
       }
     });
     return plan;
-  }, [filtered, sortBy, allItems]);
+  }, [filtered, sortBy, allItems, currentMileage]);
 
   const renderCard = (item, badge) => (
     <MaintenanceItem
@@ -150,7 +152,7 @@ export default function MaintenancePage({
       onLog={handleLog}
       onEditEntry={(entryId, patch) => updateHistoryEntry(item.id, entryId, patch)}
       onDeleteEntry={(entryId) => deleteHistoryEntry(item.id, entryId)}
-      companions={getCompanions(item, allItems)}
+      companions={getCompanions(item, allItems, currentMileage)}
       reminders={getReminders(item)}
       currentMileage={currentMileage}
       onSetBaseline={(state) => updateItem(item.id, { baselineState: state })}
@@ -198,14 +200,14 @@ export default function MaintenancePage({
           renderPlan.map((e) => {
             if (e.kind === 'group') {
               return (
-                <BundleGroup key={`g-${e.root}`} title={e.title} attachments={e.attachments}>
+                <BundleGroup key={`g-${e.root}`} title={e.title} attachments={e.attachments} currentMileage={currentMileage}>
                   {e.members.map((m) => renderCard(m))}
                 </BundleGroup>
               );
             }
             if (e.kind === 'solo') {
               return (
-                <BundleGroup key={`s-${e.item.id}`} attachments={e.attachments}>
+                <BundleGroup key={`s-${e.item.id}`} attachments={e.attachments} currentMileage={currentMileage}>
                   {renderCard(e.item)}
                 </BundleGroup>
               );
@@ -254,7 +256,7 @@ export default function MaintenancePage({
           onClose={() => setRegisterItem(null)}
           item={registerItem}
           currentMileage={currentMileage}
-          companions={getCompanions(registerItem, allItems)}
+          companions={getCompanions(registerItem, allItems, currentMileage)}
           reminders={getReminders(registerItem)}
           onSave={(entry, companionIds = []) => {
             if (companionIds.length) {

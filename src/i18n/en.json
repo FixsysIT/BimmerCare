@@ -176,7 +176,8 @@
     "tagContext": "Strongly advised",
     "tagAddon": "Add-on",
     "tagInspect": "Inspect",
-    "tagReminder": "Reminder"
+    "tagReminder": "Reminder",
+    "notNeeded": "Not needed now"
   },
   "cardStatus": {
     "worn": "Worn since {{date}}",

@@ -581,6 +581,10 @@
   padding-left: 0.4rem;
 }
 .bundle-attach-reminder { font-size: 0.82rem; color: var(--status-orange, #E8A33D); }
+/* "not needed now" — subtle, dimmed; companion is currently OK */
+.bundle-notneeded { opacity: 0.6; }
+.bundle-notneeded .bundle-attach-label { color: var(--text-muted); }
+.bundle-notneeded-row { font-size: 0.78rem; color: var(--text-muted); }
 .bundle-label-context { color: var(--status-orange, #E8A33D); font-weight: 800; }
 .bundle-label-addon   { color: var(--m-blue, #2E6DB4); }
 .bundle-label-inspect { color: var(--status-inspect, #3FB6C8); }

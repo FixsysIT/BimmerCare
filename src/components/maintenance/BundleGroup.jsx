@@ -1,16 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { tItem } from '../../utils/translate';
+import { formatMaintenanceStatus } from '../../utils/statusFormat';
 
 /* VISUAL grouping wrapper. Renders an optional bundle header (kopje), the
    linked member cards (passed as children — real independent MaintenanceItem
-   cards), then read-only attachment rows: conditional add-ons (no checkbox),
-   inspect-only hints, and operation reminders. Pure presentation — no actions,
-   no logging. The do-together logic lives in the companion picker. */
-export default function BundleGroup({ title, attachments = {}, children }) {
+   cards), then read-only attachment rows: context-aware add-ons (no checkbox),
+   inspect-only hints, operation reminders, and a subtle "not needed now" list
+   for companions that are currently OK. Pure presentation — no actions, no
+   logging. The do-together logic lives in the companion picker. */
+export default function BundleGroup({ title, attachments = {}, currentMileage, children }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
-  const { context = [], addons = [], inspect = [], reminders = [] } = attachments;
-  const hasAttachments = context.length > 0 || addons.length > 0 || inspect.length > 0 || reminders.length > 0;
+  const { context = [], addons = [], inspect = [], reminders = [], notNeeded = [] } = attachments;
+  const hasAttachments = context.length > 0 || addons.length > 0 || inspect.length > 0
+    || reminders.length > 0 || notNeeded.length > 0;
 
   const ItemRow = ({ a, tag, tagClass }) => (
     <div className="bundle-attach-row">
@@ -67,6 +70,16 @@ export default function BundleGroup({ title, attachments = {}, children }) {
                 <span key={i} className="bundle-attach-row bundle-attach-reminder">
                   <span className="bundle-attach-tag bundle-tag-reminder">{t('register.tagReminder')}</span>
                   <span>{r[lang] || r.en}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {notNeeded.length > 0 && (
+            <div className="bundle-attach-block bundle-notneeded">
+              <span className="bundle-attach-label">{t('register.notNeeded')}</span>
+              {notNeeded.map((c) => (
+                <span key={c.name} className="bundle-notneeded-row">
+                  {tItem(t, c.name)} — {formatMaintenanceStatus(c, currentMileage, new Date(), t)}
                 </span>
               ))}
             </div>
