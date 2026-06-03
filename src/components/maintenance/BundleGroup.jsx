@@ -10,7 +10,7 @@ export default function BundleGroup({ title, attachments = {}, children }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const { context = [], addons = [], inspect = [], reminders = [] } = attachments;
-  const hasAttachments = context.length || addons.length || inspect.length || reminders.length;
+  const hasAttachments = context.length > 0 || addons.length > 0 || inspect.length > 0 || reminders.length > 0;
 
   const ItemRow = ({ a, tag, tagClass }) => (
     <div className="bundle-attach-row">

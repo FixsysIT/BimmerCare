@@ -147,6 +147,26 @@
     "tagInspect": "Inspect",
     "tagReminder": "Reminder"
   },
+  "cardStatus": {
+    "worn": "Worn since {{date}}",
+    "replaceNeeded": "Replacement needed since {{date}}",
+    "defect": "Failure confirmed since {{date}}",
+    "fault": "Fault found since {{date}}",
+    "monitorSince": "Under monitoring since {{date}}",
+    "monitor": "Under monitoring",
+    "inspectionNeededSince": "Inspection needed since {{date}}",
+    "inspectionNeeded": "Inspection needed",
+    "okUntilKm": "OK until {{km}} km · {{remain}} km remaining",
+    "okUntilDate": "OK until {{date}} · {{days}} days remaining",
+    "ok": "OK",
+    "dueKm": "{{km}} km until next service",
+    "dueDays": "Next check in {{days}} days",
+    "overdueKm": "{{km}} km over interval",
+    "overdueDays": "Overdue by {{days}} days",
+    "noBaseline": "No previous service known · baseline needed",
+    "neverReplaced": "Never replaced · replacement needed",
+    "unknown": "Status unknown"
+  },
   "costs": {
     "title": "Costs",
     "total": "Total (excl. VAT)",

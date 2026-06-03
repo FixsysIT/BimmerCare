@@ -147,6 +147,26 @@
     "tagInspect": "Inspect",
     "tagReminder": "Reminder"
   },
+  "cardStatus": {
+    "worn": "Versleten sinds {{date}}",
+    "replaceNeeded": "Vervangen nodig sinds {{date}}",
+    "defect": "Defect bevestigd sinds {{date}}",
+    "fault": "Fout gevonden sinds {{date}}",
+    "monitorSince": "Onder monitoring sinds {{date}}",
+    "monitor": "Onder monitoring",
+    "inspectionNeededSince": "Inspectie nodig sinds {{date}}",
+    "inspectionNeeded": "Inspectie nodig",
+    "okUntilKm": "OK tot {{km}} km · {{remain}} km resterend",
+    "okUntilDate": "OK tot {{date}} · {{days}} dagen resterend",
+    "ok": "OK",
+    "dueKm": "Nog {{km}} km tot volgende service",
+    "dueDays": "Volgende check over {{days}} dagen",
+    "overdueKm": "{{km}} km over interval",
+    "overdueDays": "Te laat sinds {{days}} dagen",
+    "noBaseline": "Geen vorige beurt bekend · baseline nodig",
+    "neverReplaced": "Nog nooit vervangen · vervanging nodig",
+    "unknown": "Status onbekend"
+  },
   "costs": {
     "title": "Kosten",
     "total": "Totaal (excl. BTW)",

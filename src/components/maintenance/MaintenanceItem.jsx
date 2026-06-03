@@ -5,6 +5,7 @@ import StatusBadge from '../shared/StatusBadge';
 import SourceBadge from '../shared/SourceBadge';
 import { CATEGORY_ICONS } from '../../utils/constants';
 import { tItem, tCategory } from '../../utils/translate';
+import { formatMaintenanceStatus } from '../../utils/statusFormat';
 
 const STATUS_COLORS = {
   red: 'var(--status-red)', orange: 'var(--status-orange)',
@@ -84,17 +85,8 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
     progress = { pct, color: STATUS_COLORS[cs.status] || 'var(--status-green)' };
   }
 
-  // on-failure replaced items get a friendly "until Monitor" message + subtext
-  let message = cs.message;
-  let subMessage = null;
-  if (cs.replacementOkValidKm != null && cs.sourceEvent?.type === 'service') {
-    if (cs.replacementExpired) {
-      message = t('maintenance.monitorReplacedAgo', { km: (cs.kmSinceReplacement ?? 0).toLocaleString() });
-    } else {
-      message = t('maintenance.kmUntilMonitor', { km: (cs.replacementRemainingKm ?? 0).toLocaleString() });
-      subMessage = t('maintenance.monitorFromKm', { km: (cs.replacementExpiresAtKm ?? 0).toLocaleString() });
-    }
-  }
+  // single, uniform human status line for every card (no raw enums)
+  const message = formatMaintenanceStatus(item, currentMileage, new Date(), t);
 
   // picking an option opens the log modal (date backdatable + mileage + note),
   // then writes a history event. an option may override the event type
@@ -128,7 +120,6 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
       </div>
 
       <div className={`maint-message status-${cs.status}`}>{message}</div>
-      {subMessage && <div className="maint-submessage">{subMessage}</div>}
 
       {progress && (
         <div className="maint-progress">
@@ -139,7 +130,6 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
       {lastEntry && (
         <div className="maint-last">
           {t('maintenance.lastService')}: {lastEntry.mileage?.toLocaleString()} km · {lastEntry.date}
-          {lastEntry.result ? ` · ${t(`result.${lastEntry.result}`, lastEntry.result)}` : ''}
         </div>
       )}
 
