@@ -6,6 +6,7 @@ import MaintenanceModal from './MaintenanceModal';
 import ItemEditor from './ItemEditor';
 import { CATEGORIES, CATEGORY_ICONS, STATUS_ORDER, LAYERS, deriveLayer } from '../../utils/constants';
 import { tCategory, tItem } from '../../utils/translate';
+import { getCompanions, getReminders } from '../../utils/companions';
 import './MaintenancePage.css';
 
 // layer tabs — default view is "active" so the dashboard stays usable
@@ -20,6 +21,7 @@ export default function MaintenancePage({
   itemsWithStatus,
   currentMileage,
   registerMaintenance,
+  applyService,
   updateItem,
   logEvent,
   updateHistoryEntry,
@@ -40,8 +42,17 @@ export default function MaintenancePage({
     if (statusParam) { setStatusFilter(statusParam); setLayerTab('all'); }
   }
 
-  // pill picks open a small modal (date/mileage/note); opts carries those
-  const handleLog = (item, type, result, opts = {}) => logEvent(item.id, { type, result, ...opts });
+  // pill picks open a small modal (date/mileage/note); opts carries those.
+  // A replacement ('service') may also carry companion ids done in the same visit.
+  const handleLog = (item, type, result, opts = {}) => {
+    const { companionIds, ...rest } = opts;
+    if (companionIds?.length && type === 'service') {
+      const note = t('register.companionNote', { name: tItem(t, item.name) });
+      applyService(item.id, { type, result, ...rest }, companionIds, note);
+    } else {
+      logEvent(item.id, { type, result, ...rest });
+    }
+  };
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('urgency');
   const [registerItem, setRegisterItem] = useState(null);
@@ -145,6 +156,8 @@ export default function MaintenancePage({
               onLog={handleLog}
               onEditEntry={(entryId, patch) => updateHistoryEntry(item.id, entryId, patch)}
               onDeleteEntry={(entryId) => deleteHistoryEntry(item.id, entryId)}
+              companions={getCompanions(item, allItems)}
+              reminders={getReminders(item)}
               currentMileage={currentMileage}
               onSetBaseline={(state) => updateItem(item.id, { baselineState: state })}
             />
@@ -191,8 +204,15 @@ export default function MaintenancePage({
           onClose={() => setRegisterItem(null)}
           item={registerItem}
           currentMileage={currentMileage}
-          onSave={(entry) => {
-            registerMaintenance(registerItem.id, entry);
+          companions={getCompanions(registerItem, allItems)}
+          reminders={getReminders(registerItem)}
+          onSave={(entry, companionIds = []) => {
+            if (companionIds.length) {
+              const note = t('register.companionNote', { name: tItem(t, registerItem.name) });
+              applyService(registerItem.id, entry, companionIds, note);
+            } else {
+              registerMaintenance(registerItem.id, entry);
+            }
             setRegisterItem(null);
           }}
         />

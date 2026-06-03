@@ -130,7 +130,13 @@
     "receiptLink": "Factuur Link",
     "notes": "Notities",
     "save": "Opslaan",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "companionsTitle": "Samen meenemen?",
+    "companionsHint": "Vink aan wat in dezelfde beurt is gedaan — geen losse kosten, alleen status bijgewerkt.",
+    "companionNote": "Samen met {{name}}",
+    "companionMust": "Verplicht meenemen",
+    "companionAddon": "Slimme add-ons (optioneel)",
+    "companionInspect": "Alleen inspecteren"
   },
   "costs": {
     "title": "Kosten",

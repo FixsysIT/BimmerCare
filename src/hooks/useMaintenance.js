@@ -88,6 +88,59 @@ export function useMaintenance(vehicle) {
     return newEntry;
   }, [items, setItems]);
 
+  // Register a service on the primary item AND mark its companions done in the
+  // SAME visit, in ONE state update (separate calls would stale-close `items`
+  // and overwrite each other). The primary carries the whole job cost; each
+  // companion gets a service/replaced entry at the same date/km with cost 0 —
+  // the work was bundled, so its wear-clock resets without double-counting cost.
+  const applyService = useCallback((primaryId, primaryEntry, companionIds = [], companionNote = '') => {
+    if (!items) return;
+    const now = new Date().toISOString();
+    const cost = primaryEntry.cost || 0;
+    const pEntry = { id: uuidv4(), ...primaryEntry, cost, createdAt: now };
+    const compSet = new Set(companionIds);
+    setItems(items.map((item) => {
+      if (item.id === primaryId) {
+        return {
+          ...item,
+          history: [...(item.history || []), pEntry],
+          estimatedTotalCost: cost > 0 ? Math.round(cost) : item.estimatedTotalCost,
+          manualStatus: null,
+          manualStatusNote: null,
+          manualOverride: false,
+          lastResult: primaryEntry.result ?? null,
+          baselineState: null,
+          updatedAt: now,
+        };
+      }
+      if (compSet.has(item.id)) {
+        const cEntry = {
+          id: uuidv4(),
+          type: 'service',
+          result: 'replaced',
+          date: primaryEntry.date,
+          mileage: primaryEntry.mileage,
+          garage: primaryEntry.garage || '',
+          cost: 0, // bundled into the primary job's cost
+          notes: companionNote,
+          createdAt: now,
+        };
+        return {
+          ...item,
+          history: [...(item.history || []), cEntry],
+          manualStatus: null,
+          manualStatusNote: null,
+          manualOverride: false,
+          lastResult: 'replaced',
+          baselineState: null,
+          updatedAt: now,
+        };
+      }
+      return item;
+    }));
+    return pEntry;
+  }, [items, setItems]);
+
   // Baseline mode — for every item WITHOUT history, log a baseline entry at
   // the current odometer/today. Interval items then count from here (fresh,
   // not overdue); condition items count toward their inspection indicator;
@@ -269,6 +322,7 @@ export function useMaintenance(vehicle) {
     setItems,
     initItems,
     registerMaintenance,
+    applyService,
     updateItem,
     setManualStatus,
     addItem,

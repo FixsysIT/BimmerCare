@@ -130,7 +130,13 @@
     "receiptLink": "Receipt Link",
     "notes": "Notes",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "companionsTitle": "Do together?",
+    "companionsHint": "Tick what was done in the same visit — no separate cost, status only.",
+    "companionNote": "Together with {{name}}",
+    "companionMust": "Must do together",
+    "companionAddon": "Smart add-ons (optional)",
+    "companionInspect": "Inspect only"
   },
   "costs": {
     "title": "Costs",

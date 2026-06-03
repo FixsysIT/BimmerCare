@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from '../shared/Modal';
+import CompanionPicker from './CompanionPicker';
 
-export default function MaintenanceModal({ isOpen, onClose, item, currentMileage, onSave }) {
+export default function MaintenanceModal({ isOpen, onClose, item, currentMileage, companions = [], reminders = [], onSave }) {
   const { t } = useTranslation();
+  const [companionIds, setCompanionIds] = useState(companions.filter((c) => c.defaultChecked).map((c) => c.id));
   const [form, setForm] = useState({
     date: new Date().toISOString().split('T')[0],
     mileage: currentMileage || 0,
@@ -26,7 +28,7 @@ export default function MaintenanceModal({ isOpen, onClose, item, currentMileage
       receiptRef: form.receiptRef,
       receiptLink: form.receiptLink,
       notes: form.notes,
-    });
+    }, companionIds);
   };
 
   return (
@@ -68,6 +70,8 @@ export default function MaintenanceModal({ isOpen, onClose, item, currentMileage
           <label>{t('register.notes')}</label>
           <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} />
         </div>
+
+        <CompanionPicker companions={companions} selected={companionIds} onChange={setCompanionIds} reminders={reminders} />
 
         <div className="form-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>{t('register.cancel')}</button>

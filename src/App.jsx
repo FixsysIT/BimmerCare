@@ -25,7 +25,7 @@ export default function App() {
   const {
     items, itemsWithStatus, statusCounts, urgentItems,
     loading: itemsLoading, setItems, initItems,
-    registerMaintenance, updateItem, addItem, toggleDisable, resetToDefaults, startBaseline, logEvent,
+    registerMaintenance, applyService, updateItem, addItem, toggleDisable, resetToDefaults, startBaseline, logEvent,
     updateHistoryEntry, deleteHistoryEntry,
   } = useMaintenance(vehicle);
 
@@ -38,6 +38,12 @@ export default function App() {
 
   const handleRegister = (itemId, entry) => {
     registerMaintenance(itemId, entry);
+    trackChange();
+  };
+
+  // service + companions done in the same visit (one batched update)
+  const handleApplyService = (primaryId, entry, companionIds, note) => {
+    applyService(primaryId, entry, companionIds, note);
     trackChange();
   };
 
@@ -80,6 +86,7 @@ export default function App() {
               itemsWithStatus={itemsWithStatus}
               currentMileage={vehicle?.currentMileage}
               registerMaintenance={handleRegister}
+              applyService={handleApplyService}
               updateItem={updateItem}
               logEvent={handleLogEvent}
               updateHistoryEntry={(itemId, entryId, patch) => { updateHistoryEntry(itemId, entryId, patch); trackChange(); }}

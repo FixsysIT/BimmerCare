@@ -51,7 +51,7 @@ function Pills({ opts, activeResult, onPick, t }) {
   );
 }
 
-export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, currentMileage }) {
+export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, companions = [], reminders = [], currentMileage }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(null); // {type, result, label} → opens log modal
@@ -287,6 +287,8 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
           item={item}
           currentMileage={currentMileage}
           resultLabel={pending.label}
+          companions={pending.type === 'service' ? companions : []}
+          reminders={pending.type === 'service' ? reminders : []}
           onSave={(opts) => {
             onLog(item, pending.type, pending.result, opts);
             setPending(null);
