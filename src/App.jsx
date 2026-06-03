@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Dashboard from './components/dashboard/Dashboard';
 import MaintenancePage from './components/maintenance/MaintenancePage';
+import BudgetPage from './components/budget/BudgetPage';
 import CostsPage from './components/costs/CostsPage';
 import PartsPage from './components/parts/PartsPage';
 import SettingsPage from './components/settings/SettingsPage';
@@ -93,6 +94,14 @@ export default function App() {
               deleteHistoryEntry={(itemId, entryId) => { deleteHistoryEntry(itemId, entryId); trackChange(); }}
               toggleDisable={toggleDisable}
               allItems={items}
+            />
+          } />
+          <Route path="budget" element={
+            <BudgetPage
+              itemsWithStatus={itemsWithStatus}
+              settings={settings}
+              setSettings={setSettings}
+              vehicle={vehicle}
             />
           } />
           <Route path="costs" element={

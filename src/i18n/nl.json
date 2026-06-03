@@ -6,9 +6,40 @@
   "nav": {
     "dashboard": "Dashboard",
     "maintenance": "Onderhoud",
+    "budget": "Budgetplan",
     "costs": "Kosten",
     "parts": "Onderdelen",
     "settings": "Instellingen"
+  },
+  "budget": {
+    "title": "Budgetplan",
+    "currentBudget": "Huidig budget (€)",
+    "monthlyContribution": "Maandelijkse inleg (€)",
+    "safetyBuffer": "Veiligheidsbuffer (€)",
+    "maxMonthlySpend": "Max. per maand (€)",
+    "planningStartDate": "Startdatum planning",
+    "availableNow": "Nu beschikbaar",
+    "monthlySaving": "Maandelijks sparen",
+    "thisMonth": "Deze maand",
+    "scheduledFor": "Gepland voor {{date}}",
+    "pullForward": "Naar voren halen bij olielek",
+    "tiresOverride": "Banden toch eerst doen (override blokkade)",
+    "diagnosisGate": "Eerst diagnose bevestigen vóór dure vervanging",
+    "noBudget": "Past niet binnen budget/planning",
+    "empty": "Niks te plannen — alles is OK.",
+    "needMileage": "Stel eerst de kilometerstand in om te plannen.",
+    "urgency": {
+      "replace_needed": "VERVANGEN NODIG",
+      "worn": "VERSLETEN",
+      "inspection_needed": "INSPECTIE NODIG",
+      "due_soon": "BINNENKORT",
+      "monitor": "MONITOR",
+      "ok": "OK"
+    },
+    "block": {
+      "tires": "Eerst onderstel/uitlijnen",
+      "alignment": "Eerst stuurdelen vervangen"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
