@@ -154,7 +154,30 @@
   color: var(--text-secondary);
   padding: 0.25rem 0;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
+.maint-history-text { flex: 1; min-width: 0; }
+.maint-history-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+.hist-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.hist-btn:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
+.hist-btn-del:hover { color: var(--status-red); }
 
 /* reason prompt modal */
 .reason-presets {

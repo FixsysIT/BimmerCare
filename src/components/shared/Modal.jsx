@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import './Modal.css';
 
 export default function Modal({ isOpen, onClose, title, children, size = 'medium' }) {
@@ -19,7 +20,10 @@ export default function Modal({ isOpen, onClose, title, children, size = 'medium
     if (e.target === overlayRef.current) onClose();
   };
 
-  return (
+  // Portal to body: ancestor cards use backdrop-filter, which creates a
+  // containing block for position:fixed — without this the overlay gets
+  // trapped inside the card instead of covering the viewport.
+  return createPortal(
     <div className="modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
       <div className={`modal-content modal-${size}`}>
         <div className="modal-header">
@@ -30,6 +34,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'medium
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

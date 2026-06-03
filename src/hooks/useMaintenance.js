@@ -3,8 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useStorage } from './useStorage';
 import { getDefaultItems } from '../data/defaultItems';
 import { calculateStatus } from '../utils/statusCalculator';
-import { calculateTotalInclVat } from '../utils/costCalculator';
-import { STORAGE_KEYS, DEFAULT_VAT_PERCENT } from '../utils/constants';
+import { STORAGE_KEYS } from '../utils/constants';
 
 /**
  * Maintenance items management hook.
@@ -61,17 +60,13 @@ export function useMaintenance(vehicle) {
   // Register maintenance entry
   const registerMaintenance = useCallback((itemId, entry) => {
     if (!items) return;
-    const costs = calculateTotalInclVat(
-      entry.partsCost || 0,
-      entry.laborCost || 0,
-      entry.vatPercent ?? DEFAULT_VAT_PERCENT
-    );
+    // Single cost, excl. BTW.
+    const cost = entry.cost || 0;
 
     const newEntry = {
       id: uuidv4(),
       ...entry,
-      totalExclVat: costs.totalExclVat,
-      totalInclVat: costs.totalInclVat,
+      cost,
       createdAt: new Date().toISOString(),
     };
 
@@ -80,6 +75,8 @@ export function useMaintenance(vehicle) {
       return {
         ...item,
         history: [...item.history, newEntry],
+        // Cost database: learn the item's cost from the actual amount paid (excl. BTW).
+        estimatedTotalCost: cost > 0 ? Math.round(cost) : item.estimatedTotalCost,
         manualStatus: null, // Reset manual status on new service
         manualStatusNote: null,
         manualOverride: false, // history is the source now
@@ -137,23 +134,38 @@ export function useMaintenance(vehicle) {
   // source (statusCalculator reads the latest typed event). We no longer mirror
   // onto manualStatus. `lastResult` is just a UI cache for the active pill.
   // Clearing any legacy manualStatus so history wins cleanly.
-  const logEvent = useCallback((itemId, { type, result, note = '', date, mileage }) => {
+  const logEvent = useCallback((itemId, { type, result, note = '', date, mileage, cost = 0 }) => {
     if (!items) return;
     const day = date || new Date().toISOString().split('T')[0];
     const km = mileage ?? currentMileage ?? null;
+    const c = cost || 0; // excl. BTW
+    const entry = {
+      id: uuidv4(),
+      type,                       // 'inspection' | 'diagnosis' | 'service' | 'note'
+      result,                     // ok | monitor | worn | replace_needed | no_fault | fault_present | confirmed_failed | replaced | null (note)
+      date: day,                  // backdatable
+      mileage: km,
+      cost: c,                    // excl. BTW
+      notes: note,
+      createdAt: new Date().toISOString(),
+    };
     setItems(items.map((item) => {
       if (item.id !== itemId) return item;
+      const history = [...(item.history || []), entry];
+      // A 'note' is a passive logbook entry — it must not touch status/override.
+      if (type === 'note') {
+        return {
+          ...item,
+          history,
+          estimatedTotalCost: c > 0 ? Math.round(c) : item.estimatedTotalCost,
+          updatedAt: new Date().toISOString(),
+        };
+      }
       return {
         ...item,
-        history: [...(item.history || []), {
-          id: uuidv4(),
-          type,                       // 'inspection' | 'diagnosis' | 'service'
-          result,                     // ok | monitor | worn | replace_needed | no_fault | fault_present | confirmed_failed | replaced
-          date: day,                  // backdatable
-          mileage: km,
-          notes: note,
-          createdAt: new Date().toISOString(),
-        }],
+        history,
+        // Cost database: learn the item's cost from the logged amount (excl. BTW).
+        estimatedTotalCost: c > 0 ? Math.round(c) : item.estimatedTotalCost,
         manualStatus: null,
         manualStatusNote: null,
         manualOverride: false, // logging an event drops any prior override; history wins
@@ -179,6 +191,39 @@ export function useMaintenance(vehicle) {
         lastResult: status ? item.lastResult : null,  // clearing → drop highlight
         updatedAt: new Date().toISOString(),
       };
+    }));
+  }, [items, setItems]);
+
+  // Re-derive the learned cost + lastResult from a (possibly edited) history list.
+  const rederive = (history) => {
+    const withCost = [...history].reverse().find((h) => (h.cost || 0) > 0);
+    // lastResult comes from the newest status-bearing entry; notes don't count.
+    const lastStatus = [...history].reverse().find((h) => h.type !== 'note');
+    return {
+      estimatedTotalCost: withCost ? Math.round(withCost.cost) : 0,
+      lastResult: lastStatus?.result ?? null,
+    };
+  };
+
+  // Edit a single history entry (fix wrong cost/date/mileage/note).
+  const updateHistoryEntry = useCallback((itemId, entryId, patch) => {
+    if (!items) return;
+    setItems(items.map((item) => {
+      if (item.id !== itemId) return item;
+      const history = (item.history || []).map((h) =>
+        h.id === entryId ? { ...h, ...patch } : h
+      );
+      return { ...item, history, ...rederive(history), updatedAt: new Date().toISOString() };
+    }));
+  }, [items, setItems]);
+
+  // Delete a single history entry (remove a mistaken/fake log).
+  const deleteHistoryEntry = useCallback((itemId, entryId) => {
+    if (!items) return;
+    setItems(items.map((item) => {
+      if (item.id !== itemId) return item;
+      const history = (item.history || []).filter((h) => h.id !== entryId);
+      return { ...item, history, ...rederive(history), updatedAt: new Date().toISOString() };
     }));
   }, [items, setItems]);
 
@@ -231,5 +276,7 @@ export function useMaintenance(vehicle) {
     resetToDefaults,
     startBaseline,
     logEvent,
+    updateHistoryEntry,
+    deleteHistoryEntry,
   };
 }

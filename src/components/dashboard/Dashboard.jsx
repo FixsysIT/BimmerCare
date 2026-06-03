@@ -67,14 +67,14 @@ export default function Dashboard({
       </motion.div>
 
       <motion.div className="dash-actions" variants={item}>
-        <button className="btn btn-primary btn-sm" onClick={() => navigate('/maintenance')}>
+        <button className="btn btn-primary btn-sm" onClick={() => setMileageModalOpen(true)}>
+          {t('dashboard.updateMileage')}
+        </button>
+        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/maintenance')}>
           {t('dashboard.openMaintenance', 'Onderhoud openen')}
         </button>
         <button className="btn btn-secondary btn-sm" onClick={exportChecklist}>
           {t('settings.exportChecklist', 'Garage checklist')}
-        </button>
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/settings')}>
-          {t('dashboard.settingsExport', 'Instellingen / Export')}
         </button>
       </motion.div>
 

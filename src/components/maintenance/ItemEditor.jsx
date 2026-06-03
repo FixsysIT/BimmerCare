@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Modal from '../shared/Modal';
-import { INTERVAL_TYPES, SOURCES, PRIORITIES, CATEGORIES } from '../../utils/constants';
+import { INTERVAL_TYPES, PRIORITIES, CATEGORIES } from '../../utils/constants';
 
 export default function ItemEditor({ isOpen, onClose, item, onSave, onToggleDisable }) {
   const { t } = useTranslation();
@@ -60,7 +60,7 @@ export default function ItemEditor({ isOpen, onClose, item, onSave, onToggleDisa
           <div className="form-group">
             <label>Interval Type</label>
             <select value={form.intervalType} onChange={(e) => update('intervalType', e.target.value)}>
-              {Object.entries(INTERVAL_TYPES).map(([k, v]) => (
+              {Object.entries(INTERVAL_TYPES).map(([, v]) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>
@@ -68,7 +68,7 @@ export default function ItemEditor({ isOpen, onClose, item, onSave, onToggleDisa
           <div className="form-group">
             <label>Priority</label>
             <select value={form.priority} onChange={(e) => update('priority', e.target.value)}>
-              {Object.entries(PRIORITIES).map(([k, v]) => (
+              {Object.entries(PRIORITIES).map(([, v]) => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>

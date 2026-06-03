@@ -1,5 +1,6 @@
-import { differenceInDays, differenceInMonths, addMonths, addDays, format } from 'date-fns';
-import { STATUS, STATUS_REASONS, STATUS_ORDER, INTERVAL_TYPES, DIAGNOSIS_OK_VALID_MONTHS } from './constants';
+import { differenceInDays, differenceInMonths, addMonths, format } from 'date-fns';
+import { STATUS, STATUS_REASONS, STATUS_ORDER, INTERVAL_TYPES, DIAGNOSIS_OK_VALID_MONTHS,
+  INSPECTION_OK_VALID_MONTHS, REPLACEMENT_OK_VALID_FALLBACK_MONTHS } from './constants';
 
 function isOnFailure(item) {
   return item.replacementStrategy === 'on-failure' || item.intervalType === INTERVAL_TYPES.DIAGNOSIS;
@@ -53,6 +54,29 @@ function fromEvent(e, fallbackReason) {
   return r;
 }
 
+/* Condition inspection result → status, but a GREEN observation goes stale.
+   A clean look is only valid for item.intervalMonths (or a default), after which
+   it nudges back to INSPECT so nothing stays green forever. */
+function conditionEventStatus(item, e, currentDate) {
+  const r = fromEvent(e, STATUS_REASONS.INSPECTION_NEEDED);
+  if (r.status !== STATUS.GREEN) return r; // worn/replace_needed/etc. already actionable
+  const base = e.createdAt || e.date;
+  if (!base) return r;
+  const limit = item.intervalMonths ?? INSPECTION_OK_VALID_MONTHS;
+  const due = format(addMonths(new Date(base), limit), 'yyyy-MM-dd');
+  const remainingDays = differenceInDays(new Date(due), currentDate);
+  r.dueByDate = due;
+  r.remainingDays = remainingDays;
+  if (remainingDays <= 0) {
+    r.status = STATUS.INSPECT;
+    r.statusReason = STATUS_REASONS.INSPECTION_NEEDED;
+    r.message = `Re-inspect — ${Math.abs(remainingDays)} days overdue`;
+  } else {
+    r.message = `${remainingDays} days remaining`;
+  }
+  return r;
+}
+
 /* manualStatus result.
    - `legacy` true  → pre-P2.1 / fallback data carrying manualStatus without a
      matching history event. Respected so nothing changes visually, but it
@@ -86,7 +110,7 @@ function hasExplicitOverride(item) {
  *   3. legacy manualStatus (set, but no override flag) — respected as fallback.
  *   4. interval math / strategy default.
  */
-export function calculateStatus(item, currentMileage, vehicle = null, currentDate = new Date()) {
+export function calculateStatus(item, currentMileage, _vehicle = null, currentDate = new Date()) {
   // 1. genuine explicit override beats history for any strategy
   if (hasExplicitOverride(item)) return manualResult(item, false);
 
@@ -106,12 +130,19 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
         const kmSince = (currentMileage != null && lastServiceKm != null)
           ? currentMileage - lastServiceKm : null;
         const validKm = item.replacementOkValidKm ?? null;
+        // time window: explicit, else a fallback when there's no km window either,
+        // so a replacement can't stay green forever.
+        let validMonths = item.replacementOkValidMonths ?? null;
+        if (validKm == null && validMonths == null) validMonths = REPLACEMENT_OK_VALID_FALLBACK_MONTHS;
         const expiresAtKm = (lastServiceKm != null && validKm != null) ? lastServiceKm + validKm : null;
         const remainingKm = (expiresAtKm != null && currentMileage != null) ? expiresAtKm - currentMileage : null;
         const ageM = eventAgeMonths(newest, currentDate);
+        const base = newest.createdAt || newest.date;
+        const expiresDate = (validMonths != null && base)
+          ? format(addMonths(new Date(base), validMonths), 'yyyy-MM-dd') : null;
+        const remainingDays = expiresDate ? differenceInDays(new Date(expiresDate), currentDate) : null;
         const kmExpired = validKm != null && kmSince != null && kmSince >= validKm;
-        const monthsExpired = item.replacementOkValidMonths != null && ageM != null
-          && ageM >= item.replacementOkValidMonths;
+        const monthsExpired = validMonths != null && ageM != null && ageM >= validMonths;
         const expired = kmExpired || monthsExpired;
 
         const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS); // green + sourceEvent
@@ -122,9 +153,12 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
         r.replacementExpiresAtKm = expiresAtKm;
         r.replacementRemainingKm = expired ? 0 : (remainingKm != null ? Math.max(0, remainingKm) : null);
         r.replacementExpired = expired;
+
         // generic remaining/dueBy so any consumer can render a bar
         r.remainingKm = r.replacementRemainingKm;
         r.dueByKm = expiresAtKm;
+        r.dueByDate = expiresDate;
+        r.remainingDays = remainingDays;
 
         if (expired) {
           r.status = STATUS.MONITOR;
@@ -133,9 +167,10 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
             ? `Monitor — replaced ${kmSince.toLocaleString()} km ago`
             : 'replacement window expired — monitor';
         } else {
-          r.message = remainingKm != null
-            ? `${remainingKm.toLocaleString()} km until Monitor`
-            : 'replaced';
+          const parts = [];
+          if (remainingKm != null) parts.push(`${remainingKm.toLocaleString()} km`);
+          if (remainingDays != null) parts.push(`${remainingDays} days`);
+          r.message = parts.length ? `${parts.join(' / ')} until Monitor` : 'replaced';
         }
         return r;
       }
@@ -145,13 +180,23 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
       if (newest.result === 'no_fault') {
         const age = eventAgeMonths(newest, currentDate);
         const limit = item.diagnosisOkValidMonths ?? DIAGNOSIS_OK_VALID_MONTHS;
+        const base = newest.createdAt || newest.date;
         if (age !== null && age >= limit) {
           const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
           r.status = STATUS.MONITOR;
           r.statusReason = STATUS_REASONS.NO_FAULT_EXPIRED;
-          r.message = `no_fault recheck — older than ${limit} months`;
+          r.message = `Recheck due — last clean check older than ${limit} months`;
           return r;
         }
+        // Still valid → show when the next check is due.
+        const r = fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
+        if (base) {
+          const nextDate = format(addMonths(new Date(base), limit), 'yyyy-MM-dd');
+          r.dueByDate = nextDate;
+          r.remainingDays = differenceInDays(new Date(nextDate), currentDate);
+          r.message = `${r.remainingDays} days remaining`;
+        }
+        return r;
       }
       return fromEvent(newest, STATUS_REASONS.DIAGNOSIS);
     }
@@ -167,17 +212,17 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
     const svc = lastOfType(item, 'service');
     const newest = newestEvent([insp, svc]);
     if (newest) {
-      // a replacement resets the km indicator: count from the service entry
-      if (newest.type === 'service' && item.intervalKm) {
+      // a replacement resets the indicator: count from the service entry (km or time)
+      if (newest.type === 'service' && (item.intervalKm || item.intervalMonths)) {
         return { ...calculateCondition(item, newest, currentMileage, currentDate), source: 'history' };
       }
-      return fromEvent(newest, STATUS_REASONS.INSPECTION_NEEDED);
+      return conditionEventStatus(item, newest, currentDate);
     }
     if (item.manualStatus) return manualResult(item, true);
-    // No inspection logged — fall back to the km indicator if we have any
+    // No inspection logged — fall back to the km/time indicator if we have any
     // service/baseline entry, otherwise it simply needs a look.
     const last = getLastHistoryEntry(item);
-    if (last && item.intervalKm) {
+    if (last && (item.intervalKm || item.intervalMonths)) {
       return { ...calculateCondition(item, last, currentMileage, currentDate), source: 'interval' };
     }
     return mk(STATUS.INSPECT, STATUS_REASONS.INSPECTION_NEEDED, 'Inspection needed — condition unknown', 'default');
@@ -197,7 +242,7 @@ export function calculateStatus(item, currentMileage, vehicle = null, currentDat
 /**
  * Core calculation using a history entry (real or synthetic from purchase date).
  */
-function calculateWithEntry(item, entry, currentMileage, currentDate, isSynthetic) {
+function calculateWithEntry(item, entry, currentMileage, currentDate, _isSynthetic) {
   switch (item.intervalType) {
     case INTERVAL_TYPES.KM_DOMINANT:
       return calculateKmDominant(item, entry, currentMileage, currentDate);
@@ -369,18 +414,33 @@ function calculateCondition(item, lastEntry, currentMileage, currentDate) {
   const kmDriven = currentMileage - lastKm;
 
   const dueByKm = item.intervalKm ? lastKm + item.intervalKm : null;
-  const remainingKm = dueByKm ? dueByKm - currentMileage : null;
+  const remainingKm = dueByKm != null ? dueByKm - currentMileage : null;
+
+  // Time indicator (many condition items use months only, e.g. A/C service).
+  const lastDate = new Date(lastEntry.date);
+  const dueByDate = item.intervalMonths
+    ? format(addMonths(lastDate, item.intervalMonths), 'yyyy-MM-dd')
+    : null;
+  const dueDate = dueByDate ? new Date(dueByDate) : null;
+  const remainingDays = dueDate ? differenceInDays(dueDate, currentDate) : null;
 
   // KM past inspection indicator → INSPECT (needs a look, not "overdue")
   if (item.intervalKm && kmDriven >= item.intervalKm) {
     return {
       status: STATUS.INSPECT,
       statusReason: STATUS_REASONS.INSPECTION_NEEDED,
-      remainingKm,
-      remainingDays: null,
-      dueByKm,
-      dueByDate: null,
+      remainingKm, remainingDays, dueByKm, dueByDate,
       message: `Inspection due (${Math.abs(remainingKm).toLocaleString()} km over indicator)`,
+    };
+  }
+
+  // Time indicator passed → INSPECT (due since dueByDate)
+  if (dueDate && currentDate > dueDate) {
+    return {
+      status: STATUS.INSPECT,
+      statusReason: STATUS_REASONS.INSPECTION_NEEDED,
+      remainingKm, remainingDays, dueByKm, dueByDate,
+      message: `Inspection due (${Math.abs(remainingDays)} days overdue)`,
     };
   }
 
@@ -389,22 +449,30 @@ function calculateCondition(item, lastEntry, currentMileage, currentDate) {
     return {
       status: STATUS.INSPECT,
       statusReason: STATUS_REASONS.INSPECTION_NEEDED,
-      remainingKm,
-      remainingDays: null,
-      dueByKm,
-      dueByDate: null,
+      remainingKm, remainingDays, dueByKm, dueByDate,
       message: `${remainingKm.toLocaleString()} km until inspection indicator`,
     };
   }
 
+  // Time approaching → INSPECT (soon)
+  if (dueDate && item.warningDays && remainingDays <= item.warningDays) {
+    return {
+      status: STATUS.INSPECT,
+      statusReason: STATUS_REASONS.INSPECTION_NEEDED,
+      remainingKm, remainingDays, dueByKm, dueByDate,
+      message: `${remainingDays} days remaining`,
+    };
+  }
+
+  // GREEN — show whichever next-due info we have.
+  const parts = [];
+  if (remainingKm != null) parts.push(`${remainingKm.toLocaleString()} km`);
+  if (remainingDays != null) parts.push(`${remainingDays} days`);
   return {
     status: STATUS.GREEN,
     statusReason: null,
-    remainingKm,
-    remainingDays: null,
-    dueByKm,
-    dueByDate: null,
-    message: remainingKm ? `${remainingKm.toLocaleString()} km until next check` : 'OK',
+    remainingKm, remainingDays, dueByKm, dueByDate,
+    message: parts.length ? `${parts.join(' / ')} until next check` : 'OK',
   };
 }
 
@@ -427,7 +495,10 @@ function calculateDiagnosis(item) {
  */
 function getLastHistoryEntry(item) {
   if (!item.history || item.history.length === 0) return null;
-  return [...item.history].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+  // 'note' entries are passive logbook notes — never drive interval math.
+  const relevant = item.history.filter((h) => h.type !== 'note');
+  if (!relevant.length) return null;
+  return [...relevant].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 }
 
 /**

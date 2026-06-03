@@ -9,7 +9,7 @@ const CHIPS = [
   { key: 'grey', color: 'var(--status-grey)' },
 ];
 
-export default function VehicleCard({ vehicle, counts = {}, onUpdateMileage, onChip, onSettings }) {
+export default function VehicleCard({ vehicle, counts = {}, onChip }) {
   const { t } = useTranslation();
   if (!vehicle) return null;
 
@@ -33,11 +33,6 @@ export default function VehicleCard({ vehicle, counts = {}, onUpdateMileage, onC
               {t(`statusLabel.${c.key}`)} <strong>{counts[c.key]}</strong>
             </button>
           ) : null))}
-        </div>
-
-        <div className="hero-actions">
-          <button className="btn btn-primary btn-sm" onClick={onUpdateMileage}>{t('dashboard.updateMileage')}</button>
-          <button className="btn btn-secondary btn-sm" onClick={onSettings}>{t('nav.settings')}</button>
         </div>
       </div>
     </div>

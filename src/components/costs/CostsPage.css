@@ -39,10 +39,45 @@
 .category-row {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0;
+  width: 100%;
+  padding: 0.5rem 0.5rem;
+  border: none;
   border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
   font-size: 0.875rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+
+.category-row:hover { background: rgba(255, 255, 255, 0.05); }
+
+.category-row-active {
+  background: rgba(27, 105, 178, 0.15);
+}
+.category-row-active .cat-name { color: var(--bmw-blue-light); }
+
+.cost-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cost-filter-chip {
+  background: rgba(27, 105, 178, 0.15);
+  border: 1px solid var(--border);
+  color: var(--bmw-blue-light);
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cost-filter-chip:hover { background: rgba(27, 105, 178, 0.25); }
 
 .cat-name {
   flex: 1;
@@ -73,11 +108,33 @@
   border-bottom: 1px solid var(--border);
 }
 
+.log-entry-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.15s;
+}
+
+.log-entry-btn:hover {
+  background: var(--bg-elevated);
+}
+
 .log-left {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
   min-width: 0;
+}
+
+.log-note {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-style: italic;
+  white-space: pre-wrap;
 }
 
 .log-item {

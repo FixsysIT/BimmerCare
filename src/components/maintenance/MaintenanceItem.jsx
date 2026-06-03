@@ -51,10 +51,12 @@ function Pills({ opts, activeResult, onPick, t }) {
   );
 }
 
-export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSetBaseline, currentMileage }) {
+export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, currentMileage }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [pending, setPending] = useState(null); // {type, result, label} → opens log modal
+  const [editEntry, setEditEntry] = useState(null); // history entry being edited
+  const [noteOpen, setNoteOpen] = useState(false); // logbook note modal
   const cs = item.calculatedStatus;
   const strategy = item.replacementStrategy || 'interval';
   const isDiag = strategy === 'on-failure' || item.intervalType === 'diagnosis';
@@ -186,10 +188,14 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
                 <span className="maint-meta-value">{cs.dueByKm.toLocaleString()} km</span>
               </div>
             )}
-            {cs.dueByDate && (
+            {cs.remainingDays != null && (
               <div className="maint-meta-item">
                 <span className="maint-meta-label">{t('maintenance.nextDue')} (datum)</span>
-                <span className="maint-meta-value">{cs.dueByDate}</span>
+                <span className="maint-meta-value">
+                  {cs.remainingDays >= 0
+                    ? t('maintenance.daysRemaining', { days: cs.remainingDays })
+                    : t('maintenance.daysOverdue', { days: Math.abs(cs.remainingDays) })}
+                </span>
               </div>
             )}
           </div>
@@ -212,11 +218,32 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
               <span className="maint-meta-label">{t('maintenance.history')}</span>
               {item.history.slice(-4).reverse().map((h) => (
                 <div key={h.id} className="maint-history-row">
-                  {h.date} — {h.mileage?.toLocaleString()} km
-                  {h.result ? ` — ${t(`result.${h.result}`, h.result)}` : ''}
-                  {h.type === 'baseline' ? ' — baseline' : ''}
-                  {h.totalInclVat ? ` — €${h.totalInclVat.toFixed(2)}` : ''}
-                  {h.garage ? ` — ${h.garage}` : ''}
+                  <span className="maint-history-text">
+                    {h.type === 'note' ? (
+                      <>📝 {h.date} — {h.notes}</>
+                    ) : (
+                      <>
+                        {h.date} — {h.mileage?.toLocaleString()} km
+                        {h.result ? ` — ${t(`result.${h.result}`, h.result)}` : ''}
+                        {h.type === 'baseline' ? ' — baseline' : ''}
+                        {(() => { const c = h.cost ?? h.totalExclVat ?? h.totalInclVat; return c ? ` — €${c.toFixed(2)}` : ''; })()}
+                        {h.garage ? ` — ${h.garage}` : ''}
+                        {h.notes ? ` — “${h.notes}”` : ''}
+                      </>
+                    )}
+                  </span>
+                  {(onEditEntry || onDeleteEntry) && (
+                    <span className="maint-history-actions">
+                      {onEditEntry && (
+                        <button type="button" className="hist-btn" title={t('register.edit', 'Bewerk')}
+                          onClick={() => setEditEntry(h)}>✎</button>
+                      )}
+                      {onDeleteEntry && (
+                        <button type="button" className="hist-btn hist-btn-del" title={t('register.delete', 'Verwijder')}
+                          onClick={() => { if (window.confirm(t('register.confirmDelete', 'Deze registratie verwijderen?'))) onDeleteEntry(h.id); }}>🗑</button>
+                      )}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -244,6 +271,11 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
 
           <div className="maint-actions">
             <button className="btn btn-secondary btn-sm" onClick={onEdit}>{t('maintenance.edit')}</button>
+            {onLog && (
+              <button className="btn btn-secondary btn-sm" onClick={() => setNoteOpen(true)}>
+                📝 {t('maintenance.addNote', 'Notitie')}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -258,6 +290,36 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onSet
           onSave={(opts) => {
             onLog(item, pending.type, pending.result, opts);
             setPending(null);
+          }}
+        />
+      )}
+
+      {editEntry && (
+        <EventLogModal
+          isOpen={!!editEntry}
+          onClose={() => setEditEntry(null)}
+          item={item}
+          currentMileage={currentMileage}
+          resultLabel={t('register.edit', 'Bewerk')}
+          initial={editEntry}
+          onSave={({ date, mileage, cost, note }) => {
+            onEditEntry(editEntry.id, { date, mileage, cost, notes: note });
+            setEditEntry(null);
+          }}
+        />
+      )}
+
+      {noteOpen && (
+        <EventLogModal
+          isOpen={noteOpen}
+          onClose={() => setNoteOpen(false)}
+          item={item}
+          currentMileage={currentMileage}
+          resultLabel={t('maintenance.addNote', 'Notitie')}
+          noteOnly
+          onSave={({ date, mileage, note }) => {
+            onLog(item, 'note', null, { date, mileage, note });
+            setNoteOpen(false);
           }}
         />
       )}

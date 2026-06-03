@@ -19,6 +19,7 @@ import './SettingsPage.css';
 export default function SettingsPage({
   vehicle,
   updateProfile,
+  correctMileage,
   settings,
   setSettings,
   exportBackup,
@@ -42,6 +43,9 @@ export default function SettingsPage({
   const [importError, setImportError] = useState('');
   const [csvPreview, setCsvPreview] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [kmModalOpen, setKmModalOpen] = useState(false);
+  const [kmInput, setKmInput] = useState('');
+  const [kmError, setKmError] = useState('');
   const [toast, setToast] = useState('');
 
   // Profile form
@@ -82,6 +86,16 @@ export default function SettingsPage({
       odometerAtPurchase: parseInt(profile.odometerAtPurchase, 10) || vehicle.odometerAtPurchase,
     });
     showToast('Profile saved');
+  };
+
+  const handleCorrectKm = () => {
+    const v = parseInt(kmInput, 10);
+    const res = correctMileage?.(v);
+    if (res?.error) { setKmError(res.error); return; }
+    setKmModalOpen(false);
+    setKmInput('');
+    setKmError('');
+    showToast(t('settings.kmCorrected', 'KM-stand gecorrigeerd'));
   };
 
   const handleImport = async (e) => {
@@ -254,7 +268,13 @@ export default function SettingsPage({
               <input type="number" value={profile.odometerAtPurchase} onChange={(e) => setProfile({ ...profile, odometerAtPurchase: e.target.value })} />
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleProfileSave}>{t('settings.save')}</button>
+          <div className="settings-actions">
+            <button className="btn btn-primary" onClick={handleProfileSave}>{t('settings.save')}</button>
+            <button className="btn btn-secondary" onClick={() => { setKmInput(String(vehicle?.currentMileage ?? '')); setKmError(''); setKmModalOpen(true); }}>
+              🔧 {t('settings.correctKm', 'KM corrigeren')}
+            </button>
+          </div>
+          <span className="toggle-desc">{t('settings.correctKmHint', 'Verkeerde km-stand ingevoerd? Hiermee kun je hem ook lager zetten. Foutieve hogere metingen worden uit de historie verwijderd.')}</span>
         </div>
       </div>
 
@@ -425,6 +445,27 @@ export default function SettingsPage({
           </div>
         </Modal>
       )}
+
+      {/* Correct KM modal */}
+      <Modal isOpen={kmModalOpen} onClose={() => setKmModalOpen(false)} title={t('settings.correctKm', 'KM corrigeren')} size="small">
+        <div className="form">
+          <div className="form-group">
+            <label>{t('register.mileage')}</label>
+            <input
+              type="number"
+              value={kmInput}
+              onChange={(e) => { setKmInput(e.target.value); setKmError(''); }}
+              autoFocus
+            />
+          </div>
+          <span className="toggle-desc">{t('settings.correctKmHint', 'Verkeerde km-stand ingevoerd? Hiermee kun je hem ook lager zetten. Foutieve hogere metingen worden uit de historie verwijderd.')}</span>
+          {kmError && <p className="form-error">{kmError}</p>}
+          <div className="form-actions">
+            <button className="btn btn-ghost" onClick={() => setKmModalOpen(false)}>{t('common.cancel')}</button>
+            <button className="btn btn-primary" onClick={handleCorrectKm} disabled={!kmInput}>{t('common.save')}</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add item modal */}
       <Modal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} title={t('settings.addItem')} size="medium">

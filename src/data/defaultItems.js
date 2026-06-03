@@ -7,7 +7,7 @@ import { INTERVAL_TYPES, SOURCES, PRIORITIES, deriveLayer } from '../utils/const
  * Data model additions:
  *   bmwIntervalKm / bmwIntervalMonths   — what BMW officially says (null = no recommendation)
  *   communityIntervalKm / communityIntervalMonths — what community/ZF/etc recommends
- *   estimatedTotalCost — rough total job cost (parts + labor incl BTW)
+ *   estimatedTotalCost — rough total job cost, excl. BTW (learned from logged costs)
  *   replacementStrategy — 'interval' | 'condition' | 'on-failure'
  *     interval:   replace at fixed km/time (oil, filters, fluids)
  *     condition:  inspect at km, replace based on wear (brakes, tires, bushings)
@@ -104,6 +104,22 @@ export function getDefaultItems(vehicleId) {
       parts: [
         { name: 'Ignition Coil (×6)', oemNumber: '12137571644', altBrand: 'Delphi', altNumber: 'GN10572', estimatedPrice: 30.00, bmwfansUrl: '', source: 'BMW' },
       ],
+    }),
+    item(vehicleId, {
+      name: 'General Diagnostic Scan',
+      category: 'Motorelektronica',
+      intervalType: INTERVAL_TYPES.DIAGNOSIS,
+      replacementStrategy: 'on-failure',
+      intervalKm: null, intervalMonths: null, warningKm: null, warningDays: null,
+      bmwIntervalKm: null, bmwIntervalMonths: null,
+      communityIntervalKm: null, communityIntervalMonths: null,
+      estimatedTotalCost: 90,
+      source: SOURCES.COMMUNITY_PREVENTIVE,
+      sourceNote: 'Jaarlijkse foutgeheugen-uitlezing (zelf met ISTA/BimmerLink, of garage ~€90 excl. BTW). N53 gevoelig voor NOx-sensoren, injectoren en VANOS — vroeg uitlezen vangt problemen. Log "Geen fout" na schone scan; na 12 maanden vraagt de app om opnieuw uitlezen.',
+      diagnosisOkValidMonths: 12,
+      replacementOkValidMonths: 12,
+      priority: PRIORITIES.PREVENTIVE,
+      parts: [],
     }),
     item(vehicleId, {
       name: 'Air Filter',

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import MaintenanceItem from './MaintenanceItem';
@@ -21,21 +21,24 @@ export default function MaintenancePage({
   currentMileage,
   registerMaintenance,
   updateItem,
-  setManualStatus,
   logEvent,
+  updateHistoryEntry,
+  deleteHistoryEntry,
   toggleDisable,
   allItems,
 }) {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   // a status deep-link from the dashboard should show that status across all layers
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
-  const [layerTab, setLayerTab] = useState(searchParams.get('status') ? 'all' : LAYERS.ACTIVE);
-  useEffect(() => {
-    const s = searchParams.get('status');
-    if (s) { setStatusFilter(s); setLayerTab('all'); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  const statusParam = searchParams.get('status');
+  const [statusFilter, setStatusFilter] = useState(statusParam || 'all');
+  const [layerTab, setLayerTab] = useState(statusParam ? 'all' : LAYERS.ACTIVE);
+  // adjust filters when the deep-link param changes (no effect — React render-time pattern)
+  const [prevStatusParam, setPrevStatusParam] = useState(statusParam);
+  if (statusParam !== prevStatusParam) {
+    setPrevStatusParam(statusParam);
+    if (statusParam) { setStatusFilter(statusParam); setLayerTab('all'); }
+  }
 
   // pill picks open a small modal (date/mileage/note); opts carries those
   const handleLog = (item, type, result, opts = {}) => logEvent(item.id, { type, result, ...opts });
@@ -140,6 +143,8 @@ export default function MaintenancePage({
               onRegister={() => setRegisterItem(item)}
               onEdit={() => setEditItem(item)}
               onLog={handleLog}
+              onEditEntry={(entryId, patch) => updateHistoryEntry(item.id, entryId, patch)}
+              onDeleteEntry={(entryId) => deleteHistoryEntry(item.id, entryId)}
               currentMileage={currentMileage}
               onSetBaseline={(state) => updateItem(item.id, { baselineState: state })}
             />

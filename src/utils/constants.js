@@ -124,6 +124,12 @@ export const DEFAULT_VAT_PERCENT = 21;
 // it drops back to Monitor (a clean check goes stale; it's not a repair).
 export const DIAGNOSIS_OK_VALID_MONTHS = 6;
 
+// Follow-up guarantees — nothing should stay green forever. A green inspection
+// or a replacement without an explicit window goes stale after this many months
+// and nudges back to INSPECT / MONITOR so there is always a next action.
+export const INSPECTION_OK_VALID_MONTHS = 12;        // condition "ok"/observed-fine
+export const REPLACEMENT_OK_VALID_FALLBACK_MONTHS = 24; // on-failure replaced w/o window
+
 // Export version
 export const EXPORT_VERSION = '1.0';
 export const APP_VERSION = '1.1';

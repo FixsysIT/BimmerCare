@@ -307,7 +307,7 @@ const INTERVAL_LEGEND = [
   '  activeKm / activeMaanden       = interval dat de APP gebruikt voor status (dit aanpassen verandert de melding).',
   '  bmwKm / bmwMaanden             = officiele BMW-aanbeveling (referentie).',
   '  communityKm / communityMaanden = community/ZF-aanbeveling (referentie).',
-  '  kostenEUR  = geschatte totale klus (onderdelen + arbeid incl. BTW).',
+  '  kostenEUR  = geschatte totale klus (excl. BTW).',
   '  bron       = bmw-official | community-preventive | custom | condition-diagnosis',
   '  notitie    = vrije tekst (mag komma\'s bevatten).',
   '',

@@ -1,79 +1,59 @@
 /**
- * Cost calculation utilities with VAT support.
+ * Cost utilities. All amounts are EXCL. BTW.
+ * One cost per history entry (`entry.cost`). Legacy entries are normalized.
  */
 
 /**
- * Calculate total including VAT from parts + labor costs.
+ * Normalize one history entry to a single excl-BTW cost.
+ * New entries: `cost` (already excl. BTW).
+ * Legacy entries: partsCost + laborCost, with VAT extracted if it was stored incl.
  */
-export function calculateTotalInclVat(partsCost, laborCost, vatPercent = 21) {
-  const exclVat = (partsCost || 0) + (laborCost || 0);
-  const vatAmount = exclVat * (vatPercent / 100);
-  return {
-    totalExclVat: round2(exclVat),
-    vatAmount: round2(vatAmount),
-    totalInclVat: round2(exclVat + vatAmount),
-  };
+function entryCost(entry) {
+  if (entry.cost != null) return entry.cost;
+  const a = (entry.partsCost || 0) + (entry.laborCost || 0);
+  const vat = entry.vatPercent || 0;
+  if (entry.costsInclVat && vat > 0) return a / (1 + vat / 100); // was incl → extract
+  return a; // legacy stored excl
 }
 
 /**
- * Aggregate costs from all maintenance items.
+ * Aggregate costs (excl. BTW) from all maintenance items.
  */
 export function aggregateCosts(maintenanceItems) {
-  let totalInclVat = 0;
-  let totalExclVat = 0;
-  let totalVat = 0;
+  let total = 0;
   const byCategory = {};
   const allEntries = [];
 
   for (const item of maintenanceItems) {
     if (!item.history) continue;
     for (const entry of item.history) {
-      const exclVat = (entry.partsCost || 0) + (entry.laborCost || 0);
-      const vatAmount = exclVat * ((entry.vatPercent || 0) / 100);
-      const inclVat = exclVat + vatAmount;
+      const cost = entryCost(entry);
+      if (cost <= 0) continue; // skip notes/baseline/zero-cost so totals & per-month stay accurate
+      total += cost;
 
-      totalExclVat += exclVat;
-      totalVat += vatAmount;
-      totalInclVat += inclVat;
-
-      // By category
       const cat = item.category || 'Unknown';
-      if (!byCategory[cat]) {
-        byCategory[cat] = { totalExclVat: 0, totalInclVat: 0, vatAmount: 0, count: 0 };
-      }
-      byCategory[cat].totalExclVat += exclVat;
-      byCategory[cat].totalInclVat += inclVat;
-      byCategory[cat].vatAmount += vatAmount;
+      if (!byCategory[cat]) byCategory[cat] = { total: 0, count: 0 };
+      byCategory[cat].total += cost;
       byCategory[cat].count += 1;
 
       allEntries.push({
         ...entry,
+        itemId: item.id,
         itemName: item.name,
         itemCategory: item.category,
-        calculatedExclVat: round2(exclVat),
-        calculatedInclVat: round2(inclVat),
-        calculatedVat: round2(vatAmount),
+        calculatedCost: round2(cost),
       });
     }
   }
 
-  // Sort entries chronologically (newest first)
+  // Newest first
   allEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Round category totals
   for (const cat of Object.keys(byCategory)) {
-    byCategory[cat].totalExclVat = round2(byCategory[cat].totalExclVat);
-    byCategory[cat].totalInclVat = round2(byCategory[cat].totalInclVat);
-    byCategory[cat].vatAmount = round2(byCategory[cat].vatAmount);
+    byCategory[cat].total = round2(byCategory[cat].total);
   }
 
-  return {
-    totalInclVat: round2(totalInclVat),
-    totalExclVat: round2(totalExclVat),
-    totalVat: round2(totalVat),
-    byCategory,
-    entries: allEntries,
-  };
+  return { total: round2(total), byCategory, entries: allEntries };
 }
 
 /**

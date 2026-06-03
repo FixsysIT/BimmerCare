@@ -15,7 +15,7 @@ import { STORAGE_KEYS } from './utils/constants';
 import './i18n';
 
 export default function App() {
-  const { vehicle, setVehicle, loading: vehicleLoading, initVehicle, updateMileage, updateProfile } = useVehicle();
+  const { vehicle, setVehicle, loading: vehicleLoading, initVehicle, updateMileage, correctMileage, updateProfile } = useVehicle();
   const [settings, setSettings] = useStorage(STORAGE_KEYS.SETTINGS, { autoBackupEnabled: false });
 
   useEffect(() => {
@@ -23,9 +23,10 @@ export default function App() {
   }, [vehicleLoading, vehicle, initVehicle]);
 
   const {
-    items, activeItems, itemsWithStatus, statusCounts, urgentItems,
+    items, itemsWithStatus, statusCounts, urgentItems,
     loading: itemsLoading, setItems, initItems,
-    registerMaintenance, updateItem, setManualStatus, addItem, toggleDisable, resetToDefaults, startBaseline, logEvent,
+    registerMaintenance, updateItem, addItem, toggleDisable, resetToDefaults, startBaseline, logEvent,
+    updateHistoryEntry, deleteHistoryEntry,
   } = useMaintenance(vehicle);
 
   useEffect(() => {
@@ -80,14 +81,20 @@ export default function App() {
               currentMileage={vehicle?.currentMileage}
               registerMaintenance={handleRegister}
               updateItem={updateItem}
-              setManualStatus={setManualStatus}
               logEvent={handleLogEvent}
+              updateHistoryEntry={(itemId, entryId, patch) => { updateHistoryEntry(itemId, entryId, patch); trackChange(); }}
+              deleteHistoryEntry={(itemId, entryId) => { deleteHistoryEntry(itemId, entryId); trackChange(); }}
               toggleDisable={toggleDisable}
               allItems={items}
             />
           } />
           <Route path="costs" element={
-            <CostsPage maintenanceItems={items} vehicle={vehicle} />
+            <CostsPage
+              maintenanceItems={items}
+              vehicle={vehicle}
+              currentMileage={vehicle?.currentMileage}
+              updateHistoryEntry={(itemId, entryId, patch) => { updateHistoryEntry(itemId, entryId, patch); trackChange(); }}
+            />
           } />
           <Route path="parts" element={
             <PartsPage maintenanceItems={items} />
@@ -96,6 +103,7 @@ export default function App() {
             <SettingsPage
               vehicle={vehicle}
               updateProfile={updateProfile}
+              correctMileage={correctMileage}
               settings={settings}
               setSettings={setSettings}
               exportBackup={exportBackup}

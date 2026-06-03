@@ -473,6 +473,23 @@ label {
   min-width: 0;
 }
 
+.urgent-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.urgent-right .cost-chip {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
 .urgent-icon {
   font-size: 1.25rem;
   flex-shrink: 0;

@@ -37,6 +37,26 @@ export function useVehicle() {
     return { success: true };
   }, [vehicle, setVehicle]);
 
+  // Correct mileage (allows lower — fixes a wrong reading).
+  // Drops history points above the corrected value and appends a correction point.
+  const correctMileage = useCallback((newKm, date = new Date().toISOString().split('T')[0]) => {
+    if (!vehicle) return;
+    if (typeof newKm !== 'number' || isNaN(newKm) || newKm <= 0) {
+      return { error: 'Enter a valid mileage' };
+    }
+    const trimmed = (vehicle.mileageHistory || []).filter((h) => h.km <= newKm);
+    setVehicle({
+      ...vehicle,
+      currentMileage: newKm,
+      mileageHistory: [
+        ...trimmed,
+        { date, km: newKm, corrected: true },
+      ],
+      updatedAt: new Date().toISOString(),
+    });
+    return { success: true };
+  }, [vehicle, setVehicle]);
+
   // Update profile fields
   const updateProfile = useCallback((updates) => {
     if (!vehicle) return;
@@ -53,6 +73,7 @@ export function useVehicle() {
     loading,
     initVehicle,
     updateMileage,
+    correctMileage,
     updateProfile,
   };
 }
