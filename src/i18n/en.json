@@ -33,8 +33,41 @@
     "blocked": "BLOCKED / NOT SMART BEFORE PREREQUISITE",
     "diagnoseOnly": "DIAGNOSIS ONLY — don't spend yet",
     "oilCombineReason": "Oil zone is opened anyway — combine to avoid double labour and wasted oil.",
-    "cannotWait": "Oil too far over interval — can't wait for the leak repair.",
+    "cannotWait": "Oil too far over interval — can't wait. Note: a later oil-pan/OFHG repair may need fresh oil again.",
     "overrideLocal": "Plan anyway for MOT/safety",
+    "forcedByBudget": "Doesn't fit the budget — pushed out.",
+    "noBufferWarning": "No buffer set. Garage costs may run higher — keep at least €200.",
+    "tightWarning": "Budget nearly full — little margin for surprises.",
+    "focusView": "Show planned items only",
+    "allowFull": "Allow filling the full budget",
+    "hiddenItems": "{{count}} items hidden",
+    "dropHere": "Drop here",
+    "resetAuto": "Back to automatic advice",
+    "reason": {
+      "safety": "Safety",
+      "apk": "MOT",
+      "diagnosis": "Diagnosis",
+      "interval": "Interval",
+      "combine": "Smart combine",
+      "budget": "Budget",
+      "manual": "Manually chosen",
+      "blocked_diagnosis": "Blocked — diagnosis needed",
+      "blocked_prereq": "Blocked — prerequisite open"
+    },
+    "why": {
+      "safety": "Safety / MOT relevant — don't defer.",
+      "apk": "MOT / visibility — needed to pass.",
+      "diagnosis": "Scan first before choosing expensive parts.",
+      "interval": "Useful maintenance, but no direct safety impact.",
+      "combine": "Oil zone opened once. Avoids a double oil change.",
+      "budget": "Pushed to stay within budget.",
+      "blocked_diagnosis": "Expensive repair without a confirmed diagnosis.",
+      "blocked_prereq": "Fix the prerequisite first."
+    },
+    "warn": {
+      "noDiagnosis": "Expensive repair without a confirmed diagnosis.",
+      "safetyRisk": "Safety / MOT risk if pushed."
+    },
     "urgency": {
       "replace_needed": "REPLACE NEEDED",
       "worn": "WORN",

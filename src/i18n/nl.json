@@ -33,8 +33,41 @@
     "blocked": "GEBLOKKEERD / NIET SLIM VÓÓR PREREQUISITE",
     "diagnoseOnly": "ALLEEN DIAGNOSE — nog niet uitgeven",
     "oilCombineReason": "Oliezone gaat toch open — combineer om dubbel werk en olieverspilling te voorkomen.",
-    "cannotWait": "Olie te ver over interval — kan niet wachten op de lekreparatie.",
+    "cannotWait": "Olie te ver over interval — kan niet wachten. Let op: bij latere carterpan/OFHG reparatie kan olie opnieuw nodig zijn.",
     "overrideLocal": "Toch plannen wegens APK/veiligheid",
+    "forcedByBudget": "Past niet binnen budget — doorgeschoven.",
+    "noBufferWarning": "Geen buffer ingesteld. Garagekosten kunnen hoger uitvallen — houd minimaal €200 aan.",
+    "tightWarning": "Budget bijna vol — weinig marge voor tegenvallers.",
+    "focusView": "Alleen geplande items tonen",
+    "allowFull": "Budget volledig vullen toestaan",
+    "hiddenItems": "{{count}} items verborgen",
+    "dropHere": "Sleep hier naartoe",
+    "resetAuto": "Terug naar automatisch advies",
+    "reason": {
+      "safety": "Veiligheid",
+      "apk": "APK",
+      "diagnosis": "Diagnose",
+      "interval": "Interval",
+      "combine": "Slim combineren",
+      "budget": "Budget",
+      "manual": "Handmatig gekozen",
+      "blocked_diagnosis": "Geblokkeerd — diagnose nodig",
+      "blocked_prereq": "Geblokkeerd — prerequisite open"
+    },
+    "why": {
+      "safety": "Veiligheids- of APK-relevant — niet uitstellen.",
+      "apk": "APK / zicht — nodig om te slagen.",
+      "diagnosis": "Eerst uitlezen vóór dure onderdelen gekozen worden.",
+      "interval": "Onderhoud nuttig, maar geen directe veiligheidsimpact.",
+      "combine": "Oliezone één keer open. Voorkomt dubbele oliebeurt.",
+      "budget": "Doorgeschoven om budget niet te overschrijden.",
+      "blocked_diagnosis": "Dure reparatie zonder bevestigde diagnose.",
+      "blocked_prereq": "Eerst prerequisite oplossen."
+    },
+    "warn": {
+      "noDiagnosis": "Dure reparatie zonder bevestigde diagnose.",
+      "safetyRisk": "Veiligheidsrisico / APK-risico bij doorschuiven."
+    },
     "urgency": {
       "replace_needed": "VERVANGEN NODIG",
       "worn": "VERSLETEN",
