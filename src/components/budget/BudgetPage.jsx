@@ -93,6 +93,9 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
 
       {job.reasonKey === 'oilCombine' && <div className="bp-job-reason">🛢️ {t('budget.oilCombineReason')}</div>}
       {job.cannotWait && <div className="bp-job-reason bp-warn">⚠️ {t('budget.cannotWait')}</div>}
+      {job.cardWarnings?.map((w, i) => (
+        <div key={i} className="bp-job-reason bp-warn">⚠️ {t(`budget.cardWarn.${w.type}`)}</div>
+      ))}
       {job.forcedByBudget && <div className="bp-job-reason bp-warn">💰 {t('budget.forcedByBudget')}</div>}
 
       {job.blocked && job.blockReasons.map((b, i) => (

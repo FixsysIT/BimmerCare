@@ -28,7 +28,9 @@ const DIAGNOSIS_GATED = new Set([
   'Piezo Fuel Injectors (×6)', 'High-Pressure Fuel Pump (HPFP)', 'NOx Catalytic Converter', 'NOx Sensor',
 ]);
 const DIAGNOSIS_ITEMS = new Set(['General Diagnostic Scan']);
-const TIRE_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)', 'Wheel Alignment', 'Steering Rack'];
+// Open suspension/steering parts that make a fresh alignment temporary — they
+// WARN on the tyre card but never BLOCK safety-critical tyres.
+const ALIGNMENT_AFFECTING = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)', 'Steering Rack'];
 const ALIGNMENT_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'];
 const OIL_LEAK_ITEMS = new Set(['Oil Pan Gasket', 'Oil Filter Housing Gasket']);
 
@@ -74,7 +76,7 @@ function makeJob(id, title, members, extra = {}) {
     urgency, cost,
     category: members[0]?.category,
     blocked: false, blockReasons: [], diagnosisGated: false,
-    overridden: false, reasonKey: null, cannotWait: false,
+    overridden: false, reasonKey: null, cannotWait: false, cardWarnings: [],
     ...extra,
   };
 }
@@ -131,9 +133,13 @@ function applyBlockers(jobs, items, jobOverrides) {
     if (job.memberNames.some((n) => DIAGNOSIS_GATED.has(n)) && job.urgency !== 'replace_needed') {
       job.diagnosisGated = true;
     }
+    // Tyres are safety/APK critical — NEVER block them on alignment prereqs.
+    // Just warn on the card that the alignment may be temporary. Alignment's own
+    // dependency on suspension/steering is kept (it lives in the
+    // "Vooronderstel + uitlijnen" cluster, so it's done WITH those parts).
     if (names.has('Tires (×4)')) {
-      const open = TIRE_BLOCKERS.filter((n) => !names.has(n) && isOpen(n));
-      if (open.length) { job.blocked = true; job.blockReasons.push({ type: 'tires', items: open }); }
+      const open = ALIGNMENT_AFFECTING.filter((n) => !names.has(n) && isOpen(n));
+      if (open.length) job.cardWarnings.push({ type: 'alignmentTemp', items: open });
     }
     if (names.has('Wheel Alignment') && job.members.length === 1) {
       const open = ALIGNMENT_BLOCKERS.filter((n) => isOpen(n));
@@ -194,7 +200,7 @@ function placement(job, cls, bucket, extra = {}) {
     id: job.id, title: job.title, members: job.members, memberNames: job.memberNames,
     urgency: job.urgency, cost: job.cost, category: job.category,
     blocked: job.blocked, blockReasons: job.blockReasons, diagnosisGated: job.diagnosisGated,
-    cannotWait: job.cannotWait, reasonKey: job.reasonKey,
+    cannotWait: job.cannotWait, cardWarnings: job.cardWarnings, reasonKey: job.reasonKey,
     reason: cls.reason,
     bucket, manual: false, warnings: [], forcedByBudget: false,
     ...extra,

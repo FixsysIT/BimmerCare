@@ -78,7 +78,10 @@
     },
     "block": {
       "tires": "Niet slim vóór vooronderstel/uitlijning. Nieuwe banden kunnen ongelijk afslijten.",
-      "alignment": "Niet vóór draagarmen/spoorstangen als die open staan."
+      "alignment": "Eerst onderstel/stuurdelen oplossen voor correcte uitlijning. Open draagarm/fusee/spoorstangen maken uitlijning tijdelijk/onbetrouwbaar."
+    },
+    "cardWarn": {
+      "alignmentTemp": "Uitlijning mogelijk niet definitief zolang draagarm/fusee/stuurdelen open staan — later opnieuw uitlijnen kan nodig zijn."
     }
   },
   "dashboard": {

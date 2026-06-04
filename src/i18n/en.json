@@ -78,7 +78,10 @@
     },
     "block": {
       "tires": "Not smart before front suspension/alignment. New tyres can wear unevenly.",
-      "alignment": "Not before control arms/tie rods if those are open."
+      "alignment": "Fix suspension/steering first for a correct alignment. Open control arms/knuckles/tie rods make an alignment temporary/unreliable."
+    },
+    "cardWarn": {
+      "alignmentTemp": "Alignment may not be final while control arms/knuckles/steering are open — a re-alignment may be needed later."
     }
   },
   "dashboard": {
