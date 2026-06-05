@@ -13,11 +13,18 @@ import { useStatusEvents } from './hooks/useStatusEvents';
 import { useAutoBackup } from './hooks/useAutoBackup';
 import { useStorage } from './hooks/useStorage';
 import { STORAGE_KEYS } from './utils/constants';
+import { getBundles, setBundles } from './data/bundles';
 import './i18n';
 
 export default function App() {
   const { vehicle, setVehicle, loading: vehicleLoading, initVehicle, updateMileage, correctMileage, updateProfile } = useVehicle();
   const [settings, setSettings] = useStorage(STORAGE_KEYS.SETTINGS, { autoBackupEnabled: false });
+
+  // Activate the user-edited bundle set (if any) before any cluster lookup
+  // renders. Idempotent + ref-guarded, so safe to run during render.
+  if (settings?.customBundles && getBundles() !== settings.customBundles) {
+    setBundles(settings.customBundles);
+  }
 
   useEffect(() => {
     if (!vehicleLoading && !vehicle) initVehicle();

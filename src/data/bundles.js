@@ -39,7 +39,7 @@ export const ROLES = {
   INSPECT: 'inspectOnly',
 };
 
-export const BUNDLES = [
+export const DEFAULT_BUNDLES = [
   // ── HARD-MUST do-together groups ──────────────────
   {
     id: 'belt-drive-service',
@@ -186,3 +186,20 @@ export const BUNDLES = [
     },
   },
 ];
+
+/* Active bundle set. Defaults to the hard-coded list above, but can be
+   replaced by a user-edited set (imported via CSV, persisted in
+   settings.customBundles, re-activated on app load). All consumers
+   (companions.js, bundleView.js) read getBundles() so an edit takes effect
+   without touching code. */
+let activeBundles = DEFAULT_BUNDLES;
+
+export function getBundles() {
+  return activeBundles;
+}
+
+/** Replace the active bundle set. Empty/invalid → revert to defaults. */
+export function setBundles(bundles) {
+  activeBundles = Array.isArray(bundles) && bundles.length ? bundles : DEFAULT_BUNDLES;
+  return activeBundles;
+}

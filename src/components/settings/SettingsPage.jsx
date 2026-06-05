@@ -5,10 +5,12 @@ import ConfirmDialog from '../shared/ConfirmDialog';
 import {
   validateImportData, readFileAsText, downloadJSON,
   generateIntervalsCSV, generatePartsCSV, downloadCSV,
+  generateBundlesCSV, generateBundlesOverview,
   parseEditableCSV, applyCSVEdits,
   generateItemsExport, generateHistoryExport, generateDebugExport,
   generateChecklist, downloadText,
 } from '../../utils/dataExport';
+import { setBundles } from '../../data/bundles';
 import { inspectionPackages } from '../../data/inspectionPackages';
 import { getDefaultItems } from '../../data/defaultItems';
 import { mergeDefaultItems } from '../../utils/mergeDefaults';
@@ -138,6 +140,24 @@ export default function SettingsPage({
     showToast(t('settings.csvExported', 'CSV geëxporteerd'));
   };
 
+  const handleExportBundles = () => {
+    downloadCSV(generateBundlesCSV(maintenanceItems || [], t), `bimmercare-bundels-${dateStr}.csv`);
+    showToast(t('settings.csvExported', 'CSV geëxporteerd'));
+  };
+
+  const handleExportBundlesOverview = () => {
+    downloadText(generateBundlesOverview(maintenanceItems || [], t), `bimmercare-bundels-${dateStr}.md`);
+    showToast(t('settings.exported', 'Geëxporteerd'));
+  };
+
+  const handleResetBundles = () => {
+    setBundles(null); // revert active set to defaults
+    const next = { ...(settings || {}) };
+    delete next.customBundles;
+    setSettings(next);
+    showToast(t('settings.bundlesReset', 'Bundels hersteld naar standaard'));
+  };
+
   const handleCSVImport = async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -194,6 +214,10 @@ export default function SettingsPage({
   const applyCSVImport = () => {
     if (!csvPreview) return;
     setItems(csvPreview.items);
+    if (csvPreview.hadBundles) {
+      setBundles(csvPreview.bundles);
+      setSettings({ ...(settings || {}), customBundles: csvPreview.bundles });
+    }
     setCsvPreview(null);
     showToast(t('settings.csvImported', 'CSV geïmporteerd'));
   };
@@ -325,6 +349,7 @@ export default function SettingsPage({
           <button className="btn btn-secondary" onClick={handleExportHistory}>📜 {t('settings.exportHistory', 'Historie')}</button>
           <button className="btn btn-secondary" onClick={handleExportDebug}>🐞 {t('settings.exportDebugBtn', 'Debug JSON')}</button>
           <button className="btn btn-secondary" onClick={handleExportChecklist}>🧾 {t('settings.exportChecklist', 'Garage checklist')}</button>
+          <button className="btn btn-secondary" onClick={handleExportBundlesOverview}>🔗 {t('settings.exportBundlesOverview', 'Bundels overzicht')}</button>
         </div>
       </div>
 
@@ -349,11 +374,18 @@ export default function SettingsPage({
         <p className="settings-hint">
           {t('settings.csvHint', 'Exporteer als CSV, pas km/maanden/strategie/kosten aan in Excel, Sheets of een andere LLM, en importeer terug. Bovenin elk bestand staat een legenda die uitlegt wat elke kolom en waarde betekent. Items worden gekoppeld op id — die kolom niet wijzigen.')}
         </p>
+        <p className="settings-hint">
+          {t('settings.csvBundlesHint', 'Bundels-CSV = welke items samen horen (do-together). Bewerken + importeren vervangt de hele bundelset. Item-namen (Engelse sleutel) moeten exact matchen.')}
+        </p>
         <div className="settings-actions">
           <button className="btn btn-secondary" onClick={handleExportIntervals}>📊 {t('settings.csvIntervals', 'Intervallen CSV')}</button>
           <button className="btn btn-secondary" onClick={handleExportParts}>🔩 {t('settings.csvParts', 'Onderdelen CSV')}</button>
+          <button className="btn btn-secondary" onClick={handleExportBundles}>🔗 {t('settings.csvBundles', 'Bundels CSV')}</button>
           <button className="btn btn-primary" onClick={() => csvRef.current?.click()}>📤 {t('settings.csvImport', 'Importeer CSV')}</button>
           <input ref={csvRef} type="file" accept=".csv" multiple style={{ display: 'none' }} onChange={handleCSVImport} />
+          {settings?.customBundles && (
+            <button className="btn btn-ghost" onClick={handleResetBundles}>↩️ {t('settings.bundlesResetBtn', 'Bundels → standaard')}</button>
+          )}
         </div>
       </div>
 
@@ -392,13 +424,24 @@ export default function SettingsPage({
           <p style={{ color: 'var(--text-secondary)' }}>
             {t('settings.csvIntervalsUpdated', 'Intervallen bijgewerkt')}: {csvPreview.intervalsUpdated}<br />
             {t('settings.csvPartsUpdated', 'Onderdelenlijsten bijgewerkt')}: {csvPreview.partsUpdated}
+            {csvPreview.hadBundles && (
+              <>
+                <br />
+                {t('settings.csvBundlesUpdated', 'Bundels (vervangt set)')}: {csvPreview.bundlesUpdated}
+              </>
+            )}
           </p>
           {csvPreview.unknownFiles > 0 && (
             <p style={{ color: 'var(--status-orange)', fontSize: '0.875rem' }}>
               ⚠️ {csvPreview.unknownFiles} {t('settings.csvUnknownSkipped', 'bestand(en) niet herkend en overgeslagen.')}
             </p>
           )}
-          {csvPreview.intervalsUpdated === 0 && csvPreview.partsUpdated === 0 && (
+          {csvPreview.droppedBundleNames?.length > 0 && (
+            <p style={{ color: 'var(--status-orange)', fontSize: '0.875rem' }}>
+              ⚠️ {t('settings.csvBundlesDropped', 'Onbekende item-namen in bundels overgeslagen')}: {csvPreview.droppedBundleNames.flatMap((d) => d.names).join(', ')}
+            </p>
+          )}
+          {csvPreview.intervalsUpdated === 0 && csvPreview.partsUpdated === 0 && !csvPreview.hadBundles && (
             <p style={{ color: 'var(--status-orange)', fontSize: '0.875rem' }}>
               ⚠️ {t('settings.csvNoMatch', 'Geen ID-overeenkomsten gevonden — niets om bij te werken.')}
             </p>
@@ -408,7 +451,7 @@ export default function SettingsPage({
             <button
               className="btn btn-primary"
               onClick={applyCSVImport}
-              disabled={csvPreview.intervalsUpdated === 0 && csvPreview.partsUpdated === 0}
+              disabled={csvPreview.intervalsUpdated === 0 && csvPreview.partsUpdated === 0 && !csvPreview.hadBundles}
             >
               {t('common.confirm')}
             </button>

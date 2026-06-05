@@ -1,4 +1,4 @@
-import { BUNDLES, ROLES } from '../data/bundles';
+import { getBundles, ROLES } from '../data/bundles';
 import { calculateStatus } from './statusCalculator';
 
 /**
@@ -41,7 +41,7 @@ function rawLinks(item) {
       found.set(name, { role, reason });
     }
   };
-  for (const b of BUNDLES) {
+  for (const b of getBundles()) {
     if (b.group?.includes(item.name)) {
       b.group.forEach((n) => consider(n, ROLES.MUST, b.reason));
     }
@@ -83,7 +83,23 @@ export function getCompanions(item, allItems, currentMileage = null) {
 /** Free operation reminders (e.g. battery coding) triggered by servicing an item. */
 export function getReminders(item) {
   if (!item) return [];
-  return BUNDLES
+  return getBundles()
     .filter((b) => b.reminder && b.trigger?.includes(item.name))
     .map((b) => b.reminder);
+}
+
+/**
+ * Every bundle an item participates in, with its role there. Read-only view
+ * for exports ("welke items horen bij elkaar"). Role is `member` (group),
+ * `trigger`, `reminder`, or one of the add roles (mustReplace/…/inspectOnly).
+ */
+export function bundleMemberships(name) {
+  const out = [];
+  for (const b of getBundles()) {
+    const title = b.title?.nl || b.title?.en || b.id;
+    if (b.group?.includes(name)) out.push({ bundleId: b.id, title, role: 'member' });
+    if (b.trigger?.includes(name)) out.push({ bundleId: b.id, title, role: b.reminder ? 'reminder' : 'trigger' });
+    (b.adds || []).forEach((a) => { if (a.name === name) out.push({ bundleId: b.id, title, role: a.role }); });
+  }
+  return out;
 }

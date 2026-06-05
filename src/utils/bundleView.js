@@ -1,4 +1,4 @@
-import { BUNDLES, ROLES } from '../data/bundles';
+import { getBundles, ROLES } from '../data/bundles';
 import { getCompanions, getReminders } from './companions';
 
 /**
@@ -15,7 +15,7 @@ import { getCompanions, getReminders } from './companions';
  */
 
 // Union-find over item names that share a mustReplace link.
-function buildClusters() {
+function buildClusters(bundles) {
   const parent = new Map();
   const find = (x) => {
     if (!parent.has(x)) parent.set(x, x);
@@ -27,7 +27,7 @@ function buildClusters() {
   };
   const union = (a, b) => { parent.set(find(a), find(b)); };
 
-  for (const b of BUNDLES) {
+  for (const b of bundles) {
     if (b.group) {
       for (let i = 1; i < b.group.length; i++) union(b.group[0], b.group[i]);
     }
@@ -41,7 +41,7 @@ function buildClusters() {
   // root → title (first contributing bundle in array order wins; group bundles
   // are listed before trigger ones so they take precedence)
   const rootTitle = new Map();
-  for (const b of BUNDLES) {
+  for (const b of bundles) {
     if (!b.title) continue;
     const names = b.group || b.trigger || [];
     for (const n of names) {
@@ -56,17 +56,24 @@ function buildClusters() {
   return { find, nameToRoot, rootTitle };
 }
 
-// computed once — BUNDLES is static
-const CLUSTERS = buildClusters();
+// Memoized per active bundle-set reference: rebuilds only when getBundles()
+// returns a different array (i.e. after setBundles on import/reset).
+let _cache = null;
+let _cacheRef = null;
+function clusters() {
+  const b = getBundles();
+  if (b !== _cacheRef) { _cacheRef = b; _cache = buildClusters(b); }
+  return _cache;
+}
 
 /** Cluster id (root) for an item name, or null if it has no mustReplace link. */
 export function clusterIdOf(name) {
-  return CLUSTERS.nameToRoot.get(name) || null;
+  return clusters().nameToRoot.get(name) || null;
 }
 
 /** Display title {nl,en} for a cluster id, or null. */
 export function clusterTitle(rootId) {
-  return CLUSTERS.rootTitle.get(rootId) || null;
+  return clusters().rootTitle.get(rootId) || null;
 }
 
 /**
