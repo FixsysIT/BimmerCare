@@ -1,40 +1,50 @@
-import { differenceInMonths } from 'date-fns';
-import { clusterIdOf, clusterTitle } from './bundleView';
+import { differenceInCalendarMonths, addMonths } from 'date-fns';
+import { clusterIdOf, clusterTitle, relatedNames } from './bundleView';
 
 /**
- * Budget Plan engine — appointment-based PLANNING ONLY.
+ * Budget Plan engine — SAVINGS-TIMELINE planner (planning only).
  *
- * Plans repair jobs around real garage appointments like a real garage would:
- * safety / APK / diagnosis first, then smart combinations, then deferrable
- * comfort/interval work, then jobs blocked on a missing diagnosis or a
- * prerequisite. Budget is filled with a margin (never blindly to the max) and
- * every placement can be manually moved between buckets per appointment.
- * Never touches maintenance data, history, the bundle picker, or cards.
+ * Model: you have a pot (currentBudget) that grows every month by
+ * monthlyContribution. Every repair job is scheduled into the EARLIEST month
+ * where the pot can pay for it while keeping the safety buffer. Highest urgency
+ * first, cheapest breaks ties. The result is a forward timeline:
+ *   "juni €800 → spatborden · oktober €1500 → banden + uitlijnen".
+ *
+ * Scope = defects + due intervals. Monitor-only → watch list. Diagnosis-gated /
+ * prerequisite-blocked → blocked list (never auto-scheduled). The user can
+ * exclude a job or pin it to a target month. Auto-combine = hard bundle
+ * clusters + the oil-zone leak couple. Never touches maintenance data/history.
  */
 
 export const URGENCY_RANK = { replace_needed: 5, worn: 4, inspection_needed: 3, due_soon: 2, monitor: 1, ok: 0 };
-const HIGH_URGENCY = new Set(['replace_needed', 'worn', 'inspection_needed']);
+// confirmed spend that auto-fills sessions: real defects + due intervals.
+// inspection_needed is NOT here — it's a check, not a confirmed replacement, so
+// it never auto-books the full part cost (the user can still add it by hand).
+const SCHEDULABLE = new Set(['replace_needed', 'worn', 'due_soon']);
 
-export const BUCKETS = ['doen', 'combineren', 'doorschuiven', 'geblokkeerd'];
-
-// reason types drive the chip + "why" line on a card
 export const REASON = {
-  SAFETY: 'safety', APK: 'apk', DIAGNOSIS: 'diagnosis', INTERVAL: 'interval',
-  COMBINE: 'combine', BUDGET: 'budget', MANUAL: 'manual',
+  SAFETY: 'safety', APK: 'apk', INTERVAL: 'interval', COMBINE: 'combine',
   BLOCKED_DIAGNOSIS: 'blocked_diagnosis', BLOCKED_PREREQ: 'blocked_prereq',
+  WATCH: 'watch', INSPECT: 'inspect', CUSTOM: 'custom',
 };
+
+/** A free user-added budget line (e.g. CarPlay, door panels) — not a catalog item. */
+function makeCustomJob(c) {
+  const name = c.name || '';
+  return {
+    id: `custom:${c.id}`, title: { nl: name, en: name }, members: [], memberNames: [name],
+    urgency: 'due_soon', cost: Number(c.cost) || 0, reason: REASON.CUSTOM, custom: true,
+    blocked: false, blockReasons: [], diagnosisGated: false, cardWarnings: [], reasonKey: null,
+  };
+}
 
 const DIAGNOSIS_GATED = new Set([
   'Piezo Fuel Injectors (×6)', 'High-Pressure Fuel Pump (HPFP)', 'NOx Catalytic Converter', 'NOx Sensor',
 ]);
-const DIAGNOSIS_ITEMS = new Set(['General Diagnostic Scan']);
-// Open suspension/steering parts that make a fresh alignment temporary — they
-// WARN on the tyre card but never BLOCK safety-critical tyres.
 const ALIGNMENT_AFFECTING = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)', 'Steering Rack'];
 const ALIGNMENT_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'];
 const OIL_LEAK_ITEMS = new Set(['Oil Pan Gasket', 'Oil Filter Housing Gasket']);
 
-// Items an APK actually fails / direct road-safety. High urgency here = DOEN.
 const APK_SAFETY_ITEMS = new Set([
   'Brake Pads Front', 'Brake Pads Rear', 'Brake Discs Front', 'Brake Discs Rear',
   'Brake Hoses', 'Brake Fluid', 'Handbrake Shoes / Parking Brake',
@@ -43,16 +53,12 @@ const APK_SAFETY_ITEMS = new Set([
   'Stabilizer Links Front (×2)', 'Stabilizer Links Rear (×2)', 'Strut Mounts / Top Mounts',
   'CV Boot / Axle Boot', 'Headlight Modules / Bulbs', 'Wipers',
 ]);
-// Pure APK / visibility items (sub-label "apk" vs generic safety).
 const APK_ONLY_ITEMS = new Set(['Headlight Modules / Bulbs', 'Wipers', 'Tires (×4)']);
-// Leaks / cooling that cause consequential engine damage. High urgency = DOEN.
 const CONSEQUENTIAL_ITEMS = new Set([
   'Oil Pan Gasket', 'Oil Filter Housing Gasket', 'Valve Cover Gasket + PCV',
   'Crankshaft Rear Main Seal', 'Water Pump (electric)', 'Thermostat',
   'Coolant Hoses', 'Radiator', 'Expansion Tank + Cap',
 ]);
-
-const PORTION_FILLED = 0.9; // keep a 10% margin unless the user allows a full fill
 
 function itemUrgency(item) {
   const cs = item.calculatedStatus || {};
@@ -73,10 +79,9 @@ function makeJob(id, title, members, extra = {}) {
   return {
     id, title, members,
     memberNames: members.map((m) => m.name),
-    urgency, cost,
-    category: members[0]?.category,
+    urgency, cost, category: members[0]?.category,
     blocked: false, blockReasons: [], diagnosisGated: false,
-    overridden: false, reasonKey: null, cannotWait: false, cardWarnings: [],
+    reasonKey: null, cannotWait: false, cardWarnings: [],
     ...extra,
   };
 }
@@ -95,48 +100,36 @@ function buildJobs(items) {
   return jobs;
 }
 
-/**
- * Couple an oil service with an open oil-zone leak repair so the oil zone is
- * only opened once. Fires on any open leak status (worn / replace_needed /
- * inspection). If oil itself is severely overdue (red) keep it separate and
- * flag "cannot wait — oil may be needed again at the later gasket repair".
- */
+/** Couple an oil service with an open oil-zone leak repair (open the zone once). */
 function coupleOilLeak(jobs) {
   const oilIdx = jobs.findIndex((j) => j.members.length === 1 && j.memberNames[0] === 'Engine Oil + Filter');
   if (oilIdx < 0) return jobs;
   const oilJob = jobs[oilIdx];
-  if (!isOpenUrg(oilJob.urgency)) return jobs; // oil not due → nothing to couple
+  if (!isOpenUrg(oilJob.urgency)) return jobs;
 
   const gasketJobs = jobs.filter((j) => j.memberNames.some((n) => OIL_LEAK_ITEMS.has(n)) && isOpenUrg(j.urgency));
   if (!gasketJobs.length) return jobs;
 
-  const oilSevere = (oilJob.members[0].calculatedStatus?.status === 'red'); // km exceeded
+  const oilSevere = (oilJob.members[0].calculatedStatus?.status === 'red');
   if (oilSevere) { oilJob.cannotWait = true; return jobs; }
 
-  // build one combined job; drop the separate oil + gasket jobs
   const members = [...gasketJobs.flatMap((j) => j.members), ...oilJob.members];
   const combined = makeJob('combined:oil-leak', {
-    nl: 'Carterpakking + motorolie + oliefilter',
-    en: 'Oil pan gasket + oil + filter',
+    nl: 'Carterpakking + motorolie + oliefilter', en: 'Oil pan gasket + oil + filter',
   }, members, { reasonKey: 'oilCombine' });
   const drop = new Set([oilJob.id, ...gasketJobs.map((j) => j.id)]);
   return [...jobs.filter((j) => !drop.has(j.id)), combined];
 }
 
-function applyBlockers(jobs, items, jobOverrides) {
+function applyBlockers(jobs, items) {
   const urgByName = new Map(items.map((i) => [i.name, itemUrgency(i)]));
   const isOpen = (name) => isOpenUrg(urgByName.get(name) ?? 'ok');
 
   for (const job of jobs) {
     const names = new Set(job.memberNames);
-
     if (job.memberNames.some((n) => DIAGNOSIS_GATED.has(n)) && job.urgency !== 'replace_needed') {
       job.diagnosisGated = true;
     }
-    // Tyres are safety/APK critical — NEVER block them on alignment prereqs.
-    // Just warn on the card that the alignment may be temporary. Alignment's own
-    // dependency on suspension/steering is kept (it lives in the
-    // "Vooronderstel + uitlijnen" cluster, so it's done WITH those parts).
     if (names.has('Tires (×4)')) {
       const open = ALIGNMENT_AFFECTING.filter((n) => !names.has(n) && isOpen(n));
       if (open.length) job.cardWarnings.push({ type: 'alignmentTemp', items: open });
@@ -145,163 +138,212 @@ function applyBlockers(jobs, items, jobOverrides) {
       const open = ALIGNMENT_BLOCKERS.filter((n) => isOpen(n));
       if (open.length) { job.blocked = true; job.blockReasons.push({ type: 'alignment', items: open }); }
     }
-    if (job.blocked && jobOverrides?.[job.id]) job.overridden = true;
   }
 }
 
-// natural bucket → budget weight (urgency dominates, bucket breaks ties)
-const BUCKET_WEIGHT = { doen: 50, combineren: 40, doorschuiven: 0, geblokkeerd: -100 };
-
-/**
- * Classify a job into its NATURAL bucket + a reason type. The budget priority
- * is urgency-first (a red oil-leak combine outranks a merely worn safety item),
- * bucket weight only breaks ties — so a tight budget pushes the least urgent
- * work out first while keeping safety/APK/diagnosis as long as possible.
- *   doen        = safety / APK / diagnosis / consequential damage
- *   combineren  = oil-zone merge (smart combine)
- *   doorschuiven= interval / comfort / deferrable (never consumes budget)
- *   geblokkeerd = missing diagnosis or open prerequisite
- */
-function classify(job) {
-  if (job.blocked && !job.overridden) return { bucket: 'geblokkeerd', reason: REASON.BLOCKED_PREREQ };
-  if (job.diagnosisGated) return { bucket: 'geblokkeerd', reason: REASON.BLOCKED_DIAGNOSIS };
-  if (job.reasonKey === 'oilCombine') return { bucket: 'combineren', reason: REASON.COMBINE };
-
+/** Reason chip for a schedulable job (advice only, doesn't affect order). */
+function jobReason(job) {
+  if (job.reasonKey === 'oilCombine') return REASON.COMBINE;
   const names = job.memberNames;
-  if (names.some((n) => DIAGNOSIS_ITEMS.has(n)) && isOpenUrg(job.urgency)) {
-    return { bucket: 'doen', reason: REASON.DIAGNOSIS };
+  if (names.some((n) => APK_SAFETY_ITEMS.has(n))) {
+    return names.some((n) => APK_ONLY_ITEMS.has(n)) ? REASON.APK : REASON.SAFETY;
   }
-  if (HIGH_URGENCY.has(job.urgency)) {
-    if (names.some((n) => APK_SAFETY_ITEMS.has(n))) {
-      const apk = names.some((n) => APK_ONLY_ITEMS.has(n));
-      return { bucket: 'doen', reason: apk ? REASON.APK : REASON.SAFETY };
-    }
-    if (names.some((n) => CONSEQUENTIAL_ITEMS.has(n))) return { bucket: 'doen', reason: REASON.SAFETY };
-  }
-  return { bucket: 'doorschuiven', reason: REASON.INTERVAL };
+  if (names.some((n) => CONSEQUENTIAL_ITEMS.has(n))) return REASON.SAFETY;
+  return REASON.INTERVAL;
 }
 
-function jobScore(job, cls) {
-  return URGENCY_RANK[job.urgency] * 100 + (BUCKET_WEIGHT[cls.bucket] ?? 0);
+// safety/APK outrank a same-urgency interval; cheaper breaks the last tie
+const SAFE_REASONS = new Set([REASON.SAFETY, REASON.APK]);
+function comparePriority(a, b) {
+  if (URGENCY_RANK[b.urgency] !== URGENCY_RANK[a.urgency]) return URGENCY_RANK[b.urgency] - URGENCY_RANK[a.urgency];
+  const sa = SAFE_REASONS.has(a.reason) ? 1 : 0;
+  const sb = SAFE_REASONS.has(b.reason) ? 1 : 0;
+  if (sa !== sb) return sb - sa;
+  return a.cost - b.cost;
 }
 
-/** Budget available on an appointment date (or its explicit override). */
-function appointmentBudget(appt, settings, today) {
-  if (appt.budgetOverride !== undefined && appt.budgetOverride !== null && appt.budgetOverride !== '') {
-    return Number(appt.budgetOverride);
-  }
-  const monthsUntil = appt.date ? Math.max(0, differenceInMonths(new Date(appt.date), today)) : 0;
-  return (settings.currentBudget || 0) + (settings.monthlyContribution || 0) * monthsUntil - (settings.safetyBuffer || 0);
-}
+const monthDate = (today, m) => addMonths(today, m);
+const MAX_MONTHS = 120;
 
-/** A per-appointment placement view object (never mutates the shared job). */
-function placement(job, cls, bucket, extra = {}) {
-  return {
-    id: job.id, title: job.title, members: job.members, memberNames: job.memberNames,
-    urgency: job.urgency, cost: job.cost, category: job.category,
-    blocked: job.blocked, blockReasons: job.blockReasons, diagnosisGated: job.diagnosisGated,
-    cannotWait: job.cannotWait, cardWarnings: job.cardWarnings, reasonKey: job.reasonKey,
-    reason: cls.reason,
-    bucket, manual: false, warnings: [], forcedByBudget: false,
-    ...extra,
-  };
-}
-
-function riskWarnings(job, cls, targetBucket) {
-  const w = [];
-  if (targetBucket === 'doen' || targetBucket === 'combineren') {
-    if (job.diagnosisGated) w.push('noDiagnosis');
-  }
-  if (targetBucket === 'doorschuiven' || targetBucket === 'geblokkeerd') {
-    if (cls.bucket === 'doen' && (cls.reason === REASON.SAFETY || cls.reason === REASON.APK)) w.push('safetyRisk');
-  }
-  return w;
-}
-
-/** Plan one appointment: doen / combineren / doorschuiven / geblokkeerd. */
-function planAppointment(appt, jobs, settings, today) {
-  const monthsUntil = appt.date ? Math.max(0, differenceInMonths(new Date(appt.date), today)) : 0;
-  const budget = appointmentBudget(appt, settings, today);
-  const overrides = appt.overrides || {};
-  const allowFull = !!appt.allowFull;
-  const fillCap = allowFull ? budget : Math.max(0, budget * PORTION_FILLED);
-
-  // classify all schedulable jobs (skip monitor/ok unless gated/blocked)
-  const classified = jobs
-    .filter((j) => j.diagnosisGated || (j.blocked && !j.overridden) || (j.urgency !== 'monitor' && j.urgency !== 'ok'))
-    .map((j) => ({ job: j, cls: classify(j) }))
-    .sort((a, b) => jobScore(b.job, b.cls) - jobScore(a.job, a.cls) || a.job.cost - b.job.cost);
-
-  const buckets = { doen: [], combineren: [], doorschuiven: [], geblokkeerd: [] };
-  let spent = 0;
-
-  for (const { job, cls } of classified) {
-    // manual override wins — drop straight into the chosen bucket
-    const forced = overrides[job.id];
-    if (forced && BUCKETS.includes(forced)) {
-      const p = placement(job, cls, forced, { manual: true });
-      p.warnings = riskWarnings(job, cls, forced);
-      if (forced === 'doen' || forced === 'combineren') spent += job.cost;
-      buckets[forced].push(p);
-      continue;
-    }
-
-    // non-spending buckets — straight in
-    if (cls.bucket === 'geblokkeerd' || cls.bucket === 'doorschuiven') {
-      buckets[cls.bucket].push(placement(job, cls, cls.bucket));
-      continue;
-    }
-
-    // doen / combineren consume budget; if it doesn't fit the cap → push (budget)
-    if (spent + job.cost <= fillCap) {
-      buckets[cls.bucket].push(placement(job, cls, cls.bucket));
-      spent += job.cost;
-    } else {
-      buckets.doorschuiven.push(placement(job, cls, 'doorschuiven', { forcedByBudget: true, reason: REASON.BUDGET }));
-    }
-  }
-
-  const noBuffer = (settings.safetyBuffer || 0) <= 0 && !(appt.budgetOverride);
-  const tight = budget > 0 && spent > budget * 0.95;
-
-  return {
-    ...appt, monthsUntil, budget, spent, fillCap, allowFull,
-    ...buckets, noBuffer, tight,
-    hiddenCount: buckets.doorschuiven.length + buckets.geblokkeerd.length,
-  };
+/** Projected pot at a future date = current budget + saved-up inleg − buffer. */
+function projectedMoney(date, settings, today) {
+  const start = Number(settings.currentBudget) || 0;
+  const monthly = Number(settings.monthlyContribution) || 0;
+  const buffer = Number(settings.safetyBuffer) || 0;
+  const monthsUntil = date ? Math.max(0, differenceInCalendarMonths(new Date(date), today)) : 0;
+  return { monthsUntil, money: Math.max(0, start + monthly * monthsUntil - buffer) };
 }
 
 /**
- * @returns { jobs, appointments[], diagnoseOnly[], summary }
+ * Assign jobs to the user's own planning sessions (garage visits). Each session
+ * has a date + a money pot (either typed by the user, or projected from the
+ * savings curve at that date). Jobs are filled highest-urgency first into the
+ * earliest session whose remaining cash covers them; later sessions inherit the
+ * cash left after earlier ones. A job that fits no session lands in "unplanned"
+ * with a hint of the month it becomes affordable. Pinned jobs are forced into a
+ * chosen session (shortfall flagged). No drag — placement is automatic.
  */
-export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date(), jobOverrides = {}) {
-  const active = (itemsWithStatus || []).filter((i) => !i.isDisabled && itemUrgency(i) !== 'ok');
+function assignToSessions(jobs, settings, today, prefs) {
+  const start = Number(settings.currentBudget) || 0;
+  const monthly = Number(settings.monthlyContribution) || 0;
+  const buffer = Number(settings.safetyBuffer) || 0;
+  const pinned = prefs.pinnedSession || {}; // jobId -> sessionId
 
-  let jobs = buildJobs(active);
-  jobs = coupleOilLeak(jobs);
-  applyBlockers(jobs, itemsWithStatus || [], jobOverrides);
-
-  const appts = (settings.appointments || [])
+  const sessions = (settings.budgetSessions || [])
     .slice()
     .sort((a, b) => (a.date ? new Date(a.date) : Infinity) - (b.date ? new Date(b.date) : Infinity))
-    .map((a) => planAppointment(a, jobs, settings, today));
+    .map((s) => {
+      const overridden = s.money !== '' && s.money != null && !Number.isNaN(Number(s.money));
+      const proj = projectedMoney(s.date, settings, today);
+      return {
+        id: s.id, date: s.date, note: s.note, monthsUntil: proj.monthsUntil,
+        money: overridden ? Number(s.money) : proj.money, overridden,
+        locked: !!s.locked, manual: !!s.manual, entries: [], spent: 0,
+      };
+    });
+  const byId = new Map(sessions.map((s) => [s.id, s]));
 
-  // global "watch, don't spend yet" list: monitor-only jobs. Diagnosis-gated
-  // items already surface per-appointment in GEBLOKKEERD (spec §7).
-  const diagnoseOnly = jobs
-    .filter((j) => j.urgency === 'monitor' && !j.diagnosisGated && !(j.blocked && !j.overridden))
-    .map((j) => placement(j, classify(j), 'geblokkeerd'));
+  // Typed money = exactly what the user says he has that visit (standalone).
+  // Projected sessions share ONE growing savings pot, so they carry over earlier
+  // projected spend among themselves; typed sessions stay out of that chain.
+  const priorSpend = (i) =>
+    sessions[i].overridden ? 0 : sessions.slice(0, i).filter((s) => !s.overridden).reduce((c, s) => c + s.spent, 0);
+  const avail = (i) => sessions[i].money - priorSpend(i) - sessions[i].spent;
+  const assign = (s, job, extra = {}) => { s.entries.push({ job, reason: job.reason, ...extra }); s.spent += job.cost; };
 
+  // 1) pinned jobs → their chosen session (priority order, shortfall flagged)
+  const pinnedJobs = jobs.filter((j) => byId.has(pinned[j.id])).sort(comparePriority);
+  for (const job of pinnedJobs) {
+    const s = byId.get(pinned[job.id]);
+    const before = avail(sessions.indexOf(s));
+    assign(s, job, { pinned: true, shortfall: before < job.cost ? Math.round(job.cost - before) : 0 });
+  }
+  // 2) auto jobs → earliest session that can pay. Locked (finalised) and manual
+  // ("zelf kiezen") sessions are never auto-filled — they only hold what the user
+  // explicitly pinned/added, so a focused "only tyres" or themed visit stays clean.
+  const unplannedJobs = [];
+  const autoJobs = jobs.filter((j) => !byId.has(pinned[j.id])).sort(comparePriority);
+  for (const job of autoJobs) {
+    let placed = false;
+    for (let i = 0; i < sessions.length; i++) {
+      if (sessions[i].locked || sessions[i].manual) continue;
+      if (avail(i) >= job.cost) { assign(sessions[i], job); placed = true; break; }
+    }
+    if (!placed) unplannedJobs.push(job);
+  }
+
+  sessions.forEach((s, i) => {
+    s.left = Math.round(avail(i));
+    s.cost = s.spent;
+    s.entries.sort((a, b) => comparePriority(a.job, b.job));
+  });
+
+  // unplanned: when would the savings curve cover it (ignoring sessions, after all committed spend)?
+  const committed = sessions.reduce((c, s) => c + s.spent, 0);
+  const unplanned = unplannedJobs.sort(comparePriority).map((job) => {
+    let m = 0;
+    while (m < MAX_MONTHS && (start + monthly * m - buffer) < job.cost + committed) m++;
+    const ok = m < MAX_MONTHS;
+    return {
+      job, reason: job.reason,
+      earliestMonth: ok ? m : null,
+      earliestDate: ok ? monthDate(today, m) : null,
+    };
+  });
+
+  return { sessions, unplanned, totalCost: jobs.reduce((c, j) => c + j.cost, 0) };
+}
+
+/**
+ * @returns { sessions[], unplanned[], blocked[], watch[], excluded[], summary }
+ */
+export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date()) {
+  const prefs = settings.budgetPrefs || {};
+  const excludedIds = prefs.excluded || {};
+  const forcedIds = prefs.forced || {}; // user said "plan it anyway" past a block/gate
+  const pinnedSession = prefs.pinnedSession || {};
+  const costOverride = prefs.costOverride || {}; // jobId -> user price (incl. labour)
+  const sessionIds = new Set((settings.budgetSessions || []).map((s) => s.id));
+  const isPinned = (id) => sessionIds.has(pinnedSession[id]); // pinned to a real session
+
+  const open = (itemsWithStatus || []).filter((i) => !i.isDisabled && itemUrgency(i) !== 'ok');
+  let jobs = buildJobs(open);
+  jobs = coupleOilLeak(jobs);
+  applyBlockers(jobs, itemsWithStatus || []);
+  // user-added free lines (CarPlay, door panels, …) plan like any chosen job
+  jobs = [...jobs, ...(settings.budgetCustom || []).map(makeCustomJob)];
+  for (const j of jobs) {
+    j.reason = j.custom ? REASON.CUSTOM : jobReason(j);
+    if (costOverride[j.id] != null && costOverride[j.id] !== '') { j.cost = Number(costOverride[j.id]); j.costEdited = true; }
+  }
+
+  const blocked = [];
+  const watch = [];
+  const inspect = [];
+  const excluded = [];
+  const schedulable = [];
+  const catalog = []; // every plannable job, for the "+ add to session" picker
+  for (const j of jobs) {
+    if (excludedIds[j.id]) { excluded.push(j); continue; }
+    // manually adding a job to a session (pin) or "plan anyway" forces it in
+    const forced = !!forcedIds[j.id] || isPinned(j.id);
+    catalog.push({ id: j.id, title: j.title, memberNames: j.memberNames, cost: j.cost, urgency: j.urgency });
+    if ((j.diagnosisGated || j.blocked) && !forced) {
+      j.reason = j.diagnosisGated ? REASON.BLOCKED_DIAGNOSIS : REASON.BLOCKED_PREREQ;
+      blocked.push(j);
+      continue;
+    }
+    if (forced) j.forced = true; // bypass the gate/block, plan it anyway
+    if (forced || SCHEDULABLE.has(j.urgency)) { schedulable.push(j); continue; }
+    if (j.urgency === 'inspection_needed') { j.reason = REASON.INSPECT; inspect.push(j); continue; }
+    j.reason = REASON.WATCH; watch.push(j); // monitor-only
+  }
+
+  const { sessions, unplanned, totalCost } = assignToSessions(schedulable, settings, today, prefs);
+
+  // Don't lose inspections: if one logically belongs with work already booked in
+  // a session (shares a bundle), let it RIDE ALONG that visit — car's already
+  // open, so it's a free check (€0 booked), not a separate trip. Orphans with no
+  // related session stay in the advisory inspect[] list.
+  // riders the user locked into a finalised session stay there regardless of logic
+  const lockedRiderTo = new Map();
+  for (const s of settings.budgetSessions || []) {
+    if (s.locked) (s.lockedRiders || []).forEach((id) => lockedRiderTo.set(id, s.id));
+  }
+  const sessById = new Map(sessions.map((s) => [s.id, s]));
+  const placedNames = sessions.map((s) => ({ s, names: new Set(s.entries.flatMap((e) => e.job.memberNames)) }));
+  const orphanInspect = [];
+  for (const job of inspect) {
+    const lockedSid = lockedRiderTo.get(job.id);
+    if (lockedSid && sessById.has(lockedSid)) {
+      sessById.get(lockedSid).entries.push({ job, reason: REASON.INSPECT, rider: true });
+      job.rider = true;
+      continue;
+    }
+    const rel = new Set(job.memberNames.flatMap((n) => [...relatedNames(n)]));
+    const hit = placedNames.find(({ names }) => [...rel].some((n) => names.has(n)));
+    if (hit) {
+      const withEntry = hit.s.entries.find((e) => e.job.memberNames.some((n) => rel.has(n)));
+      hit.s.entries.push({ job, reason: REASON.INSPECT, rider: true, withName: withEntry?.job.memberNames[0] });
+      job.rider = true;
+    } else {
+      orphanInspect.push(job);
+    }
+  }
+
+  const start = Number(settings.currentBudget) || 0;
+  const buffer = Number(settings.safetyBuffer) || 0;
   return {
-    jobs,
-    appointments: appts,
-    diagnoseOnly,
+    sessions, unplanned, blocked, watch, inspect: orphanInspect, excluded, catalog,
     summary: {
-      currentBudget: settings.currentBudget || 0,
-      availableNow: (settings.currentBudget || 0) - (settings.safetyBuffer || 0),
-      safetyBuffer: settings.safetyBuffer || 0,
-      monthly: settings.monthlyContribution || 0,
-      noBuffer: (settings.safetyBuffer || 0) <= 0,
+      currentBudget: start,
+      availableNow: start - buffer,
+      safetyBuffer: buffer,
+      monthly: Number(settings.monthlyContribution) || 0,
+      noBuffer: buffer <= 0,
+      totalCost,
+      scheduledCount: schedulable.length,
+      unplannedCount: unplanned.length,
     },
   };
 }

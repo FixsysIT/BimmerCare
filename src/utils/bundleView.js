@@ -77,6 +77,22 @@ export function clusterTitle(rootId) {
 }
 
 /**
+ * All item names that share ANY bundle with `name` (group co-members, and the
+ * trigger↔adds relation, any role). Broader than a mustReplace cluster — used to
+ * decide whether an inspection logically belongs with work already being done,
+ * so it can ride along on the same garage visit instead of getting lost.
+ */
+export function relatedNames(name) {
+  const out = new Set();
+  for (const b of getBundles()) {
+    const names = [...(b.group || []), ...(b.trigger || []), ...((b.adds || []).map((a) => a.name))];
+    if (names.includes(name)) names.forEach((n) => out.add(n));
+  }
+  out.delete(name);
+  return out;
+}
+
+/**
  * Read-only attachments to show under a cluster (or a single trigger card):
  * conditional add-ons (name + cost + reason), inspect-only hints, reminders.
  * `memberNames` are the cluster's own items (excluded from add-ons).
