@@ -44,6 +44,7 @@
     "undated": "No date",
     "pinHere": "Pin",
     "pinnedHere": "Pinned ✓",
+    "pinRiderHint": "Pin = you're actually doing it; becomes a fixed job at full price.",
     "addJob": "Add job",
     "customName": "Custom job (e.g. CarPlay, door panels)",
     "addCustom": "Custom job",

@@ -285,6 +285,7 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                   {e.withName && <div className="bp-job-why">{t('budget.riderWhy', { name: tItem(t, e.withName) })}</div>}
                   {!s.locked && (
                     <div className="bp-job-ctl">
+                      <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.pinHere')}</button>
                       <button type="button" className="bp-link bp-link-del" onClick={() => exclude(e.job.id)}>{t('budget.exclude')}</button>
                     </div>
                   )}
