@@ -74,6 +74,14 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
   const restore = (id) => setMap('excluded', id, null);
   const pinTo = (id, sessionId) => setMap('pinnedSession', id, sessionId || null);
   const force = (id) => setMap('forced', id, true);
+  // "alvast checken": add a monitor/inspection item to a session as a €0 check
+  const addToCheck = (id, sid) => setMap('checkSession', id, sid);
+  const clearCheck = (id) => setMap('checkSession', id, null);
+  // upgrade a check to a real booked job (pin) and drop the check flag, in one write
+  const bookCheck = (id, sid) => {
+    const cs = { ...(prefs.checkSession || {}) }; delete cs[id];
+    setPrefs({ pinnedSession: { ...(prefs.pinnedSession || {}), [id]: sid }, checkSession: cs });
+  };
 
   // ---- price edit (catalog job → costOverride; custom job → its own cost) ----
   const setCost = (id, val) => {
@@ -278,15 +286,24 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
               : s.entries.map((e) => (e.rider ? (
                 <div key={e.job.id} className="bp-job bp-job-rider">
                   <div className="bp-job-top">
-                    <span className="bp-rider-tag">🔍 {t('budget.checkAlong')}</span>
+                    <span className="bp-rider-tag">🔍 {t(e.check ? 'budget.checkTag' : 'budget.checkAlong')}</span>
                     <span className="bp-job-title">{title(e.job)}</span>
                     <span className="bp-job-cost bp-cost-muted">{t('budget.ifReplaced', { amount: eur(e.job.cost) })}</span>
                   </div>
                   {e.withName && <div className="bp-job-why">{t('budget.riderWhy', { name: tItem(t, e.withName) })}</div>}
                   {!s.locked && (
                     <div className="bp-job-ctl">
-                      <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.pinHere')}</button>
-                      <button type="button" className="bp-link bp-link-del" onClick={() => exclude(e.job.id)}>{t('budget.exclude')}</button>
+                      {e.check ? (
+                        <>
+                          <button type="button" className="bp-link bp-pin-on" onClick={() => bookCheck(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.bookCheck')}</button>
+                          <button type="button" className="bp-link bp-link-del" onClick={() => clearCheck(e.job.id)}>{t('budget.exclude')}</button>
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.pinHere')}</button>
+                          <button type="button" className="bp-link bp-link-del" onClick={() => exclude(e.job.id)}>{t('budget.exclude')}</button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -308,6 +325,14 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                     .filter((j) => !s.entries.some((e) => e.job.id === j.id))
                     .map((j) => <option key={j.id} value={j.id}>{title(j)} · {eur(j.cost)}</option>)}
                 </select>
+                {plan.checkCatalog.filter((j) => !s.entries.some((e) => e.job.id === j.id)).length > 0 && (
+                  <select className="bp-add-check" value="" onChange={(e) => e.target.value && addToCheck(e.target.value, s.id)}>
+                    <option value="">+ {t('budget.addCheck')}</option>
+                    {plan.checkCatalog
+                      .filter((j) => !s.entries.some((e) => e.job.id === j.id))
+                      .map((j) => <option key={j.id} value={j.id}>{title(j)}</option>)}
+                  </select>
+                )}
                 <div className="bp-custom-add">
                   <input
                     type="text" className="bp-custom-name" placeholder={t('budget.customName')}

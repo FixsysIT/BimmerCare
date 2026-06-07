@@ -197,6 +197,11 @@
   padding: 0.4rem 0.5rem; color: var(--m-blue, #4a90d9); font-size: 0.82rem; cursor: pointer;
 }
 .bp-cost-muted { color: var(--text-muted); font-weight: 600; font-size: 0.82rem; }
+.bp-add-check {
+  margin-top: 0.4rem; width: 100%; background: var(--bg-surface, #0d0f19);
+  border: 1px dashed rgba(63, 182, 200, 0.4); border-radius: 8px;
+  padding: 0.4rem 0.5rem; color: var(--status-inspect, #3FB6C8); font-size: 0.82rem; cursor: pointer;
+}
 .bp-price { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.78rem; color: var(--text-muted); }
 .bp-price-in {
   width: 70px; background: var(--bg-surface, #0d0f19); border: 1px solid rgba(255,255,255,0.12);

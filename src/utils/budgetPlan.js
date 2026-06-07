@@ -290,12 +290,17 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
   const inspect = [];
   const excluded = [];
   const schedulable = [];
-  const catalog = []; // every plannable job, for the "+ add to session" picker
+  const catalog = [];      // "+ Klus toevoegen" picker — booked work (pay)
+  const checkCatalog = []; // "+ Alvast checken" picker — inspection + monitor (free €0 check)
   for (const j of jobs) {
     if (excludedIds[j.id]) { excluded.push(j); continue; }
     // manually adding a job to a session (pin) or "plan anyway" forces it in
     const forced = !!forcedIds[j.id] || isPinned(j.id);
-    catalog.push({ id: j.id, title: j.title, memberNames: j.memberNames, cost: j.cost, urgency: j.urgency });
+    const lite = { id: j.id, title: j.title, memberNames: j.memberNames, cost: j.cost, urgency: j.urgency };
+    // booked picker = defects / due intervals / gated-blocked (force in) / custom.
+    // inspection + monitor go to the separate "alvast checken" picker (€0 check).
+    if (j.urgency === 'monitor' || j.urgency === 'inspection_needed') checkCatalog.push(lite);
+    else catalog.push(lite);
     if ((j.diagnosisGated || j.blocked) && !forced) {
       j.reason = j.diagnosisGated ? REASON.BLOCKED_DIAGNOSIS : REASON.BLOCKED_PREREQ;
       blocked.push(j);
@@ -318,8 +323,11 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
   for (const s of settings.budgetSessions || []) {
     if (s.locked) (s.lockedRiders || []).forEach((id) => lockedRiderTo.set(id, s.id));
   }
+  const checkSession = prefs.checkSession || {}; // jobId -> sessionId ("alvast checken")
   const sessById = new Map(sessions.map((s) => [s.id, s]));
+  const addCheck = (job, sid) => { sessById.get(sid).entries.push({ job, reason: REASON.INSPECT, rider: true, check: true }); job.rider = true; };
   const placedNames = sessions.map((s) => ({ s, names: new Set(s.entries.flatMap((e) => e.job.memberNames)) }));
+
   const orphanInspect = [];
   for (const job of inspect) {
     const lockedSid = lockedRiderTo.get(job.id);
@@ -328,6 +336,7 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
       job.rider = true;
       continue;
     }
+    if (checkSession[job.id] && sessById.has(checkSession[job.id])) { addCheck(job, checkSession[job.id]); continue; }
     const rel = new Set(job.memberNames.flatMap((n) => [...relatedNames(n)]));
     const hit = placedNames.find(({ names }) => [...rel].some((n) => names.has(n)));
     if (hit) {
@@ -338,11 +347,17 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
       orphanInspect.push(job);
     }
   }
+  // monitor items the user chose to "alvast checken" → free €0 rider on that session
+  const remainingWatch = [];
+  for (const job of watch) {
+    if (checkSession[job.id] && sessById.has(checkSession[job.id])) addCheck(job, checkSession[job.id]);
+    else remainingWatch.push(job);
+  }
 
   const start = Number(settings.currentBudget) || 0;
   const buffer = Number(settings.safetyBuffer) || 0;
   return {
-    sessions, unplanned, blocked, watch, inspect: orphanInspect, excluded, catalog,
+    sessions, unplanned, blocked, watch: remainingWatch, inspect: orphanInspect, excluded, catalog, checkCatalog,
     summary: {
       currentBudget: start,
       availableNow: start - buffer,
