@@ -5,7 +5,7 @@ intervallen, inspecties en diagnoses bij, en zet BMW-officiële naast community-
 met OEM-onderdelen en kostenramingen. Persoonlijk, geen account, geen server — alle data
 staat lokaal (localforage / IndexedDB).
 
-**Current version: v1.1**
+**Current version: v1.2**
 
 ## Features
 
@@ -16,6 +16,15 @@ staat lokaal (localforage / IndexedDB).
   schoon te houden naarmate de catalogus groeit (`visibilityLayer`).
 - **Quick actions** — per item direct registreren of een inspectie/diagnose-resultaat
   loggen (incl. "Defect bevestigd" → rood).
+- **Budgetplan** — spaar-planner met eigen inplanmomenten: geef een naam, kies datum
+  (optioneel) + hoeveel geld je dan hebt (getypt of geschat uit budget + maandinleg).
+  Klussen worden auto-verdeeld op urgentie, of zet "Zelf kiezen" aan en stel het moment
+  zelf samen. Een klus of moment kun je vastzetten zodat het niet wegvalt bij
+  budgetwijziging, momenten verwijderen, en vullen met eigen vrije posten (CarPlay,
+  deurpanelen) + prijs aanpassen incl. arbeid. Inspecties liften gratis mee met logisch
+  gekoppeld werk.
+- **Do-together bundels** — onderdelen die samen horen (vooronderstel + uitlijning,
+  oliezone) worden gegroepeerd met een companion-picker; budgetplan plant ze als één klus.
 - **Inspectiepakketten** — kant-en-klare checklists (Jaarlijkse BMW inspectie,
   Nulmeting 180k, Misfire diagnose N53, Koelprobleem diagnose).
 - **Garage checklist export** — compacte, printbare markdown-werkorder.
@@ -45,6 +54,7 @@ npm run lint     # eslint
 |------------|-----------|
 | `v1.0-mvp` | Eerste stabiele MVP. Blijft onaangeraakt op commit `bd563a9`. |
 | `v1.1`     | history-derived status + "Defect bevestigd" (confirmed failure) action + top onderhoudsparts-data. |
+| `v1.2`     | Budgetplan (sessie-spaarplanner) + do-together bundels + gehumaniseerde kaartstatus. |
 
 ## Documentatie
 

@@ -53,26 +53,14 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
   };
   // finalise a session: freeze its jobs (pin booked ones, snapshot riders) so the
   // engine never reshuffles it; it shows read-only with a "definitief" badge.
+  // snapshot the session's jobs (separate from the user's own pins, so unlock
+  // never wipes a hand-pinned job). pinnedSession is left untouched.
   const lockSession = (s) => {
-    const booked = s.entries.filter((e) => !e.rider).map((e) => e.job.id);
-    const riders = s.entries.filter((e) => e.rider).map((e) => e.job.id);
-    const pin = { ...(prefs.pinnedSession || {}) };
-    booked.forEach((id) => { pin[id] = s.id; });
-    setSettings({
-      ...settings,
-      budgetPrefs: { ...prefs, pinnedSession: pin },
-      budgetSessions: sessions.map((x) => (x.id === s.id ? { ...x, locked: true, lockedRiders: riders } : x)),
-    });
+    const lockedJobs = s.entries.filter((e) => !e.rider).map((e) => e.job.id);
+    const lockedRiders = s.entries.filter((e) => e.rider).map((e) => e.job.id);
+    set('budgetSessions', sessions.map((x) => (x.id === s.id ? { ...x, locked: true, lockedJobs, lockedRiders } : x)));
   };
-  const unlockSession = (s) => {
-    const pin = { ...(prefs.pinnedSession || {}) };
-    Object.keys(pin).forEach((id) => { if (pin[id] === s.id) delete pin[id]; });
-    setSettings({
-      ...settings,
-      budgetPrefs: { ...prefs, pinnedSession: pin },
-      budgetSessions: sessions.map((x) => (x.id === s.id ? { ...x, locked: false, lockedRiders: [] } : x)),
-    });
-  };
+  const unlockSession = (s) => set('budgetSessions', sessions.map((x) => (x.id === s.id ? { ...x, locked: false, lockedJobs: [], lockedRiders: [] } : x)));
 
   // ---- job preferences (exclude / pin-to-session / force-past-block) ----
   const prefs = settings.budgetPrefs || {};
@@ -156,9 +144,14 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
     </>
   );
 
-  // move-to-session dropdown + price edit + exclude, shown under a job
-  const JobCtl = ({ job, extra }) => (
+  // move-to-session dropdown + price edit + exclude, shown under a job.
+  // sessionId set → show a "Vastzetten" toggle that pins this job to the session
+  // so it survives budget changes / reshuffles (won't get dropped).
+  const JobCtl = ({ job, extra, sessionId }) => (
     <div className="bp-job-ctl">
+      {sessionId && ((prefs.pinnedSession || {})[job.id] === sessionId
+        ? <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(job.id, null)}>📌 {t('budget.pinnedHere')}</button>
+        : <button type="button" className="bp-link" onClick={() => pinTo(job.id, sessionId)}>📌 {t('budget.pinHere')}</button>)}
       <label className="bp-move">
         {t('budget.moveTo')}
         <select value={(prefs.pinnedSession || {})[job.id] || ''} onChange={(e) => pinTo(job.id, e.target.value)}>
@@ -182,7 +175,7 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
   const hasSessions = plan.sessions.length > 0;
   const anyLocked = plan.sessions.some((s) => s.locked);
   const showAdvice = prefs.showAdvice ?? !anyLocked; // once something's final, hide the rest by default
-  const adviceCount = plan.unplanned.length + plan.blocked.length + plan.inspect.length + plan.watch.length + plan.excluded.length;
+  const adviceCount = plan.unplanned.length + plan.blocked.length + plan.inspect.length + plan.excluded.length;
 
   return (
     <div className="budget-page">
@@ -240,25 +233,25 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
               ) : (
                 <input type="date" className="bp-appt-date" value={raw.date || ''} onChange={(e) => updateSession(s.id, { date: e.target.value })} />
               )}
-              {!s.locked && (
-                <input
-                  type="number" className="bp-appt-override"
-                  placeholder={`${t('budget.projected')}: ${eur(s.money)}`}
-                  value={raw.money ?? ''} onChange={(e) => updateSession(s.id, { money: e.target.value })}
-                />
-              )}
               {s.locked ? (
                 <>
                   <button type="button" className="bp-link bp-unlock-btn" onClick={() => unlockSession(s)}>{t('budget.unlock')}</button>
-                  <button type="button" className="bp-appt-del" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑</button>
+                  <button type="button" className="bp-del-block" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑 {t('budget.deleteBlock')}</button>
                 </>
               ) : (
                 <>
                   <button type="button" className="bp-link bp-lock-btn" onClick={() => lockSession(s)}>🔒 {t('budget.lockSession')}</button>
-                  <button type="button" className="bp-appt-del" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑</button>
+                  <button type="button" className="bp-del-block" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑 {t('budget.deleteBlock')}</button>
                 </>
               )}
             </div>
+            {!s.locked && (
+              <input
+                type="number" className="bp-session-money"
+                placeholder={`${t('budget.projected')}: ${eur(s.money)}`}
+                value={raw.money ?? ''} onChange={(e) => updateSession(s.id, { money: e.target.value })}
+              />
+            )}
             {s.locked
               ? (raw.note ? <div className="bp-note-static">{raw.note}</div> : null)
               : (
@@ -302,7 +295,7 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                   {e.shortfall > 0 && (
                     <div className="bp-job-reason bp-warn">💰 {t('budget.sessionShort', { amount: eur(e.shortfall) })}</div>
                   )}
-                  {!s.locked && <JobCtl job={e.job} />}
+                  {!s.locked && <JobCtl job={e.job} sessionId={s.id} />}
                 </div>
               )))}
 
@@ -405,21 +398,8 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
         </div>
       )}
 
-      {/* ---- monitor / watch ---- */}
-      {plan.watch.length > 0 && (
-        <div className="card bp-section">
-          <h3 className="section-title">👁️ {t('budget.watch')}</h3>
-          {plan.watch.map((job) => (
-            <div key={job.id} className="bp-job bp-job-muted">
-              <div className="bp-job-top">
-                <span className="bp-job-title">{title(job)}</span>
-                <span className="bp-job-cost">{eur(job.cost)}</span>
-              </div>
-              <div className="bp-job-why">{whyLine(job)}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* monitor-only items are intentionally NOT shown on budget — they live on
+          the maintenance page; budget = spend planning, monitor = don't spend yet */}
 
       {/* ---- excluded by user ---- */}
       {plan.excluded.length > 0 && (

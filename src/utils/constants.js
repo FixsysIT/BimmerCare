@@ -132,7 +132,7 @@ export const REPLACEMENT_OK_VALID_FALLBACK_MONTHS = 24; // on-failure replaced w
 
 // Export version
 export const EXPORT_VERSION = '1.0';
-export const APP_VERSION = '1.1';
+export const APP_VERSION = '1.2';
 
 // Catalog version — bump when default items/metadata change, so existing
 // stored data can be merged up via Settings → "Catalogus bijwerken".

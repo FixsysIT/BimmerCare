@@ -46,7 +46,7 @@
 # Project brain — BimmerCare
 
 BMW F10 523i (N53, 2010) onderhoudsapp. Offline-first PWA, lokale data (localforage),
-geen server/account. Current release: **v1.1**.
+geen server/account. Current release: **v1.2**.
 
 ## Werkstijl (hard rules)
 

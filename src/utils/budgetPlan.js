@@ -183,11 +183,10 @@ function projectedMoney(date, settings, today) {
  * with a hint of the month it becomes affordable. Pinned jobs are forced into a
  * chosen session (shortfall flagged). No drag — placement is automatic.
  */
-function assignToSessions(jobs, settings, today, prefs) {
+function assignToSessions(jobs, settings, today, pinned) {
   const start = Number(settings.currentBudget) || 0;
   const monthly = Number(settings.monthlyContribution) || 0;
   const buffer = Number(settings.safetyBuffer) || 0;
-  const pinned = prefs.pinnedSession || {}; // jobId -> sessionId
 
   const sessions = (settings.budgetSessions || [])
     .slice()
@@ -264,7 +263,16 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
   const pinnedSession = prefs.pinnedSession || {};
   const costOverride = prefs.costOverride || {}; // jobId -> user price (incl. labour)
   const sessionIds = new Set((settings.budgetSessions || []).map((s) => s.id));
-  const isPinned = (id) => sessionIds.has(pinnedSession[id]); // pinned to a real session
+  // a locked session keeps its OWN snapshot of job ids (lockedJobs) separate from
+  // the user's pins, so unlocking never wipes a job the user pinned by hand (e.g.
+  // a manually-added NOx). Merge the snapshot into the effective pin map.
+  const lockedJobTo = new Map();
+  for (const s of settings.budgetSessions || []) {
+    if (s.locked) (s.lockedJobs || []).forEach((id) => lockedJobTo.set(id, s.id));
+  }
+  const mergedPinned = { ...pinnedSession };
+  for (const [id, sid] of lockedJobTo) if (mergedPinned[id] == null) mergedPinned[id] = sid;
+  const isPinned = (id) => sessionIds.has(mergedPinned[id]); // pinned to a real session
 
   const open = (itemsWithStatus || []).filter((i) => !i.isDisabled && itemUrgency(i) !== 'ok');
   let jobs = buildJobs(open);
@@ -299,7 +307,7 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
     j.reason = REASON.WATCH; watch.push(j); // monitor-only
   }
 
-  const { sessions, unplanned, totalCost } = assignToSessions(schedulable, settings, today, prefs);
+  const { sessions, unplanned, totalCost } = assignToSessions(schedulable, settings, today, mergedPinned);
 
   // Don't lose inspections: if one logically belongs with work already booked in
   // a session (shares a bundle), let it RIDE ALONG that visit — car's already

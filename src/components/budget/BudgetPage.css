@@ -176,6 +176,11 @@
 }
 .bp-session-name::placeholder { color: var(--text-muted); font-weight: 600; }
 .bp-session-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; margin-bottom: 0.4rem; }
+.bp-session-money {
+  display: block; width: 100%; margin: 0.4rem 0;
+  background: var(--bg-surface, #0d0f19); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 0.45rem 0.5rem; color: var(--text-primary, #fff); font-size: 0.9rem;
+}
 .bp-manual-toggle { margin: 0.45rem 0; }
 .bp-session-bar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .bp-session-bar .bp-appt-override { margin-left: auto; }
@@ -205,6 +210,7 @@
 }
 .bp-custom-cost { width: 80px; }
 .bp-reason-chip.r-custom { color: var(--m-blue, #4a90d9); background: rgba(46, 109, 180, 0.18); }
+.bp-pin-on { color: var(--m-blue, #4a90d9); font-weight: 700; }
 /* finalised (locked) session */
 .bp-month-locked { border-left-color: var(--status-green, #46c98b); background: rgba(70, 201, 139, 0.06); }
 .bp-locked-date { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem; }
@@ -215,6 +221,13 @@
 }
 .bp-lock-btn { margin-left: auto; }
 .bp-unlock-btn { margin-left: auto; }
+.bp-del-block {
+  display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.6rem; border-radius: 8px;
+  color: var(--status-red, #E2453B); background: rgba(226, 69, 59, 0.12);
+  border: 1px solid rgba(226, 69, 59, 0.4);
+}
+.bp-del-block:hover { background: rgba(226, 69, 59, 0.22); }
 .bp-note-static { font-size: 0.85rem; color: var(--text-muted); margin: 0.4rem 0; }
 .bp-advice-toggle {
   width: 100%; margin: 0.5rem 0 1rem; background: transparent;
