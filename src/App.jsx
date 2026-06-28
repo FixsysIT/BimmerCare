@@ -122,7 +122,7 @@ export default function App() {
             />
           } />
           <Route path="parts" element={
-            <PartsPage maintenanceItems={items} />
+            <PartsPage maintenanceItems={items} settings={settings} />
           } />
           <Route path="settings" element={
             <SettingsPage

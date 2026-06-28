@@ -14,7 +14,7 @@ import { setBundles } from '../../data/bundles';
 import { inspectionPackages } from '../../data/inspectionPackages';
 import { getDefaultItems } from '../../data/defaultItems';
 import { mergeDefaultItems } from '../../utils/mergeDefaults';
-import { CATALOG_VERSION } from '../../utils/constants';
+import { CATALOG_VERSION, LABOUR_RATE_EXCL_BTW } from '../../utils/constants';
 import { INTERVAL_TYPES, CATEGORIES } from '../../utils/constants';
 import './SettingsPage.css';
 
@@ -320,6 +320,23 @@ export default function SettingsPage({
         <button className="btn btn-secondary" onClick={toggleLang}>
           {i18n.language === 'en' ? '🇳🇱 Switch to Nederlands' : '🇬🇧 Switch to English'}
         </button>
+      </div>
+
+      {/* Arbeidstarief */}
+      <div className="card settings-section">
+        <h3 className="section-title">{t('settings.labourRate')}</h3>
+        <div className="form-group">
+          <label>{t('settings.labourRateLabel')}</label>
+          <input
+            type="number"
+            min="0"
+            step="5"
+            value={settings?.labourRateExclBtw ?? ''}
+            placeholder={String(LABOUR_RATE_EXCL_BTW)}
+            onChange={(e) => setSettings({ ...(settings || {}), labourRateExclBtw: e.target.value === '' ? null : Number(e.target.value) })}
+          />
+        </div>
+        <span className="toggle-desc">{t('settings.labourRateHint', { rate: LABOUR_RATE_EXCL_BTW })}</span>
       </div>
 
       {/* Data Management */}

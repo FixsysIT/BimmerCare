@@ -12,10 +12,11 @@ const shopUrl = {
   motointegrator: (nr) => `https://www.motointegrator.nl/producten/?phrase=${encodeURIComponent(nr)}`,
 };
 
-export default function PartsPage({ maintenanceItems }) {
+export default function PartsPage({ maintenanceItems, settings }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState('');
+  const labourRate = Number(settings?.labourRateExclBtw) > 0 ? Number(settings.labourRateExclBtw) : LABOUR_RATE_EXCL_BTW;
 
   const copyNumber = async (nr) => {
     if (await copyToClipboard(nr)) {
@@ -121,7 +122,7 @@ export default function PartsPage({ maintenanceItems }) {
                     <span className="part-label">{t('parts.labour')}</span>
                     <span className="part-value">{t('parts.labourValue', {
                       hours: part.labourHours.toLocaleString('nl-NL'),
-                      cost: Math.round(part.labourHours * LABOUR_RATE_EXCL_BTW),
+                      cost: Math.round(part.labourHours * labourRate),
                     })}</span>
                   </div>
                 )}
