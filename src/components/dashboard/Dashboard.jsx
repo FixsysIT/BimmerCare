@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, useReducedMotion } from 'framer-motion';
-import carPhoto from '../../assets/f10-hero.jpg';
+import carPhoto from '../../assets/f10-hero-airport.jpg';
 import HealthGauge from './HealthGauge';
 import MileageUpdate from './MileageUpdate';
 import UrgentItems from './UrgentItems';

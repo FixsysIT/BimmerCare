@@ -59,14 +59,18 @@ export default function HealthGauge({ counts = {}, onSelect }) {
     return { x1, y1, x2, y2, red, big, deg };
   });
 
-  // satellite readouts under the gauge — only the actionable buckets
+  // satellite readouts under the gauge: actionable buckets up top, the calm
+  // ones (watch / fine / no-data) on a quieter second row so they stay traceable
   const readouts = [
     { key: 'red', color: 'var(--status-red)' },
     { key: 'orange', color: 'var(--status-orange)' },
     { key: 'inspect', color: 'var(--status-inspect)' },
   ];
-  const monitor = counts.monitor || 0;
-  const grey = counts.grey || 0;
+  const calm = [
+    { key: 'green', color: 'var(--status-green)' },
+    { key: 'monitor', color: 'var(--status-monitor)' },
+    { key: 'grey', color: 'var(--status-grey)' },
+  ];
 
   return (
     <div className="gauge">
@@ -129,13 +133,18 @@ export default function HealthGauge({ counts = {}, onSelect }) {
         ))}
       </div>
 
-      {(monitor > 0 || grey > 0) && (
-        <p className="gauge-quiet">
-          {monitor > 0 && <button type="button" className="gauge-quiet-link" onClick={() => onSelect?.('monitor')}>{monitor} {t('statusLabel.monitor')}</button>}
-          {monitor > 0 && grey > 0 && <span className="gauge-quiet-sep">·</span>}
-          {grey > 0 && <button type="button" className="gauge-quiet-link" onClick={() => onSelect?.('grey')}>{grey} {t('statusLabel.grey')}</button>}
-        </p>
-      )}
+      <div className="gauge-readouts gauge-readouts-calm">
+        {calm.map((r) => (
+          <button
+            key={r.key} type="button" className="gauge-readout gauge-readout-sm"
+            onClick={() => onSelect?.(r.key)} disabled={(counts[r.key] || 0) === 0}
+          >
+            <span className="gauge-readout-dot" style={{ background: r.color }} />
+            <span className="gauge-readout-num">{counts[r.key] || 0}</span>
+            <span className="gauge-readout-label">{t(`statusLabel.${r.key}`)}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
