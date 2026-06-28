@@ -45,7 +45,9 @@
       "add": "Toevoegen",
       "placeholder": "Idee, bv. 'misschien eerst banden ipv uitlijnen'",
       "empty": "Nog geen ideeën. Noteer hier losse gedachten voor later.",
-      "remove": "Verwijderen"
+      "remove": "Verwijderen",
+      "restore": "Terug naar plan",
+      "restoreHint": "Bouw dit blok opnieuw op als inplanmoment"
     },
     "report": {
       "title": "BimmerCare — budgetplan voor advies",

@@ -379,24 +379,55 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
   const removeIdea = (id) => set('budgetIdeas', ideas.filter((i) => i.id !== id));
   // park a whole block as an idea: snapshot its name + jobs to the ideas list,
   // then remove the session (unpinning its jobs back to available, same as delete).
+  // The snapshot carries enough structure (session fields + pinned job ids + the
+  // custom lines that lived in it) to rebuild the block later via ideaToSession.
   const sessionToIdea = (s) => {
     const raw = rawById(s.id);
     const name = raw.name || (s.date ? dateLabel(s.date) : t('budget.undated'));
     const jobs = s.entries.map((e) => title(e.job)).join(' · ');
     const text = jobs ? `${name}: ${jobs}` : name;
     const pin = { ...(prefs.pinnedSession || {}) };
+    const jobIds = [];
     const droppedCustom = [];
+    const allCustom = settings.budgetCustom || [];
     Object.keys(pin).forEach((jid) => {
-      if (pin[jid] === s.id) { delete pin[jid]; if (jid.startsWith('custom:')) droppedCustom.push(jid.slice(7)); }
+      if (pin[jid] === s.id) {
+        jobIds.push(jid);
+        delete pin[jid];
+        if (jid.startsWith('custom:')) droppedCustom.push(jid.slice(7));
+      }
     });
+    const snapshot = {
+      name: raw.name || '', date: raw.date || '', money: raw.money || '', note: raw.note || '', manual: !!raw.manual,
+      jobIds,
+      custom: allCustom.filter((c) => droppedCustom.includes(c.id)),
+    };
     setSettings({
       ...settings,
-      budgetIdeas: [...ideas, { id: newId(), text, createdAt: new Date().toISOString() }],
+      budgetIdeas: [...ideas, { id: newId(), text, createdAt: new Date().toISOString(), snapshot }],
       budgetSessions: sessions.filter((x) => x.id !== s.id),
-      budgetCustom: (settings.budgetCustom || []).filter((c) => !droppedCustom.includes(c.id)),
+      budgetCustom: allCustom.filter((c) => !droppedCustom.includes(c.id)),
       budgetPrefs: { ...prefs, pinnedSession: pin },
     });
     setIdeasOpen(true);
+  };
+  // restore a parked idea back into a real planning session: rebuild the block,
+  // re-add its custom lines, re-pin its jobs, then drop the idea.
+  const ideaToSession = (idea) => {
+    const snap = idea.snapshot;
+    if (!snap) return;
+    const sid = newId();
+    const pin = { ...(prefs.pinnedSession || {}) };
+    (snap.jobIds || []).forEach((jid) => { pin[jid] = sid; });
+    const existingCustom = settings.budgetCustom || [];
+    const customToAdd = (snap.custom || []).filter((c) => !existingCustom.some((e) => e.id === c.id));
+    setSettings({
+      ...settings,
+      budgetSessions: [...sessions, { id: sid, name: snap.name, date: snap.date, money: snap.money, note: snap.note, manual: snap.manual }],
+      budgetCustom: [...existingCustom, ...customToAdd],
+      budgetIdeas: ideas.filter((i) => i.id !== idea.id),
+      budgetPrefs: { ...prefs, pinnedSession: pin },
+    });
   };
 
   // print an A4 work order for the mechanic (opens a clean print window)
@@ -723,6 +754,9 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                 <div key={i.id} className="bp-idea-row">
                   <span className="bp-idea-text">{i.text}</span>
                   <span className="bp-idea-date">{new Date(i.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+                  {i.snapshot && (
+                    <button type="button" className="bp-link" onClick={() => ideaToSession(i)} title={t('budget.ideas.restoreHint')}>↩ {t('budget.ideas.restore')}</button>
+                  )}
                   <button type="button" className="bp-idea-del" onClick={() => removeIdea(i.id)} title={t('budget.ideas.remove')}>🗑</button>
                 </div>
               ))}

@@ -12,13 +12,15 @@ import { useMaintenance } from './hooks/useMaintenance';
 import { useStatusEvents } from './hooks/useStatusEvents';
 import { useAutoBackup } from './hooks/useAutoBackup';
 import { useStorage } from './hooks/useStorage';
-import { STORAGE_KEYS } from './utils/constants';
+import { STORAGE_KEYS, CATALOG_VERSION } from './utils/constants';
 import { getBundles, setBundles } from './data/bundles';
+import { getDefaultItems } from './data/defaultItems';
+import { mergeDefaultItems } from './utils/mergeDefaults';
 import './i18n';
 
 export default function App() {
   const { vehicle, setVehicle, loading: vehicleLoading, initVehicle, updateMileage, correctMileage, updateProfile } = useVehicle();
-  const [settings, setSettings] = useStorage(STORAGE_KEYS.SETTINGS, { autoBackupEnabled: false });
+  const [settings, setSettings, settingsLoading] = useStorage(STORAGE_KEYS.SETTINGS, { autoBackupEnabled: false });
 
   // Activate the user-edited bundle set (if any) before any cluster lookup
   // renders. Idempotent + ref-guarded, so safe to run during render.
@@ -40,6 +42,18 @@ export default function App() {
   useEffect(() => {
     if (!itemsLoading && !items.length && vehicle?.vehicleId) initItems();
   }, [itemsLoading, items, vehicle, initItems]);
+
+  // Auto-apply the non-destructive catalog merge when a new CATALOG_VERSION ships.
+  // Single-user app, merge only adds missing items + metadata (never touches
+  // history/status/user edits), so no manual "Catalogus bijwerken" step is needed.
+  useEffect(() => {
+    if (itemsLoading || settingsLoading || !items.length || !vehicle?.vehicleId) return;
+    if (settings?.catalogVersionApplied === CATALOG_VERSION) return;
+    const defaults = getDefaultItems(vehicle.vehicleId);
+    const res = mergeDefaultItems(items, defaults);
+    setItems(res.items);
+    setSettings({ ...settings, catalogVersionApplied: CATALOG_VERSION });
+  }, [itemsLoading, settingsLoading, items, vehicle, settings, setItems, setSettings]);
 
   const { lastBackup, shouldRemind, trackChange, exportBackup } = useAutoBackup(vehicle, items, settings);
   const { events: statusEvents, acknowledgeItem } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);

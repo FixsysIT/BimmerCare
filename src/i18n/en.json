@@ -45,7 +45,9 @@
       "add": "Add",
       "placeholder": "Idea, e.g. 'maybe tyres first instead of alignment'",
       "empty": "No ideas yet. Jot down loose thoughts for later here.",
-      "remove": "Remove"
+      "remove": "Remove",
+      "restore": "Back to plan",
+      "restoreHint": "Rebuild this block as a planning session"
     },
     "report": {
       "title": "BimmerCare — budget plan for advice",
