@@ -81,6 +81,60 @@
   text-decoration: underline;
 }
 
+/* OEM/alt nummer = 1-klik kopiëren */
+.part-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.part-copy:hover {
+  border-color: var(--bmw-blue-light);
+}
+
+.part-copy-icon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Koop-knoppen: Winparts / Motointegrator / BMWFans */
+.part-shops {
+  flex-wrap: wrap;
+}
+
+.part-shop {
+  color: var(--bmw-blue-light);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--bmw-blue-light);
+  border-radius: var(--radius-sm);
+}
+
+.part-shop:hover {
+  background: var(--bmw-blue-light);
+  color: #fff;
+}
+
+.part-shop-muted {
+  color: var(--text-muted);
+  border-color: var(--border, rgba(255, 255, 255, 0.12));
+  font-weight: 500;
+}
+
+.part-shop-muted:hover {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
 .part-note {
   font-size: 0.75rem;
   color: var(--text-muted);

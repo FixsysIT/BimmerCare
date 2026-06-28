@@ -2,11 +2,27 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CATEGORY_ICONS } from '../../utils/constants';
 import { tItem, tPartName } from '../../utils/translate';
+import { copyToClipboard } from '../../utils/dataExport';
 import './PartsPage.css';
+
+// Shop deep-links: prefill the search with the part number so Saddik can order himself.
+// Verified June 2026: both params resolve to a real result/product page.
+const shopUrl = {
+  winparts: (nr) => `https://www.winparts.nl/zoekresultaten?q=${encodeURIComponent(nr)}`,
+  motointegrator: (nr) => `https://www.motointegrator.nl/producten/?phrase=${encodeURIComponent(nr)}`,
+};
 
 export default function PartsPage({ maintenanceItems }) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [copied, setCopied] = useState('');
+
+  const copyNumber = async (nr) => {
+    if (await copyToClipboard(nr)) {
+      setCopied(nr);
+      setTimeout(() => setCopied((c) => (c === nr ? '' : c)), 1500);
+    }
+  };
 
   const partsData = useMemo(() => {
     const results = [];
@@ -44,7 +60,9 @@ export default function PartsPage({ maintenanceItems }) {
         <p className="empty-state">{t('parts.noParts')}</p>
       ) : (
         <div className="parts-list">
-          {partsData.map((part, i) => (
+          {partsData.map((part, i) => {
+            const buyNr = part.oemNumber || part.altNumber;
+            return (
             <div key={`${part.oemNumber}-${i}`} className="card part-card">
               <div className="part-header">
                 <span className="part-icon">{CATEGORY_ICONS[part.category] || '⚙️'}</span>
@@ -61,13 +79,33 @@ export default function PartsPage({ maintenanceItems }) {
                 {part.oemNumber && (
                   <div className="part-row">
                     <span className="part-label">{t('parts.oemNumber')}</span>
-                    <span className="part-value part-oem">{part.oemNumber}</span>
+                    <button
+                      type="button"
+                      className="part-value part-oem part-copy"
+                      onClick={() => copyNumber(part.oemNumber)}
+                      title={t('parts.copyHint')}
+                    >
+                      <span>{part.oemNumber}</span>
+                      <span className="part-copy-icon">{copied === part.oemNumber ? `✓ ${t('parts.copied')}` : '📋'}</span>
+                    </button>
                   </div>
                 )}
                 {part.altBrand && (
                   <div className="part-row">
                     <span className="part-label">{t('parts.alternative')}</span>
-                    <span className="part-value">{part.altBrand} {part.altNumber}</span>
+                    {part.altNumber ? (
+                      <button
+                        type="button"
+                        className="part-value part-copy"
+                        onClick={() => copyNumber(part.altNumber)}
+                        title={t('parts.copyHint')}
+                      >
+                        <span>{part.altBrand} {part.altNumber}</span>
+                        <span className="part-copy-icon">{copied === part.altNumber ? `✓ ${t('parts.copied')}` : '📋'}</span>
+                      </button>
+                    ) : (
+                      <span className="part-value">{part.altBrand}</span>
+                    )}
                   </div>
                 )}
                 {part.estimatedPrice > 0 && (
@@ -76,11 +114,14 @@ export default function PartsPage({ maintenanceItems }) {
                     <span className="part-value">€{part.estimatedPrice.toFixed(2)}</span>
                   </div>
                 )}
-                {part.bmwfansUrl && (
-                  <div className="part-row">
-                    <a href={part.bmwfansUrl} target="_blank" rel="noopener noreferrer" className="part-link">
-                      🔗 {t('parts.bmwfansLink')}
-                    </a>
+                {buyNr && (
+                  <div className="part-row part-shops">
+                    <span className="part-label">{t('parts.buy')}</span>
+                    <a href={shopUrl.winparts(buyNr)} target="_blank" rel="noopener noreferrer" className="part-shop">Winparts</a>
+                    <a href={shopUrl.motointegrator(buyNr)} target="_blank" rel="noopener noreferrer" className="part-shop">Motointegrator</a>
+                    {part.bmwfansUrl && (
+                      <a href={part.bmwfansUrl} target="_blank" rel="noopener noreferrer" className="part-shop part-shop-muted">BMWFans</a>
+                    )}
                   </div>
                 )}
               </div>
@@ -88,7 +129,8 @@ export default function PartsPage({ maintenanceItems }) {
                 <p className="part-note">{part.sourceNote}</p>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
