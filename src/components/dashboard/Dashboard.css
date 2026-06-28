@@ -12,11 +12,11 @@
   position: relative;
   overflow: hidden;
   padding: 0;
-  min-height: 800px;
+  min-height: 400px;
   background-color: #04040A;
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center bottom;
+  background-position: center 80%;
   border-color: var(--border-strong);
 }
 
