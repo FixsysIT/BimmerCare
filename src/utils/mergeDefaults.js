@@ -43,6 +43,14 @@ export function mergeDefaultItems(existing, defaults) {
       changed = true;
     }
 
+    // Special migration: NOx Sensor to 250k (NOXEM 402)
+    if (def && next.name === 'NOx Sensor' && next.replacementOkValidKm === 100000) {
+      next.replacementOkValidKm = 250000;
+      next.parts = def.parts;
+      next.sourceNote = def.sourceNote;
+      changed = true;
+    }
+
     if (changed) { metadataFilled++; filledNames.push(item.name); next.updatedAt = new Date().toISOString(); }
     return next;
   });

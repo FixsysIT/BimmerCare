@@ -1,6 +1,7 @@
 import { EXPORT_VERSION, APP_VERSION, CATALOG_VERSION, DIAGNOSIS_OK_VALID_MONTHS } from './constants';
 import { tItem, tCategory } from './translate';
 import { calculateStatus, lastOfType } from './statusCalculator';
+import { formatMaintenanceStatus } from './statusFormat';
 import { getDefaultItems } from '../data/defaultItems';
 import { missingDefaultNames, itemsMissingLayer } from './mergeDefaults';
 import { getBundles, ROLES } from '../data/bundles';
@@ -489,6 +490,216 @@ export function generateChecklist(packages, vehicle) {
     return `## ${p.name}\n${lines.join('\n')}`;
   });
   return head.join('\n') + '\n' + body.join('\n\n') + '\n';
+}
+
+/* ── Budget plan → readable advice report (for pasting into ChatGPT) ──────
+   Turns a built budget plan (from buildBudgetPlan) into a compact markdown
+   brief: what's planned per garage visit + everything still open
+   (monitor/inspect/blocked/unplanned), with a question header asking for a
+   second opinion on bundling vs a separate appointment. Read-only — never
+   touches state. `t` resolves item labels + section text; `km`/`today` give
+   per-item status context. */
+export function generateBudgetReport(plan, settings, vehicle, t, today = new Date()) {
+  const km = vehicle?.currentMileage ?? null;
+  const eur = (n) => `€${Math.round(n || 0).toLocaleString('nl-NL')}`;
+  const L = (key, opts) => t(`budget.report.${key}`, opts);
+  const rawSession = (id) => (settings.budgetSessions || []).find((s) => s.id === id) || {};
+  const dateLabel = (d) => (d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : L('noDate'));
+
+  const jobTitle = (job) => (job.title ? (job.title.nl || job.title.en) : tItem(t, job.memberNames[0]));
+  const memberLine = (job) => (job.members?.length > 1 || job.memberNames?.length > 1
+    ? job.memberNames.map((n) => tItem(t, n)).join(' · ') : null);
+  const why = (job) => {
+    if (job.members?.length === 1 && km != null) return formatMaintenanceStatus(job.members[0], km, today, t);
+    return '';
+  };
+  const jobNotes = settings.budgetPrefs?.jobNote || {};
+  // one bullet for a job; `note` overrides the price suffix (e.g. "€X indien vervangen")
+  const bullet = (job, { priceNote, tag } = {}) => {
+    const head = tag ? `${tag} ` : '';
+    const price = priceNote || eur(job.cost);
+    const w = why(job);
+    const members = memberLine(job);
+    const ext = jobNotes[job.id]; // free "+ sensor" inspection extension
+    let line = `- ${head}${jobTitle(job)}${ext ? ` + ${ext}` : ''} — ${price}`;
+    if (w) line += ` — ${w}`;
+    if (members) line += `\n  (${members})`;
+    return line;
+  };
+
+  const out = [];
+  out.push(`# ${L('title')}`);
+  if (vehicle) out.push(`${vehicle.model} · ${vehicle.engine} · ${vehicle.year} · ${(km || 0).toLocaleString('nl-NL')} km`);
+  out.push(`${L('budgetNow')}: ${eur(plan.summary.currentBudget)} · ${L('monthly')}: ${eur(plan.summary.monthly)} · ${L('buffer')}: ${eur(plan.summary.safetyBuffer)}`);
+  out.push('');
+  out.push(`> ${L('question')}`);
+  out.push('');
+
+  // only finalised (locked) blocks go in the report — not draft sessions,
+  // advisory buckets or ideas; the user copies what he's actually committed to
+  const planned = plan.sessions.filter((s) => s.locked && s.entries.length > 0);
+  if (planned.length) {
+    out.push(`## ${L('plannedSessions')}`);
+    for (const s of planned) {
+      const raw = rawSession(s.id);
+      out.push('');
+      out.push(`### ${raw.name || dateLabel(s.date)}${raw.name && s.date ? ` — ${dateLabel(s.date)}` : ''}`);
+      out.push(L('sessionMoney', { have: eur(s.money), spent: eur(s.cost), left: eur(s.left) }));
+      const booked = s.entries.filter((e) => !e.rider);
+      const riders = s.entries.filter((e) => e.rider);
+      if (booked.length) {
+        out.push(L('booked') + ':');
+        booked.forEach((e) => out.push(bullet(e.job)));
+      }
+      if (riders.length) {
+        out.push(L('alongChecks') + ':');
+        riders.forEach((e) => out.push(bullet(e.job, { tag: '🔍', priceNote: L('ifReplaced', { amount: eur(e.job.cost) }) })));
+      }
+    }
+    out.push('');
+  }
+
+  // advisory buckets (unplanned/blocked/inspect/monitor) and ideas are
+  // intentionally left out — the report mirrors only what's locked in.
+
+  return out.join('\n').trim() + '\n';
+}
+
+/* ── Printable A4 work order for the mechanic ────────────────────────────
+   One garage visit → a clean, self-contained HTML page (own print CSS) the
+   owner hands to the mechanic: "this is what I want done this appointment".
+   No app branding — it reads as a personal letter. A prominent vehicle header
+   (type · engine · year · plate · VIN · km) lets the garage order parts by VIN;
+   NO part numbers (unverified OEM data stays in-app) and NO prices (the garage
+   quotes). Booked jobs → "uit te voeren"; ride-along + check-only jobs →
+   "controleren / beoordelen". Closes with: only the above is approved, extra
+   work must be agreed first. */
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+export function buildWorkOrderHTML(session, rawSession, vehicle, t, tName, _today = new Date(), notes = {}) {
+  const L = (k, o) => t(`budget.workorder.${k}`, o);
+  const dateNL = (d) => (d ? new Date(d).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) : L('noDate'));
+
+  const jobTitle = (job) => (job.title ? (job.title.nl || job.title.en) : tName(job.memberNames[0]));
+
+  const row = (job, todoLabel, isCheckSection) => {
+    const note = job.check ? notes[job.id] : null; // only inspections can have "+ sensor" extensions
+    return `<tr>
+      <td class="wo-check"><div class="wo-box"></div></td>
+      <td class="wo-do">${esc(todoLabel)}</td>
+      <td>
+        <div class="wo-name">${esc(jobTitle(job))}${note ? ` <span class="wo-note">+ ${esc(note)}</span>` : ''}</div>
+        ${isCheckSection ? `<div class="wo-mech-space"></div>` : ''}
+      </td>
+    </tr>`;
+  };
+
+  // booked replacements vs things to only assess. A custom task flagged
+  // check-only (job.check) moves to the assess section even though it's booked.
+  const booked = session.entries.filter((e) => !e.rider && !e.job.check);
+  const checks = session.entries.filter((e) => e.rider || e.job.check);
+  const todoFor = (job) => (job.urgency === 'inspection_needed' ? L('todoInspect') : L('todoReplace'));
+
+  const doRows = booked.map((e) => row(e.job, todoFor(e.job), false)).join('');
+  const checkRows = checks.map((e) => row(e.job, L('todoCheck'), true)).join('');
+
+  const v = vehicle || {};
+  const model = v.model || 'BMW';
+  const sub = [v.engine, v.year].filter(Boolean).join(' · ');
+  const plate = v.plate ? esc(v.plate) : '____________';
+  const vin = v.vin ? esc(v.vin) : '________________________';
+  const km = v.currentMileage ? `${Number(v.currentMileage).toLocaleString('nl-NL')} km` : '';
+  const owner = v.owner || '';
+  const phone = v.phone || '';
+
+  return `<!doctype html><html lang="nl"><head><meta charset="utf-8">
+<title>${esc(model)} — ${esc(session.date ? dateNL(session.date) : L('noDate'))}</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; color: #111; margin: 0; padding: 15mm 15mm; font-size: 13px; line-height: 1.5; }
+  .wo-head { border-bottom: 3px solid #0066b1; padding-bottom: 12px; margin-bottom: 16px; }
+  .wo-car { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .wo-sub { font-size: 13px; color: #555; margin-top: 4px; }
+  .wo-ids { display: flex; gap: 32px; margin-top: 12px; flex-wrap: wrap; }
+  .wo-id { font-size: 12px; }
+  .wo-id .k { display: block; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px; color: #888; margin-bottom: 2px; }
+  .wo-id .v { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 600; font-size: 13px; letter-spacing: 0.02em; }
+  .wo-id.vin .v { font-size: 15px; color: #0066b1; }
+  .wo-appt { margin: 8px 0 16px; font-size: 14px; color: #0066b1; }
+  .wo-appt strong { font-weight: 700; color: #0066b1; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #0066b1; margin: 20px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { vertical-align: middle; padding: 6px 8px; border-bottom: 1px solid #eee; }
+  .wo-check { width: 34px; padding-left: 4px; }
+  .wo-box { width: 16px; height: 16px; border: 2px solid #ccc; border-radius: 4px; background: #fff; }
+  .wo-do { width: 28%; font-weight: 600; color: #444; }
+  .wo-name { font-weight: 600; font-size: 13px; }
+  .wo-note { color: #333; font-weight: 400; font-style: italic; }
+  .wo-members { color: #555; font-size: 11px; }
+  .wo-mech-space { height: 40px; }
+  .wo-sessnote { margin-top: 16px; font-size: 13px; background: #fdfbf7; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #eab308; }
+  
+  .wo-footer-block { margin-top: 30px; padding-top: 16px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: flex-end; }
+  .wo-contact-info { }
+  .wo-owner { font-weight: 700; font-size: 14px; color: #0066b1; margin-bottom: 2px; }
+  .wo-contact { font-size: 12px; color: #555; line-height: 1.5; }
+  .wo-meta { text-align: right; font-size: 11px; color: #888; }
+  .wo-meta strong { color: #555; font-weight: 600; }
+  .wo-empty { color: #888; font-style: italic; padding: 12px 8px; }
+</style></head>
+<body onload="window.print()">
+  <div class="wo-head">
+    <div class="wo-car">${esc(model)}</div>
+    ${sub ? `<div class="wo-sub">${esc(sub)}${km ? ` · ${esc(km)}` : ''}</div>` : (km ? `<div class="wo-sub">${esc(km)}</div>` : '')}
+    <div class="wo-ids">
+      <div class="wo-id"><span class="k">${esc(L('plate'))}</span><span class="v">${plate}</span></div>
+      <div class="wo-id vin"><span class="k">${esc(L('vin'))}</span><span class="v">${vin}</span></div>
+    </div>
+  </div>
+
+  <div class="wo-appt"><strong>${esc(L('date'))}:</strong> ${esc(session.date ? dateNL(session.date) : L('noDate'))}</div>
+
+  <h2>${esc(L('doSection'))}</h2>
+  ${doRows ? `<table>${doRows}</table>` : `<div class="wo-empty">${esc(L('emptyDo'))}</div>`}
+
+  ${checkRows ? `<h2>${esc(L('checkSection'))}</h2><table>${checkRows}</table>` : ''}
+
+  ${rawSession?.note ? `<div class="wo-sessnote"><strong>${esc(L('remark'))}:</strong><br> ${esc(rawSession.note)}</div>` : ''}
+
+  <div class="wo-footer-block">
+    <div class="wo-contact-info">
+      ${owner ? `<div class="wo-owner">${esc(owner)}</div>` : ''}
+      ${phone ? `<div class="wo-contact">${esc(phone)}<br><em>${esc(L('callApproval'))}</em></div>` : ''}
+    </div>
+  </div>
+</body></html>`;
+}
+
+/* Copy text to the clipboard (with a textarea fallback for older browsers). */
+export async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export function downloadText(text, filename, mime = 'text/markdown;charset=utf-8') {

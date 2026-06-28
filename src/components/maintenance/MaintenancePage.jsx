@@ -29,6 +29,7 @@ export default function MaintenancePage({
   updateHistoryEntry,
   deleteHistoryEntry,
   toggleDisable,
+  resetTimer,
   allItems,
 }) {
   const { t } = useTranslation();
@@ -156,6 +157,7 @@ export default function MaintenancePage({
       reminders={getReminders(item)}
       currentMileage={currentMileage}
       onSetBaseline={(state) => updateItem(item.id, { baselineState: state })}
+      onResetTimer={() => resetTimer(item.id)}
     />
   );
 

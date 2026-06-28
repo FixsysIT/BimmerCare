@@ -34,6 +34,7 @@ function makeCustomJob(c) {
   return {
     id: `custom:${c.id}`, title: { nl: name, en: name }, members: [], memberNames: [name],
     urgency: 'due_soon', cost: Number(c.cost) || 0, reason: REASON.CUSTOM, custom: true,
+    check: !!c.check, // check-only task → assess section on the work order, not "replace"
     blocked: false, blockReasons: [], diagnosisGated: false, cardWarnings: [], reasonKey: null,
   };
 }
@@ -165,13 +166,16 @@ function comparePriority(a, b) {
 const monthDate = (today, m) => addMonths(today, m);
 const MAX_MONTHS = 120;
 
-/** Projected pot at a future date = current budget + saved-up inleg − buffer. */
+/** Projected pot at a future date = current budget + saved-up inleg − buffer.
+   Deposits are counted from the CURRENT month up to (and including) the session
+   month, so a visit one calendar month out already includes this month's + next
+   month's saving (current budget is "what I have now", before this month's inleg). */
 function projectedMoney(date, settings, today) {
   const start = Number(settings.currentBudget) || 0;
   const monthly = Number(settings.monthlyContribution) || 0;
   const buffer = Number(settings.safetyBuffer) || 0;
-  const monthsUntil = date ? Math.max(0, differenceInCalendarMonths(new Date(date), today)) : 0;
-  return { monthsUntil, money: Math.max(0, start + monthly * monthsUntil - buffer) };
+  const deposits = date ? Math.max(0, differenceInCalendarMonths(new Date(date), today) + 1) : 0;
+  return { monthsUntil: deposits, money: Math.max(0, start + monthly * deposits - buffer) };
 }
 
 /**
@@ -234,6 +238,10 @@ function assignToSessions(jobs, settings, today, pinned) {
   sessions.forEach((s, i) => {
     s.left = Math.round(avail(i));
     s.cost = s.spent;
+    // pot SHOWN to the user = realistic money going into THIS visit: the savings
+    // curve minus what earlier (projected) visits already committed. Typed sessions
+    // are islands (priorSpend skips them), so their pot is exactly what was typed.
+    s.pot = Math.round(s.overridden ? s.money : Math.max(0, s.money - priorSpend(i)));
     s.entries.sort((a, b) => comparePriority(a.job, b.job));
   });
 
@@ -306,7 +314,10 @@ export function buildBudgetPlan(itemsWithStatus, settings = {}, today = new Date
       blocked.push(j);
       continue;
     }
-    if (forced) j.forced = true; // bypass the gate/block, plan it anyway
+    if (forced) {
+      j.forced = true; // bypass the gate/block, plan it anyway
+      if (j.urgency === 'inspection_needed' || j.urgency === 'monitor') j.urgency = 'replace_needed';
+    }
     if (forced || SCHEDULABLE.has(j.urgency)) { schedulable.push(j); continue; }
     if (j.urgency === 'inspection_needed') { j.reason = REASON.INSPECT; inspect.push(j); continue; }
     j.reason = REASON.WATCH; watch.push(j); // monitor-only

@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { Reorder as MotionReorder, useDragControls } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { buildBudgetPlan, REASON } from '../../utils/budgetPlan';
 import { formatMaintenanceStatus } from '../../utils/statusFormat';
+import { generateBudgetReport, copyToClipboard, buildWorkOrderHTML } from '../../utils/dataExport';
 import { tItem } from '../../utils/translate';
 import './BudgetPage.css';
 
@@ -17,7 +19,7 @@ const REASON_CLS = {
 const newId = () => (globalThis.crypto?.randomUUID?.() || String(Date.now() + Math.random()));
 const ymd = (d) => d.toISOString().slice(0, 10);
 
-export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings, vehicle }) {
+export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings, vehicle, registerMaintenance }) {
   const { t, i18n } = useTranslation();
   const km = vehicle?.currentMileage;
 
@@ -51,6 +53,34 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
       budgetPrefs: { ...prefs, pinnedSession: pin },
     });
   };
+
+  const finishSession = (s) => {
+    if (!registerMaintenance) return;
+    const raw = rawById(s.id);
+    const date = raw.date || new Date().toISOString();
+    const mileage = vehicle?.currentMileage || 0;
+    
+    s.entries.forEach((e) => {
+      if (e.job.custom) return;
+      
+      // A job can have multiple members (e.g. bundles).
+      // Record the total cost on the first member, and 0 on the rest to reset their timers.
+      (e.job.members || []).forEach((memberItem, index) => {
+        registerMaintenance(memberItem.id, {
+          type: 'service',
+          result: e.job.check ? 'checked' : 'replaced',
+          cost: index === 0 ? e.job.cost : 0,
+          date,
+          mileage,
+          garage: 'BimmerCare',
+          notes: raw.note || ''
+        });
+      });
+    });
+    
+    removeSession(s.id);
+  };
+
   // finalise a session: freeze its jobs (pin booked ones, snapshot riders) so the
   // engine never reshuffles it; it shows read-only with a "definitief" badge.
   // snapshot the session's jobs (separate from the user's own pins, so unlock
@@ -70,6 +100,28 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
     if (value == null) delete m[id]; else m[id] = value;
     setPrefs({ [key]: m });
   };
+  // ---- manual job order within a session (display-only, engine untouched) ----
+  // prefs.jobOrder = { [sessionId]: [jobId, ...] }.
+  const orderEntries = (sid, entries) => {
+    const ord = (prefs.jobOrder || {})[sid];
+    if (!ord) return entries;
+    const idx = (id) => { const i = ord.indexOf(id); return i === -1 ? Infinity : i; };
+    return [...entries].sort((a, b) => idx(a.job.id) - idx(b.job.id)); // stable: unknown → end
+  };
+  const reorderMove = (sid, orderIds, id, dir) => {
+    const ids = [...orderIds]; const i = ids.indexOf(id); const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    setMap('jobOrder', sid, ids);
+  };
+  const handleReorder = (sid, newOrderIds) => {
+    // newOrderIds contains just the subset of IDs that were reordered (e.g. actions or checks).
+    // We merge this with the existing jobOrder so we don't wipe out the other group's order.
+    const currentOrd = (prefs.jobOrder || {})[sid] || [];
+    const merged = [...new Set([...newOrderIds, ...currentOrd])];
+    setMap('jobOrder', sid, merged);
+  };
+
   const exclude = (id) => setMap('excluded', id, true);
   const restore = (id) => setMap('excluded', id, null);
   const pinTo = (id, sessionId) => setMap('pinnedSession', id, sessionId || null);
@@ -102,10 +154,15 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
     const cid = newId();
     setSettings({
       ...settings,
-      budgetCustom: [...(settings.budgetCustom || []), { id: cid, name: d.name.trim(), cost: Number(d.cost) || 0 }],
+      budgetCustom: [...(settings.budgetCustom || []), { id: cid, name: d.name.trim(), cost: Number(d.cost) || 0, check: !!d.check }],
       budgetPrefs: { ...prefs, pinnedSession: { ...(prefs.pinnedSession || {}), [`custom:${cid}`]: sid } },
     });
-    setDraft((dd) => ({ ...dd, [sid]: { name: '', cost: '' } }));
+    setDraft((dd) => ({ ...dd, [sid]: { name: '', cost: '', check: false } }));
+  };
+  // flip a custom task between "vervangen" (booked) and "alleen controleren" (assess)
+  const toggleCustomCheck = (fullId) => {
+    const cid = fullId.slice(7);
+    set('budgetCustom', (settings.budgetCustom || []).map((c) => (c.id === cid ? { ...c, check: !c.check } : c)));
   };
   const removeCustom = (fullId) => {
     const cid = fullId.slice(7);
@@ -137,6 +194,7 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
       )}
       <div className="bp-reasons">
         <span className={`bp-reason-chip ${REASON_CLS[job.reason] || ''}`}>{t(`budget.reason.${job.reason}`)}</span>
+        {job.check && <span className="bp-reason-chip r-monitor">🔍 {t('budget.customCheckChip')}</span>}
         {job.forced && <span className="bp-reason-chip r-manual">{t('budget.forced')}</span>}
       </div>
       <div className="bp-job-why">{whyLine(job)}</div>
@@ -152,11 +210,25 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
     </>
   );
 
+  // drag handle (desktop) + ▲▼ buttons (touch) to set a logical order in a session
+  const JobReorderControls = ({ sid, id, orderIds, controls }) => (orderIds.length > 1 ? (
+    <span className="bp-reorder">
+      <span
+        className="bp-drag-handle bp-drag-motion" title={t('budget.dragHint')}
+        onPointerDown={(e) => controls.start(e)}
+        style={{ touchAction: 'none' }}
+      >⠿</span>
+      <button type="button" className="bp-ord-btn" onClick={() => reorderMove(sid, orderIds, id, -1)} disabled={orderIds[0] === id} aria-label={t('budget.moveUp')}>▲</button>
+      <button type="button" className="bp-ord-btn" onClick={() => reorderMove(sid, orderIds, id, 1)} disabled={orderIds[orderIds.length - 1] === id} aria-label={t('budget.moveDown')}>▼</button>
+    </span>
+  ) : null);
+
   // move-to-session dropdown + price edit + exclude, shown under a job.
   // sessionId set → show a "Vastzetten" toggle that pins this job to the session
   // so it survives budget changes / reshuffles (won't get dropped).
-  const JobCtl = ({ job, extra, sessionId }) => (
+  const JobCtl = ({ job, extra, sessionId, orderIds, controls }) => (
     <div className="bp-job-ctl">
+      {sessionId && orderIds && <JobReorderControls sid={sessionId} id={job.id} orderIds={orderIds} controls={controls} />}
       {sessionId && ((prefs.pinnedSession || {})[job.id] === sessionId
         ? <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(job.id, null)}>📌 {t('budget.pinnedHere')}</button>
         : <button type="button" className="bp-link" onClick={() => pinTo(job.id, sessionId)}>📌 {t('budget.pinHere')}</button>)}
@@ -174,20 +246,200 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
       </label>
       {job.costEdited && !job.custom && <button type="button" className="bp-link" onClick={() => setCost(job.id, '')}>{t('budget.resetPrice')}</button>}
       {extra}
+      {/* clean "out of this visit" for a job the user pinned here — unpins back to
+          available (reappears in the picker), no deletion list */}
+      {sessionId && !job.custom && (prefs.pinnedSession || {})[job.id] === sessionId && (
+        <button type="button" className="bp-link" onClick={() => pinTo(job.id, null)}>× {t('budget.removeFromSession')}</button>
+      )}
+      {job.custom && (
+        <button type="button" className="bp-link" onClick={() => toggleCustomCheck(job.id)} title={t('budget.customCheckHint')}>
+          {job.check ? `🔧 ${t('budget.customMakeReplace')}` : `🔍 ${t('budget.customMakeCheck')}`}
+        </button>
+      )}
       {job.custom
         ? <button type="button" className="bp-link bp-link-del" onClick={() => removeCustom(job.id)}>{t('budget.removeCustom')}</button>
         : <button type="button" className="bp-link bp-link-del" onClick={() => exclude(job.id)}>{t('budget.exclude')}</button>}
     </div>
   );
 
+  // a check entry = a free ride-along rider OR a custom flagged "alleen controleren";
+  // those go in the "Controle / inspectie" group, booked work in "Wordt uitgevoerd"
+  const isCheckEntry = (e) => e.rider || e.job.check;
+
+  // free-text extension on a check entry ("+ sensor") to widen the inspection;
+  // stored per job in prefs.jobNote, echoed on print + in the copy report
+  const setNote = (id, val) => setMap('jobNote', id, val === '' ? null : val);
+  const NoteRow = ({ id, locked }) => {
+    const note = (prefs.jobNote || {})[id] || '';
+    if (locked) return note ? <div className="bp-job-note-static">📝 {note}</div> : null;
+    return (
+      <input
+        type="text" className="bp-job-note" placeholder={t('budget.jobNotePlaceholder')}
+        value={note} onChange={(ev) => setNote(id, ev.target.value)}
+      />
+    );
+  };
+
+  const MotionGroup = ({ items, sid, locked }) => {
+    const [localIds, setLocalIds] = useState(items.map((e) => e.job.id));
+    
+    // Sync localIds if items change from outside (e.g. adding a new job)
+    useEffect(() => {
+      setLocalIds(items.map((e) => e.job.id));
+    }, [items]);
+
+    const byId = useMemo(() => new Map(items.map((e) => [e.job.id, e])), [items]);
+
+    const finishDrag = () => {
+      handleReorder(sid, localIds);
+    };
+
+    return (
+      <MotionReorder.Group axis="y" values={localIds} onReorder={setLocalIds} className="bp-reorder-group">
+        {localIds.map((id) => {
+          const e = byId.get(id);
+          if (!e) return null;
+          return (
+            <MotionEntry
+              key={id}
+              e={e}
+              sid={sid}
+              locked={locked}
+              orderIds={localIds}
+              onDragEnd={finishDrag}
+            />
+          );
+        })}
+      </MotionReorder.Group>
+    );
+  };
+
+  // one entry row (rider or normal job). orderIds = the group it lives in, so
+  // drag/▲▼ reorder stay within actions or within checks, never cross.
+  const MotionEntry = ({ e, sid, locked, orderIds, onDragEnd }) => {
+    const controls = useDragControls();
+    return (
+      <MotionReorder.Item
+        value={e.job.id}
+        dragListener={false}
+        dragControls={controls}
+        className="bp-motion-item"
+        onDragEnd={onDragEnd}
+      >
+        {e.rider ? (
+          <div className="bp-job bp-job-rider">
+            <div className="bp-job-top">
+              <span className="bp-rider-tag">🔍 {t(e.check ? 'budget.checkTag' : 'budget.checkAlong')}</span>
+              <span className="bp-job-title">{title(e.job)}</span>
+              <span className="bp-job-cost bp-cost-muted">{t('budget.ifReplaced', { amount: eur(e.job.cost) })}</span>
+            </div>
+            {e.withName && <div className="bp-job-why">{t('budget.riderWhy', { name: tItem(t, e.withName) })}</div>}
+            {!locked && (
+              <div className="bp-job-ctl">
+                <JobReorderControls sid={sid} id={e.job.id} orderIds={orderIds} controls={controls} />
+                {e.check ? (
+                  <>
+                    <button type="button" className="bp-link bp-pin-on" onClick={() => bookCheck(e.job.id, sid)} title={t('budget.pinRiderHint')}>📌 {t('budget.bookCheck')}</button>
+                    <button type="button" className="bp-link" onClick={() => clearCheck(e.job.id)}>× {t('budget.removeFromSession')}</button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(e.job.id, sid)} title={t('budget.pinRiderHint')}>📌 {t('budget.pinHere')}</button>
+                    <button type="button" className="bp-link bp-link-del" onClick={() => exclude(e.job.id)}>{t('budget.exclude')}</button>
+                  </>
+                )}
+              </div>
+            )}
+            <NoteRow id={e.job.id} locked={locked} />
+          </div>
+        ) : (
+          <div className={`bp-job${e.pinned ? ' bp-job-pinned' : ''}`}>
+            <JobBody job={e.job} />
+            {e.shortfall > 0 && (
+              <div className="bp-job-reason bp-warn">💰 {t('budget.sessionShort', { amount: eur(e.shortfall) })}</div>
+            )}
+            {!locked && <JobCtl job={e.job} sessionId={sid} orderIds={orderIds} controls={controls} />}
+            {e.job.check && <NoteRow id={e.job.id} locked={locked} />}
+          </div>
+        )}
+      </MotionReorder.Item>
+    );
+  };
+
+  // ---- ideas scratchpad (free notes, collapsed, don't fill the screen) ----
+  const ideas = settings.budgetIdeas || [];
+  const [ideaDraft, setIdeaDraft] = useState('');
+  const [ideasOpen, setIdeasOpen] = useState(false);
+  const addIdea = () => {
+    const text = ideaDraft.trim();
+    if (!text) return;
+    set('budgetIdeas', [...ideas, { id: newId(), text, createdAt: new Date().toISOString() }]);
+    setIdeaDraft('');
+  };
+  const removeIdea = (id) => set('budgetIdeas', ideas.filter((i) => i.id !== id));
+  // park a whole block as an idea: snapshot its name + jobs to the ideas list,
+  // then remove the session (unpinning its jobs back to available, same as delete).
+  const sessionToIdea = (s) => {
+    const raw = rawById(s.id);
+    const name = raw.name || (s.date ? dateLabel(s.date) : t('budget.undated'));
+    const jobs = s.entries.map((e) => title(e.job)).join(' · ');
+    const text = jobs ? `${name}: ${jobs}` : name;
+    const pin = { ...(prefs.pinnedSession || {}) };
+    const droppedCustom = [];
+    Object.keys(pin).forEach((jid) => {
+      if (pin[jid] === s.id) { delete pin[jid]; if (jid.startsWith('custom:')) droppedCustom.push(jid.slice(7)); }
+    });
+    setSettings({
+      ...settings,
+      budgetIdeas: [...ideas, { id: newId(), text, createdAt: new Date().toISOString() }],
+      budgetSessions: sessions.filter((x) => x.id !== s.id),
+      budgetCustom: (settings.budgetCustom || []).filter((c) => !droppedCustom.includes(c.id)),
+      budgetPrefs: { ...prefs, pinnedSession: pin },
+    });
+    setIdeasOpen(true);
+  };
+
+  // print an A4 work order for the mechanic (opens a clean print window)
+  const printSession = (s) => {
+    // print in the user's manual order (same as on screen), not engine priority
+    const ordered = { ...s, entries: orderEntries(s.id, s.entries) };
+    const html = buildWorkOrderHTML(ordered, rawById(s.id), vehicle, t, (n) => tItem(t, n), new Date(), prefs.jobNote || {});
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+  };
+
+  // copy a readable plan brief to the clipboard for a ChatGPT second opinion
+  const [copied, setCopied] = useState(false);
+  const copyReport = async () => {
+    const ok = await copyToClipboard(generateBudgetReport(plan, settings, vehicle, t, new Date()));
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2500); }
+  };
+
   const hasSessions = plan.sessions.length > 0;
   const anyLocked = plan.sessions.some((s) => s.locked);
   const showAdvice = prefs.showAdvice ?? !anyLocked; // once something's final, hide the rest by default
   const adviceCount = plan.unplanned.length + plan.blocked.length + plan.inspect.length + plan.excluded.length;
 
+  const toggleCollapse = (sid) => {
+    setSettings({
+      ...settings,
+      budgetPrefs: { ...prefs, collapsedSessions: { ...(prefs.collapsedSessions || {}), [sid]: !(prefs.collapsedSessions || {})[sid] } }
+    });
+  };
+
   return (
     <div className="budget-page">
-      <h1 className="page-title">{t('budget.title')}</h1>
+      <div className="bp-page-head">
+        <h1 className="page-title">{t('budget.title')}</h1>
+        {km && anyLocked && (
+          <button type="button" className="btn btn-secondary btn-sm" onClick={copyReport} title={t('budget.copyLockedHint')}>
+            {copied ? `✓ ${t('budget.copied')}` : t('budget.copyForChatGPT')}
+          </button>
+        )}
+      </div>
 
       <div className="card bp-settings">
         <div className="bp-field">
@@ -225,10 +477,16 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
 
       {plan.sessions.map((s) => {
         const raw = rawById(s.id);
+        const ordered = orderEntries(s.id, s.entries);
         return (
           <div key={s.id} className={`card bp-month${s.locked ? ' bp-month-locked' : ''}`}>
             {s.locked ? (
-              <div className="bp-session-title">🔒 {raw.name || (s.date ? dateLabel(s.date) : t('budget.undated'))}</div>
+              <div className="bp-session-title" onClick={() => toggleCollapse(s.id)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <span style={{ marginRight: '8px', fontSize: '0.8em', opacity: 0.6 }}>
+                  {(prefs.collapsedSessions || {})[s.id] ? '▶' : '▼'}
+                </span>
+                🔒 {raw.name || (s.date ? dateLabel(s.date) : t('budget.undated'))}
+              </div>
             ) : (
               <input
                 type="text" className="bp-session-name" placeholder={t('budget.namePlaceholder')}
@@ -244,11 +502,16 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
               {s.locked ? (
                 <>
                   <button type="button" className="bp-link bp-unlock-btn" onClick={() => unlockSession(s)}>{t('budget.unlock')}</button>
-                  <button type="button" className="bp-del-block" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑 {t('budget.deleteBlock')}</button>
+                  <button type="button" className="bp-link" onClick={() => printSession(s)} title={t('budget.printHint')}>🖨️ {t('budget.print')}</button>
+                  <button type="button" className="bp-link" onClick={() => sessionToIdea(s)} title={t('budget.toIdeasHint')}>💡 {t('budget.toIdeas')}</button>
+                  <button type="button" className="bp-del-block" onClick={() => finishSession(s)} title={t('budget.finishSessionHint', 'Afgerond en kosten registreren')}>✅ {t('budget.finishSession', 'Afronden')}</button>
+                  <button type="button" className="bp-del-block" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑</button>
                 </>
               ) : (
                 <>
                   <button type="button" className="bp-link bp-lock-btn" onClick={() => lockSession(s)}>🔒 {t('budget.lockSession')}</button>
+                  <button type="button" className="bp-link" onClick={() => printSession(s)} title={t('budget.printHint')}>🖨️ {t('budget.print')}</button>
+                  <button type="button" className="bp-link" onClick={() => sessionToIdea(s)} title={t('budget.toIdeasHint')}>💡 {t('budget.toIdeas')}</button>
                   <button type="button" className="bp-del-block" onClick={() => removeSession(s.id)} title={t('budget.removeSession')}>🗑 {t('budget.deleteBlock')}</button>
                 </>
               )}
@@ -256,12 +519,12 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
             {!s.locked && (
               <input
                 type="number" className="bp-session-money"
-                placeholder={`${t('budget.projected')}: ${eur(s.money)}`}
+                placeholder={`${t('budget.projected')}: ${eur(s.pot)}`}
                 value={raw.money ?? ''} onChange={(e) => updateSession(s.id, { money: e.target.value })}
               />
             )}
             {s.locked
-              ? (raw.note ? <div className="bp-note-static">{raw.note}</div> : null)
+              ? (!((prefs.collapsedSessions || {})[s.id]) && raw.note ? <div className="bp-note-static">{raw.note}</div> : null)
               : (
                 <input
                   type="text" className="bp-appt-note" placeholder={t('budget.notePlaceholder')}
@@ -276,46 +539,36 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
             )}
             <div className="bp-month-sub">
               {s.locked && <span className="bp-final-badge">✓ {t('budget.final')}</span>}
-              {s.overridden ? t('budget.youHave', { amount: eur(s.money) }) : t('budget.projectedPot', { amount: eur(s.money) })}
+              {s.overridden ? t('budget.youHave', { amount: eur(s.money) }) : t('budget.projectedPot', { amount: eur(s.pot) })}
               {' · '}{t('budget.spent', { amount: eur(s.cost) })}
               {' · '}<strong className={s.left < 0 ? 'bp-neg' : 'bp-pos'}>{t('budget.left', { amount: eur(s.left) })}</strong>
             </div>
 
-            {s.entries.length === 0
-              ? <div className="bp-bucket-empty">{t(s.manual ? 'budget.manualEmpty' : 'budget.sessionEmpty')}</div>
-              : s.entries.map((e) => (e.rider ? (
-                <div key={e.job.id} className="bp-job bp-job-rider">
-                  <div className="bp-job-top">
-                    <span className="bp-rider-tag">🔍 {t(e.check ? 'budget.checkTag' : 'budget.checkAlong')}</span>
-                    <span className="bp-job-title">{title(e.job)}</span>
-                    <span className="bp-job-cost bp-cost-muted">{t('budget.ifReplaced', { amount: eur(e.job.cost) })}</span>
-                  </div>
-                  {e.withName && <div className="bp-job-why">{t('budget.riderWhy', { name: tItem(t, e.withName) })}</div>}
-                  {!s.locked && (
-                    <div className="bp-job-ctl">
-                      {e.check ? (
-                        <>
-                          <button type="button" className="bp-link bp-pin-on" onClick={() => bookCheck(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.bookCheck')}</button>
-                          <button type="button" className="bp-link bp-link-del" onClick={() => clearCheck(e.job.id)}>{t('budget.exclude')}</button>
-                        </>
-                      ) : (
-                        <>
-                          <button type="button" className="bp-link bp-pin-on" onClick={() => pinTo(e.job.id, s.id)} title={t('budget.pinRiderHint')}>📌 {t('budget.pinHere')}</button>
-                          <button type="button" className="bp-link bp-link-del" onClick={() => exclude(e.job.id)}>{t('budget.exclude')}</button>
-                        </>
-                      )}
+            {s.entries.length === 0 ? (
+              <div className="bp-bucket-empty">{t(s.manual ? 'budget.manualEmpty' : 'budget.sessionEmpty')}</div>
+            ) : (() => {
+              if (s.locked && (prefs.collapsedSessions || {})[s.id]) return null;
+              
+              const actions = ordered.filter((e) => !isCheckEntry(e));
+              const checks = ordered.filter((e) => isCheckEntry(e));
+              return (
+                <>
+                  {actions.length > 0 && (
+                    <div className="bp-group">
+                      <div className="bp-group-head bp-group-action">🔧 {t('budget.groupActions')}</div>
+                      <MotionGroup items={actions} sid={s.id} locked={s.locked} />
                     </div>
                   )}
-                </div>
-              ) : (
-                <div key={e.job.id} className={`bp-job${e.pinned ? ' bp-job-pinned' : ''}`}>
-                  <JobBody job={e.job} />
-                  {e.shortfall > 0 && (
-                    <div className="bp-job-reason bp-warn">💰 {t('budget.sessionShort', { amount: eur(e.shortfall) })}</div>
+                  {checks.length > 0 && (
+                    <div className="bp-group">
+                      <div className="bp-group-head bp-group-check">🔍 {t('budget.groupChecks')}</div>
+                      <MotionGroup items={checks} sid={s.id} locked={s.locked} />
+                    </div>
                   )}
-                  {!s.locked && <JobCtl job={e.job} sessionId={s.id} />}
-                </div>
-              )))}
+                </>
+              );
+            })()}
+
 
             {!s.locked && (
               <>
@@ -342,6 +595,13 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                     type="number" className="bp-custom-cost" placeholder="€"
                     value={draft[s.id]?.cost ?? ''} onChange={(e) => setField(s.id, 'cost', e.target.value)}
                   />
+                  <label className="bp-custom-check" title={t('budget.customCheckHint')}>
+                    <input
+                      type="checkbox" checked={!!draft[s.id]?.check}
+                      onChange={(e) => setField(s.id, 'check', e.target.checked)}
+                    />
+                    🔍 {t('budget.customCheckChip')}
+                  </label>
                   <button type="button" className="bp-link" onClick={() => addCustom(s.id)} disabled={!draft[s.id]?.name?.trim()}>
                     + {t('budget.addCustom')}
                   </button>
@@ -440,6 +700,35 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
         </div>
       )}
       </>)}
+
+      {/* ---- ideas scratchpad — collapsed, sits at the very bottom ---- */}
+      <div className="card bp-section bp-ideas">
+        <button type="button" className="bp-ideas-head" onClick={() => setIdeasOpen((o) => !o)}>
+          <span>{ideasOpen ? '▼' : '▶'} 💡 {t('budget.ideas.title')}</span>
+          {ideas.length > 0 && <span className="bp-ideas-count">{ideas.length}</span>}
+        </button>
+        {ideasOpen && (
+          <div className="bp-ideas-body">
+            <div className="bp-idea-add">
+              <input
+                type="text" className="bp-idea-input" placeholder={t('budget.ideas.placeholder')}
+                value={ideaDraft} onChange={(e) => setIdeaDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') addIdea(); }}
+              />
+              <button type="button" className="bp-link" onClick={addIdea} disabled={!ideaDraft.trim()}>+ {t('budget.ideas.add')}</button>
+            </div>
+            {ideas.length === 0
+              ? <p className="bp-bucket-empty">{t('budget.ideas.empty')}</p>
+              : ideas.map((i) => (
+                <div key={i.id} className="bp-idea-row">
+                  <span className="bp-idea-text">{i.text}</span>
+                  <span className="bp-idea-date">{new Date(i.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}</span>
+                  <button type="button" className="bp-idea-del" onClick={() => removeIdea(i.id)} title={t('budget.ideas.remove')}>🗑</button>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

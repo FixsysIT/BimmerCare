@@ -7,7 +7,7 @@
  *
  * All `name` values MUST match a real catalog item name in defaultItems.js
  * (the stable English key). No invented items, no embedded parts here —
- * embedded parts (wear sensor, ZF filter kit, drain plug) already live in an
+ * embedded parts (ZF filter kit, drain plug) already live in an
  * item's parts[] and need no linking.
  *
  * Two shapes:
@@ -62,19 +62,43 @@ export const DEFAULT_BUNDLES = [
   {
     id: 'front-brake-service',
     title: { nl: 'Remmen voor', en: 'Front brakes' },
-    group: ['Brake Discs Front', 'Brake Pads Front'],
+    // Decoupled: discs is its own job, pads a strongly-recommended add-on (not
+    // forced into the same cluster — you can plan discs alone).
+    trigger: ['Brake Discs Front'],
+    adds: [{ name: 'Brake Pads Front', role: ROLES.CONTEXT }],
     reason: {
-      nl: 'Nieuwe schijven met oude blokken is beun. Wear-sensor zit al als part bij de blokken.',
-      en: 'New discs with old pads is a botch. Wear sensor is already a part on the pads.',
+      nl: 'Nieuwe schijven met oude blokken is beun. Blokken sterk aangeraden.',
+      en: 'New discs with old pads is a botch. Pads strongly recommended.',
+    },
+  },
+  {
+    id: 'front-brake-pads-sensor',
+    title: { nl: 'Remblokken voor', en: 'Front brake pads' },
+    trigger: ['Brake Pads Front'],
+    adds: [{ name: 'Brake Wear Sensor Front', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Nieuwe blokken vereisen vaak een nieuwe wear-sensor om de waarschuwing te resetten.',
+      en: 'New pads usually require a new wear sensor to reset the warning.',
     },
   },
   {
     id: 'rear-brake-service',
     title: { nl: 'Remmen achter', en: 'Rear brakes' },
-    group: ['Brake Discs Rear', 'Brake Pads Rear'],
+    trigger: ['Brake Discs Rear'],
+    adds: [{ name: 'Brake Pads Rear', role: ROLES.CONTEXT }],
     reason: {
-      nl: 'Zelfde verhaal achter. Schijf = blokken mee.',
-      en: 'Same story at the rear. Disc = pads with it.',
+      nl: 'Zelfde verhaal achter: nieuwe schijf, oude blokken is beun. Blokken sterk aangeraden.',
+      en: 'Same at the rear: new disc with old pads is a botch. Pads strongly recommended.',
+    },
+  },
+  {
+    id: 'rear-brake-pads-sensor',
+    title: { nl: 'Remblokken achter', en: 'Rear brake pads' },
+    trigger: ['Brake Pads Rear'],
+    adds: [{ name: 'Brake Wear Sensor Rear', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Nieuwe blokken vereisen vaak een nieuwe wear-sensor om de waarschuwing te resetten.',
+      en: 'New pads usually require a new wear sensor to reset the warning.',
     },
   },
 
@@ -158,6 +182,60 @@ export const DEFAULT_BUNDLES = [
     reason: {
       nl: 'Nieuwe banden op ongelijnd onderstel = geld weggooien. Bescherm die €800.',
       en: 'New tyres on a misaligned chassis = money down the drain. Protect that €800.',
+    },
+  },
+  {
+    id: 'ignition-service',
+    trigger: ['Spark Plugs (×6)'],
+    adds: [{ name: 'Ignition Coils (×6)', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Bougies toch eruit? Goed moment om oude bobines (veel voorkomend probleem) direct preventief mee te nemen.',
+      en: 'Spark plugs are out anyway? Good time to preventively replace old ignition coils (common issue).',
+    },
+  },
+  {
+    id: 'powertrain-mounts',
+    trigger: ['Engine Mounts (×2)'],
+    adds: [{ name: 'Transmission Mount', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Motorsteunen defect? Baksteun heeft dezelfde leeftijd en krachten te verduren. Vervang als set.',
+      en: 'Engine mounts failed? Transmission mount is the same age/stress. Replace as a set.',
+    },
+  },
+  {
+    id: 'front-struts-mounts',
+    trigger: ['Shock Absorbers Front (×2)'],
+    adds: [{ name: 'Strut Mounts / Top Mounts', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Voorste schokdempers vervangen betekent dat de veerpoot los gaat. Toplagers direct meenemen.',
+      en: 'Replacing front shocks means disassembling the strut. Always replace the top mounts.',
+    },
+  },
+  {
+    id: 'rear-struts-mounts',
+    trigger: ['Shock Absorbers Rear (×2)'],
+    adds: [{ name: 'Strut Mounts / Top Mounts', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Achterste schokdempers vervangen: rubbers / toplagers direct meenemen om bijgeluiden te voorkomen.',
+      en: 'Replacing rear shocks: replace rubber top mounts to prevent rattling noises.',
+    },
+  },
+  {
+    id: 'n53-intake-gaskets',
+    trigger: ['Walnut Blasting (Intake Valves)', 'DISA Valves (Large & Small)', 'Starter Motor'],
+    adds: [{ name: 'Intake Manifold Gaskets', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Hiervoor moet het inlaatspruitstuk gedemonteerd worden. Gebruik altijd nieuwe inlaatpakkingen om vacuümlekken te voorkomen.',
+      en: 'The intake manifold must be removed for this. Always use new gaskets to prevent vacuum leaks.',
+    },
+  },
+  {
+    id: 'driveline-support',
+    trigger: ['Flex Disc (Hardyschijf)'],
+    adds: [{ name: 'Driveshaft Center Support Bearing', role: ROLES.CONTEXT }],
+    reason: {
+      nl: 'Bij het vervangen van de hardyschijf ligt de uitlaat/hitteschild al los. Mooi moment om het tussenlager te vernieuwen (vaak versleten).',
+      en: 'When replacing the flex disc, the exhaust/heat shield is already out. Good time to replace the center support bearing.',
     },
   },
 

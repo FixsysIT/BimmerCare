@@ -59,34 +59,38 @@ export function useMaintenance(vehicle) {
 
   // Register maintenance entry
   const registerMaintenance = useCallback((itemId, entry) => {
-    if (!items) return;
     // Single cost, excl. BTW.
     const cost = entry.cost || 0;
+    const now = new Date().toISOString();
 
     const newEntry = {
       id: uuidv4(),
       ...entry,
       cost,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
     };
 
-    setItems(items.map((item) => {
-      if (item.id !== itemId) return item;
-      return {
-        ...item,
-        history: [...item.history, newEntry],
-        // Cost database: learn the item's cost from the actual amount paid (excl. BTW).
-        estimatedTotalCost: cost > 0 ? Math.round(cost) : item.estimatedTotalCost,
-        manualStatus: null, // Reset manual status on new service
-        manualStatusNote: null,
-        manualOverride: false, // history is the source now
-        baselineState: null, // a logged service supersedes any baseline assertion
-        updatedAt: new Date().toISOString(),
-      };
-    }));
+    setItems((prevItems) => {
+      if (!prevItems) return prevItems;
+      return prevItems.map((item) => {
+        if (item.id !== itemId) return item;
+        return {
+          ...item,
+          history: [...item.history, newEntry],
+          // Cost database: learn the item's cost from the actual amount paid (excl. BTW).
+          estimatedTotalCost: cost > 0 ? Math.round(cost) : item.estimatedTotalCost,
+          manualStatus: null, // Reset manual status on new service
+          manualStatusNote: null,
+          manualOverride: false, // history is the source now
+          baselineState: null, // a logged service supersedes any baseline assertion
+          lastResult: entry.result ?? null, // Update last result
+          updatedAt: now,
+        };
+      });
+    });
 
     return newEntry;
-  }, [items, setItems]);
+  }, [setItems]);
 
   // Register a service on the primary item AND mark its companions done in the
   // SAME visit, in ONE state update (separate calls would stale-close `items`
@@ -172,6 +176,37 @@ export function useMaintenance(vehicle) {
       };
     }));
     return n;
+  }, [items, currentMileage, setItems]);
+
+  // Reset timer — restart the interval clock for ONE item NOW without claiming a
+  // replacement. Logs a baseline entry at the current odometer/today (no cost, no
+  // 'replaced' result), so interval math counts fresh from here. Use this for
+  // "doe maar de volgende weer" — the part wasn't replaced, the count just restarts.
+  const resetTimer = useCallback((itemId, atKm) => {
+    if (!items) return;
+    const km = atKm ?? currentMileage ?? 0;
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
+    setItems(items.map((item) => {
+      if (item.id !== itemId) return item;
+      return {
+        ...item,
+        history: [...(item.history || []), {
+          id: uuidv4(),
+          type: 'baseline',
+          date: today,
+          mileage: km,
+          notes: 'Timer reset',
+          createdAt: now,
+        }],
+        manualStatus: null,
+        manualStatusNote: null,
+        manualOverride: false,
+        baselineState: null,
+        lastResult: null,
+        updatedAt: now,
+      };
+    }));
   }, [items, currentMileage, setItems]);
 
   // Update item (edit intervals, toggle, etc.)
@@ -329,6 +364,7 @@ export function useMaintenance(vehicle) {
     toggleDisable,
     resetToDefaults,
     startBaseline,
+    resetTimer,
     logEvent,
     updateHistoryEntry,
     deleteHistoryEntry,

@@ -33,7 +33,7 @@ export default function App() {
   const {
     items, itemsWithStatus, statusCounts, urgentItems,
     loading: itemsLoading, setItems, initItems,
-    registerMaintenance, applyService, updateItem, addItem, toggleDisable, resetToDefaults, startBaseline, logEvent,
+    registerMaintenance, applyService, updateItem, addItem, toggleDisable, resetToDefaults, startBaseline, resetTimer, logEvent,
     updateHistoryEntry, deleteHistoryEntry,
   } = useMaintenance(vehicle);
 
@@ -100,6 +100,7 @@ export default function App() {
               updateHistoryEntry={(itemId, entryId, patch) => { updateHistoryEntry(itemId, entryId, patch); trackChange(); }}
               deleteHistoryEntry={(itemId, entryId) => { deleteHistoryEntry(itemId, entryId); trackChange(); }}
               toggleDisable={toggleDisable}
+              resetTimer={(itemId) => { resetTimer(itemId); trackChange(); }}
               allItems={items}
             />
           } />
@@ -109,6 +110,7 @@ export default function App() {
               settings={settings}
               setSettings={setSettings}
               vehicle={vehicle}
+              registerMaintenance={handleRegister}
             />
           } />
           <Route path="costs" element={

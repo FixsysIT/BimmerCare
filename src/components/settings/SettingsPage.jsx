@@ -57,6 +57,8 @@ export default function SettingsPage({
     year: vehicle?.year || '',
     plate: vehicle?.plate || '',
     vin: vehicle?.vin || '',
+    owner: vehicle?.owner || '',
+    phone: vehicle?.phone || '',
     odometerAtPurchase: vehicle?.odometerAtPurchase || '',
   });
 
@@ -85,6 +87,8 @@ export default function SettingsPage({
       year: parseInt(profile.year, 10) || vehicle.year,
       plate: profile.plate,
       vin: profile.vin,
+      owner: profile.owner,
+      phone: profile.phone,
       odometerAtPurchase: parseInt(profile.odometerAtPurchase, 10) || vehicle.odometerAtPurchase,
     });
     showToast('Profile saved');
@@ -286,6 +290,14 @@ export default function SettingsPage({
             <div className="form-group">
               <label>{t('settings.vin')}</label>
               <input value={profile.vin} onChange={(e) => setProfile({ ...profile, vin: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>{t('settings.owner')}</label>
+              <input value={profile.owner} onChange={(e) => setProfile({ ...profile, owner: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label>{t('settings.phone')}</label>
+              <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
             </div>
             <div className="form-group">
               <label>{t('settings.purchaseKm')}</label>

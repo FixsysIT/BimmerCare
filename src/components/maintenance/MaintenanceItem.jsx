@@ -7,6 +7,17 @@ import { CATEGORY_ICONS } from '../../utils/constants';
 import { tItem, tCategory } from '../../utils/translate';
 import { formatMaintenanceStatus } from '../../utils/statusFormat';
 
+const formatDateDisplay = (dateString, lang) => {
+  if (!dateString) return '';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    return d.toLocaleDateString(lang || 'nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch {
+    return dateString;
+  }
+};
+
 const STATUS_COLORS = {
   red: 'var(--status-red)', orange: 'var(--status-orange)',
   inspect: 'var(--status-inspect)', monitor: 'var(--status-monitor)',
@@ -52,7 +63,7 @@ function Pills({ opts, activeResult, onPick, t }) {
   );
 }
 
-export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, companions = [], reminders = [], badge = null, currentMileage }) {
+export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEditEntry, onDeleteEntry, onSetBaseline, onResetTimer, companions = [], reminders = [], badge = null, currentMileage }) {
   const { t, i18n } = useTranslation();
   const badgeLang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const [expanded, setExpanded] = useState(false);
@@ -129,7 +140,7 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
 
       {lastEntry && (
         <div className="maint-last">
-          {t('maintenance.lastService')}: {lastEntry.mileage?.toLocaleString()} km · {lastEntry.date}
+          {t('maintenance.lastService')}: {lastEntry.mileage?.toLocaleString()} km · {formatDateDisplay(lastEntry.date, i18n.language)}
         </div>
       )}
 
@@ -140,6 +151,16 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
             <button type="button" className="seg-btn seg-action" onClick={onRegister}>
               {t('maintenance.markReplaced')}
             </button>
+            {onResetTimer && hasHistory && (
+              <button
+                type="button"
+                className="seg-btn"
+                title={t('maintenance.resetTimerHint')}
+                onClick={() => { if (window.confirm(t('maintenance.resetTimerConfirm'))) onResetTimer(); }}
+              >
+                ↺ {t('maintenance.resetTimer')}
+              </button>
+            )}
           </div>
         )}
         {strategy === 'condition' && (
@@ -214,10 +235,10 @@ export default function MaintenanceItem({ item, onRegister, onEdit, onLog, onEdi
                 <div key={h.id} className="maint-history-row">
                   <span className="maint-history-text">
                     {h.type === 'note' ? (
-                      <>📝 {h.date} — {h.notes}</>
+                      <>📝 {formatDateDisplay(h.date, i18n.language)} — {h.notes}</>
                     ) : (
                       <>
-                        {h.date} — {h.mileage?.toLocaleString()} km
+                        {formatDateDisplay(h.date, i18n.language)} — {h.mileage?.toLocaleString()} km
                         {h.result ? ` — ${t(`result.${h.result}`, h.result)}` : ''}
                         {h.type === 'baseline' ? ' — baseline' : ''}
                         {(() => { const c = h.cost ?? h.totalExclVat ?? h.totalInclVat; return c ? ` — €${c.toFixed(2)}` : ''; })()}

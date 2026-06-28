@@ -11,6 +11,8 @@ export function getDefaultVehicle() {
     year: 2010,
     plate: '',
     vin: '',
+    owner: '',
+    phone: '',
     purchaseDate: '2010-07-05',
     odometerAtPurchase: 0,
     currentMileage: 0,
