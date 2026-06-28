@@ -14,7 +14,109 @@ import { INTERVAL_TYPES, SOURCES, PRIORITIES, deriveLayer } from '../utils/const
  *     on-failure: only replace when broken/faulty (injectors, sensors, pumps)
  */
 
+/**
+ * Geschatte ARBEIDSDUUR per klus, in uren (indicatie, onafhankelijke garage / DIY).
+ * Per item-`name` (de stabiele Engelse key). Alleen richtwaarde voor planning —
+ * geen exacte BMW-norm. Combinatieklussen (bv. waterpomp+thermostaat) tellen apart.
+ */
+const LABOUR_HOURS = {
+  'Engine Oil + Filter': 0.5,
+  'Spark Plugs (×6)': 0.75,
+  'Ignition Coils (×6)': 0.5,
+  'General Diagnostic Scan': 0.5,
+  'Air Filter': 0.25,
+  'Fuel Filter (in-tank)': 1.5,
+  'Valve Cover Gasket + PCV': 2.5,
+  'VANOS Solenoids (×2)': 0.5,
+  'Serpentine Belt': 1,
+  'Crankshaft Rear Main Seal': 6,
+  'Oil Pan Gasket': 4,
+  'Engine Mounts (×2)': 2,
+  'Transmission Mount': 1,
+  'Vacuum Lines (N53)': 1,
+  'Coolant Hoses': 1.5,
+  'Coolant Flush': 1,
+  'Water Pump (electric)': 2,
+  'Thermostat': 1.5,
+  'Brake Pads Front': 0.75,
+  'Brake Wear Sensor Front': 0.1,
+  'Brake Pads Rear': 0.75,
+  'Brake Wear Sensor Rear': 0.1,
+  'Brake Discs Front': 1,
+  'Brake Discs Rear': 1,
+  'Brake Fluid': 0.75,
+  'Transmission Fluid (ZF)': 1.5,
+  'Differential Fluid': 0.5,
+  'Power Steering Fluid': 0.5,
+  'Steering Rack': 4,
+  'Tires (×4)': 0.75,
+  'Control Arms / Ball Joints': 2,
+  'Wheel Alignment': 1,
+  'Flex Disc (Hardyschijf)': 1.5,
+  'Stabilizer Links Front (×2)': 0.5,
+  'Stabilizer Links Rear (×2)': 0.5,
+  'Shock Absorbers Front (×2)': 2,
+  'Shock Absorbers Rear (×2)': 1.5,
+  'Tie Rod Ends (×2)': 1,
+  'Wheel Bearings': 1.5,
+  'CV Boot / Axle Boot': 1.5,
+  'Battery (AGM)': 0.5,
+  'Cabin Filter (×2)': 0.5,
+  'A/C Condenser + Dryer': 2.5,
+  'Piezo Fuel Injectors (×6)': 2,
+  'High-Pressure Fuel Pump (HPFP)': 1,
+  'NOx Sensor': 0.5,
+  'NOx Catalytic Converter': 2,
+  'Oil Filter Housing Gasket': 2,
+  'Expansion Tank + Cap': 0.75,
+  'Radiator': 2,
+  'Idler Pulley / Tensioner': 0.75,
+  'Brake Hoses': 1,
+  'Handbrake Shoes / Parking Brake': 1.5,
+  'Strut Mounts / Top Mounts': 2,
+  'Rear Subframe Bushings': 4,
+  'Differential Bushings': 2.5,
+  'A/C Service': 0.75,
+  'Wipers': 0.1,
+  'Lambda Sensors': 0.5,
+  'MAF / MAP Sensor': 0.25,
+  'Starter Motor': 1.5,
+  'Alternator': 1.5,
+  'IBS Sensor / Battery Cable': 0.5,
+  'Headlight Modules / Bulbs': 0.5,
+  'Walnut Blasting (Intake Valves)': 3,
+  'DISA Valves (Large & Small)': 1,
+  'DISA Valve Large': 0.5,
+  'DISA Valve Small': 0.5,
+  'Intake Manifold Gaskets': 2.5,
+  'Intake Gasket Set': 2.5,
+  'Driveshaft Center Support Bearing': 2,
+  'Center Support Bearing': 2,
+};
+
+/**
+ * Aanbevolen merk voor parts die nog GEEN `altBrand` hebben (per OEM-nummer).
+ * Bekende, kwalitatief goede OE-leveranciers. Parts mét altBrand houden dat merk
+ * (dat is al de aanbeveling). Bij twijfel niet gokken — gewoon weglaten.
+ */
+const PART_BRANDS = {
+  '07119963252': 'Victor Reinz',          // carter-afdichtring
+  '16117163295': 'Bosch',                 // brandstoffilter
+  '11747810807': 'Febi / Genuine BMW',    // vacuümslangen
+  '17127540127': 'Febi / Rein',           // bovenste radiatorslang
+  '17127540128': 'Febi / Rein',           // onderste radiatorslang
+  '82141467704': 'Genuine BMW (blauw)',   // koelvloeistof
+  '34356792289': 'Febi / ATE',            // slijtsensor voor
+  '34356792292': 'Febi / ATE',            // slijtsensor achter
+  '13517616170': 'Bosch / Genuine BMW',   // hogedrukpomp
+  '18307645280': 'Genuine BMW',           // NOx-kat
+};
+
 function item(vehicleId, data) {
+  const parts = (data.parts || []).map((p) => ({
+    ...p,
+    recommendedBrand: p.recommendedBrand || p.altBrand || PART_BRANDS[p.oemNumber] || '',
+  }));
   return {
     id: uuidv4(),
     vehicleId,
@@ -25,10 +127,12 @@ function item(vehicleId, data) {
     visibilityLayer: deriveLayer(data),  // active|inspection|diagnosis (overridable via data)
     manualStatus: null,
     manualStatusNote: null,
+    labourHours: data.labourHours ?? LABOUR_HOURS[data.name] ?? null,  // indicatieve arbeidsuren
     history: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...data,
+    parts,
   };
 }
 

@@ -29,7 +29,7 @@ export default function PartsPage({ maintenanceItems }) {
     for (const item of maintenanceItems) {
       if (!item.parts?.length) continue;
       for (const part of item.parts) {
-        results.push({ ...part, itemName: item.name, category: item.category, sourceNote: item.sourceNote, intervalKm: item.intervalKm, intervalMonths: item.intervalMonths });
+        results.push({ ...part, itemName: item.name, category: item.category, sourceNote: item.sourceNote, intervalKm: item.intervalKm, intervalMonths: item.intervalMonths, labourHours: item.labourHours });
       }
     }
     if (search) {
@@ -38,6 +38,7 @@ export default function PartsPage({ maintenanceItems }) {
         p.name.toLowerCase().includes(q) ||
         p.oemNumber?.toLowerCase().includes(q) ||
         p.altBrand?.toLowerCase().includes(q) ||
+        p.recommendedBrand?.toLowerCase().includes(q) ||
         p.itemName.toLowerCase().includes(q)
       );
     }
@@ -62,6 +63,7 @@ export default function PartsPage({ maintenanceItems }) {
         <div className="parts-list">
           {partsData.map((part, i) => {
             const buyNr = part.oemNumber || part.altNumber;
+            const brand = part.recommendedBrand || part.altBrand;
             return (
             <div key={`${part.oemNumber}-${i}`} className="card part-card">
               <div className="part-header">
@@ -90,9 +92,9 @@ export default function PartsPage({ maintenanceItems }) {
                     </button>
                   </div>
                 )}
-                {part.altBrand && (
+                {brand && (
                   <div className="part-row">
-                    <span className="part-label">{t('parts.alternative')}</span>
+                    <span className="part-label">{t('parts.brand')}</span>
                     {part.altNumber ? (
                       <button
                         type="button"
@@ -100,11 +102,11 @@ export default function PartsPage({ maintenanceItems }) {
                         onClick={() => copyNumber(part.altNumber)}
                         title={t('parts.copyHint')}
                       >
-                        <span>{part.altBrand} {part.altNumber}</span>
+                        <span>{brand} {part.altNumber}</span>
                         <span className="part-copy-icon">{copied === part.altNumber ? `✓ ${t('parts.copied')}` : '📋'}</span>
                       </button>
                     ) : (
-                      <span className="part-value">{part.altBrand}</span>
+                      <span className="part-value">{brand}</span>
                     )}
                   </div>
                 )}
@@ -112,6 +114,12 @@ export default function PartsPage({ maintenanceItems }) {
                   <div className="part-row">
                     <span className="part-label">{t('parts.price')}</span>
                     <span className="part-value">€{part.estimatedPrice.toFixed(2)}</span>
+                  </div>
+                )}
+                {part.labourHours > 0 && (
+                  <div className="part-row">
+                    <span className="part-label">{t('parts.labour')}</span>
+                    <span className="part-value">{t('parts.labourValue', { hours: part.labourHours.toLocaleString('nl-NL') })}</span>
                   </div>
                 )}
                 {buyNr && (

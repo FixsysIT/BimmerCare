@@ -17,6 +17,36 @@ import { deriveLayer } from './constants';
  */
 const META_KEYS = ['visibilityLayer', 'inspectionGroup', 'garageChecklistGroup', 'userFacingPriority'];
 
+/**
+ * Verrijk opgeslagen parts met nieuwe, additieve catalogusvelden zonder user-edits
+ * (prijs, altNumber, etc.) te overschrijven, en voeg ontbrekende default-parts toe.
+ * Matchen op OEM-nummer (de stabiele part-key). Parts zonder OEM worden niet
+ * automatisch toegevoegd (kan niet veilig ontdubbeld worden) en blijven met rust.
+ * Returns { parts, changed }.
+ */
+function mergeParts(storedParts, defParts) {
+  if (!Array.isArray(defParts) || defParts.length === 0) return { parts: storedParts, changed: false };
+  const stored = Array.isArray(storedParts) ? storedParts : [];
+  const defByOem = new Map(defParts.filter((p) => p.oemNumber).map((p) => [p.oemNumber, p]));
+  let changed = false;
+
+  const enriched = stored.map((p) => {
+    const def = p.oemNumber ? defByOem.get(p.oemNumber) : null;
+    if (!def) return p;
+    const next = { ...p };
+    // alleen ontbrekend/leeg merk aanvullen — nooit een door de user gezette waarde wissen
+    if (!next.recommendedBrand && def.recommendedBrand) { next.recommendedBrand = def.recommendedBrand; changed = true; }
+    return next;
+  });
+
+  const haveOem = new Set(stored.filter((p) => p.oemNumber).map((p) => p.oemNumber));
+  defParts.forEach((d) => {
+    if (d.oemNumber && !haveOem.has(d.oemNumber)) { enriched.push(d); changed = true; }
+  });
+
+  return { parts: enriched, changed };
+}
+
 export function mergeDefaultItems(existing, defaults) {
   const existingByName = new Map((existing || []).map((i) => [i.name, i]));
   const defByName = new Map((defaults || []).map((d) => [d.name, d]));
@@ -41,6 +71,18 @@ export function mergeDefaultItems(existing, defaults) {
     if (def && def.category && def.category !== next.category) {
       next.category = def.category;
       changed = true;
+    }
+
+    // Additieve velden: vul indicatieve arbeidsuren aan als ze nog ontbreken.
+    if (def && (next.labourHours === undefined || next.labourHours === null) && def.labourHours != null) {
+      next.labourHours = def.labourHours;
+      changed = true;
+    }
+
+    // Verrijk parts met nieuwe merk-adviezen + ontbrekende default-parts (per OEM).
+    if (def) {
+      const { parts, changed: partsChanged } = mergeParts(next.parts, def.parts);
+      if (partsChanged) { next.parts = parts; changed = true; }
     }
 
     // Special migration: NOx Sensor to 250k (NOXEM 402)
