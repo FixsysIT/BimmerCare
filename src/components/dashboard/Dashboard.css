@@ -4,13 +4,249 @@
   gap: 1.25rem;
 }
 
-.dash-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+/* ════════════════════════════════════════════════
+   Binnacle — the instrument cluster over the car
+   ════════════════════════════════════════════════ */
+
+.binnacle {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background-color: #04040A;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center 38%;
+  border-color: var(--border-strong);
 }
 
-/* "Nieuw" marker on an urgent item whose status just changed */
+/* dark scrim + a soft pool of light behind the gauge (cluster glow) */
+.binnacle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(58% 80% at 26% 50%, rgba(30, 122, 212, 0.16) 0%, rgba(4, 4, 10, 0) 60%),
+    linear-gradient(180deg, rgba(4, 4, 10, 0.74) 0%, rgba(4, 4, 10, 0.86) 100%);
+}
+
+/* M-tricolor bezel edge */
+.binnacle::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  z-index: 3;
+  background: linear-gradient(180deg,
+    var(--m-lightblue) 0%, var(--m-lightblue) 33%,
+    var(--m-darkblue) 33%, var(--m-darkblue) 66%,
+    var(--m-red) 66%, var(--m-red) 100%);
+}
+
+.binnacle-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(210px, 0.95fr) 1fr;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.6rem 1.7rem;
+}
+
+@media (max-width: 680px) {
+  .binnacle-grid { grid-template-columns: 1fr; gap: 1.1rem; padding: 1.3rem 1.2rem; }
+}
+
+/* ── Health tachometer ───────────────────────── */
+
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.gauge-dial {
+  position: relative;
+  width: 100%;
+  max-width: 232px;
+  aspect-ratio: 1 / 1;
+}
+
+.gauge-svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.gauge-track { fill: none; stroke: rgba(255, 255, 255, 0.06); stroke-width: 7; stroke-linecap: round; }
+.gauge-load { fill: none; stroke-width: 7; stroke-linecap: round; }
+
+.gauge-tick { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1.6; }
+.gauge-tick-big { stroke: rgba(255, 255, 255, 0.32); stroke-width: 2.2; }
+.gauge-tick-red { stroke: rgba(255, 82, 82, 0.72); }
+
+.gauge-needle { stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 5px currentColor); }
+.gauge-hub { fill: #0E1019; stroke: rgba(255, 255, 255, 0.28); stroke-width: 1.5; }
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.05rem;
+  padding-bottom: 19%;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.gauge-center:disabled { cursor: default; }
+
+.gauge-big {
+  font-family: var(--font-gauge);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.gauge-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.gauge-readouts { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+.gauge-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  background: var(--bg-glass-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: border-color var(--t-fast), opacity var(--t-fast);
+}
+.gauge-readout:not(:disabled):hover { border-color: var(--border-strong); }
+.gauge-readout:disabled { opacity: 0.38; cursor: default; }
+.gauge-readout-dot { width: 7px; height: 7px; border-radius: 50%; }
+.gauge-readout-num { font-family: var(--font-gauge); font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.gauge-readout-label { font-size: 0.7rem; color: var(--text-secondary); }
+
+.gauge-quiet { margin: 0; display: flex; gap: 0.4rem; font-size: 0.72rem; color: var(--text-muted); }
+.gauge-quiet-sep { color: var(--text-muted); }
+.gauge-quiet-link {
+  background: none; border: none; padding: 0;
+  font: inherit; color: var(--text-muted); cursor: pointer;
+}
+.gauge-quiet-link:hover { color: var(--text-secondary); }
+
+/* ── Odometer / identity ─────────────────────── */
+
+.odo { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+
+.odo-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.odo-model {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+.odo-read { display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.15rem; }
+.odo-km {
+  font-family: var(--font-gauge);
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 24px var(--bmw-blue-glow);
+}
+.odo-unit { font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); }
+
+.odo-action {
+  align-self: flex-start;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, var(--bmw-blue-light), var(--bmw-blue));
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--bmw-blue-glow);
+  transition: transform var(--t-fast), box-shadow var(--t-med);
+}
+.odo-action:hover { transform: translateY(-1px); box-shadow: 0 6px 22px var(--bmw-blue-glow); }
+
+@media (max-width: 680px) {
+  .odo { align-items: center; text-align: center; }
+  .odo-km { font-size: 2.9rem; }
+  .odo-action { align-self: center; }
+}
+
+/* ════════════════════════════════════════════════
+   Check Control — the cluster's warning messages
+   ════════════════════════════════════════════════ */
+
+.urgent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.7rem;
+}
+
+.urgent-tabs { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+
+.urgent-tab {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+.urgent-tab:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.urgent-tab-active {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+  background: var(--bg-glass-strong);
+}
+
+.urgent-empty { color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 0; }
+
+.urgent-list { display: flex; flex-direction: column; gap: 0.45rem; }
+
+/* warning rows: flat, with a hairline so they read like cluster lines */
+.urgent-item.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  background: rgba(255, 255, 255, 0.018);
+  cursor: pointer;
+}
+.urgent-item.card:hover { border-color: var(--border-strong); background: rgba(255, 255, 255, 0.04); }
+
 .urgent-new {
   display: inline-flex;
   align-items: center;
@@ -41,263 +277,6 @@
 }
 .urgent-more:hover { color: var(--text-primary); border-color: var(--border-strong); }
 
-.page-title {
-  font-size: 1.6rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem;
-  padding-left: 0.75rem;
-  border-left: 4px solid;
-  border-image: var(--m-stripe) 1;
-}
+/* ── Footer action ───────────────────────────── */
 
-/* ── Hero card ───────────────────────────────── */
-
-.hero-card {
-  position: relative;
-  overflow: hidden;
-  min-height: 340px;
-  padding: 1.4rem 1.5rem;
-  display: flex;
-  align-items: flex-end;
-  background-color: #05050C;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center 42%;
-  border-color: var(--border-strong);
-}
-
-/* Scrim from the bottom so the car stays visible up top and text reads on dark */
-.hero-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background:
-    linear-gradient(0deg, rgba(5, 5, 12, 0.96) 0%, rgba(5, 5, 12, 0.82) 28%, rgba(5, 5, 12, 0.34) 58%, rgba(5, 5, 12, 0.08) 100%);
-}
-
-@media (max-width: 560px) {
-  .hero-card { min-height: 280px; background-position: center 42%; }
-}
-
-/* M-tricolor edge */
-.hero-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 4px;
-  z-index: 3;
-  background: linear-gradient(180deg, var(--m-lightblue) 0%, var(--m-lightblue) 33%, var(--m-darkblue) 33%, var(--m-darkblue) 66%, var(--m-red) 66%, var(--m-red) 100%);
-}
-
-.hero-info {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  width: 100%;
-}
-
-.hero-head {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.hero-eyebrow {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-}
-
-.hero-model {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  line-height: 1.1;
-}
-
-.hero-odo .mileage-value {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  font-size: 2.9rem;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  text-shadow: 0 0 20px var(--bmw-blue-glow);
-}
-
-.hero-unit {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.hero-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-glass-strong);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease);
-}
-.hero-chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.hero-chip strong { color: var(--text-primary); }
-.hero-chip-dot { width: 7px; height: 7px; border-radius: 50%; }
-
-.hero-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.hero-actions .btn { flex: 0 0 auto; }
-
-@media (max-width: 560px) {
-  .hero-head { flex-direction: column; gap: 0.3rem; }
-}
-
-/* ── Status gauge rings ──────────────────────── */
-
-.status-ring {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  padding: 0.4rem 0.2rem;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
-}
-
-.status-ring:not(:disabled):hover {
-  border-color: var(--border-strong);
-  background: var(--bg-glass);
-}
-
-.status-ring:disabled { cursor: default; opacity: 0.55; }
-
-.ring-dial {
-  position: relative;
-  width: 100%;
-  max-width: 72px;
-}
-
-.ring-svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.ring-track {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.07);
-  stroke-width: 6;
-}
-
-.ring-arc {
-  fill: none;
-  stroke-width: 6;
-}
-
-.ring-dial .ring-value {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  font-weight: 800;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.ring-label {
-  margin-top: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-/* ── Urgent items ───────────────────────────── */
-
-.urgent-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.6rem;
-}
-
-.urgent-tabs {
-  display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-}
-
-.urgent-tab {
-  padding: 0.25rem 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: all var(--t-fast) var(--ease);
-}
-.urgent-tab:hover { color: var(--text-primary); border-color: var(--border-strong); }
-.urgent-tab-active {
-  color: var(--text-primary);
-  border-color: var(--border-active);
-  background: var(--bg-glass-strong);
-}
-
-.urgent-empty {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  padding: 0.5rem 0;
-}
-
-.urgent-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.urgent-item.card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-.urgent-item.card:hover { border-color: var(--border-strong); }
+.dash-foot { display: flex; }

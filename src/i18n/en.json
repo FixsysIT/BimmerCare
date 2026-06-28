@@ -187,6 +187,8 @@
     "updateMileage": "Update Mileage",
     "statusOverview": "Status Overview",
     "urgentItems": "Urgent Items",
+    "checkControl": "Check Control",
+    "allClearTitle": "All clear",
     "lastBackup": "Last Backup",
     "noBackup": "No backup yet",
     "downloadBackup": "Download Backup",

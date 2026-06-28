@@ -31,7 +31,7 @@ const TABS = [
   { key: 'all', match: ['red', 'orange', 'inspect'] },
 ];
 
-export default function UrgentItems({ items, onOpen, max, changedItems, onAckItem, currentMileage }) {
+export default function UrgentItems({ items, onOpen, max, changedItems, onAckItem, currentMileage, title }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState('red');
 
@@ -45,7 +45,7 @@ export default function UrgentItems({ items, onOpen, max, changedItems, onAckIte
   return (
     <div className="urgent-items">
       <div className="urgent-head">
-        <h3 className="section-title">{t('dashboard.urgentItems')}</h3>
+        <h3 className="section-title">{title || t('dashboard.urgentItems')}</h3>
         <div className="urgent-tabs">
           {TABS.map((x) => (
             <button

@@ -1,10 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
-import VehicleCard from './VehicleCard';
+import { motion, useReducedMotion } from 'framer-motion';
+import carPhoto from '../../assets/f10-hero.jpg';
+import HealthGauge from './HealthGauge';
 import MileageUpdate from './MileageUpdate';
-import StatusOverview from './StatusOverview';
 import UrgentItems from './UrgentItems';
 import { generateChecklist, downloadText } from '../../utils/dataExport';
 import { inspectionPackages } from '../../data/inspectionPackages';
@@ -12,12 +12,34 @@ import './Dashboard.css';
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.03 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
+
+// odometer that rolls up to its value on ignition (skipped if motion is reduced)
+function Odo({ value }) {
+  const reduce = useReducedMotion();
+  const [shown, setShown] = useState(reduce ? value : 0);
+  const ref = useRef();
+  useEffect(() => {
+    if (reduce) return; // value rendered directly below; no animation
+    cancelAnimationFrame(ref.current);
+    const dur = 1100, t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setShown(Math.round(value * eased));
+      if (p < 1) ref.current = requestAnimationFrame(tick);
+    };
+    ref.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(ref.current);
+  }, [value, reduce]);
+  const display = reduce ? value : shown;
+  return <>{(display || 0).toLocaleString('nl-NL')}</>;
+}
 
 export default function Dashboard({
   vehicle, updateMileage, statusCounts, urgentItems, itemsWithStatus,
@@ -33,31 +55,39 @@ export default function Dashboard({
     downloadText(generateChecklist(inspectionPackages, vehicle), `bimmercare-checklist-${date}.md`);
   };
 
-  // items with a recent, unacknowledged status change → get a "Nieuw" marker
   const changedItems = useMemo(
     () => new Set((statusEvents || []).filter((e) => !e.acknowledged).map((e) => e.itemId)),
     [statusEvents],
   );
 
+  if (!vehicle) return null;
+
   return (
     <motion.div className="dashboard" variants={container} initial="hidden" animate="show">
-      <motion.h1 className="page-title" variants={item}>{t('dashboard.title')}</motion.h1>
+      {/* ── Binnacle: tach + odo, framed over the real car ── */}
+      <motion.div className="card binnacle" variants={item} style={{ backgroundImage: `url(${carPhoto})` }}>
+        <div className="binnacle-grid">
+          <HealthGauge counts={statusCounts} onSelect={goFilter} />
 
-      <motion.div variants={item}>
-        <VehicleCard
-          vehicle={vehicle}
-          counts={statusCounts}
-          onChip={goFilter}
-        />
+          <div className="odo">
+            <span className="odo-eyebrow">{vehicle.engine} · {vehicle.year}{vehicle.plate ? ` · ${vehicle.plate}` : ''}</span>
+            <h1 className="odo-model">{vehicle.model}</h1>
+            <div className="odo-read">
+              <span className="odo-km"><Odo value={vehicle.currentMileage || 0} /></span>
+              <span className="odo-unit">km</span>
+            </div>
+            <button className="odo-action" onClick={() => setMileageModalOpen(true)}>
+              {t('dashboard.updateMileage')}
+            </button>
+          </div>
+        </div>
       </motion.div>
 
-      <motion.div variants={item}>
-        <StatusOverview counts={statusCounts} onSelect={goFilter} />
-      </motion.div>
-
-      <motion.div variants={item}>
+      {/* ── Check Control: the cluster's warning messages ── */}
+      <motion.div className="card check-control" variants={item}>
         <UrgentItems
           items={itemsWithStatus || urgentItems}
+          title={t('dashboard.checkControl', 'Check Control')}
           onOpen={goFilter}
           changedItems={changedItems}
           onAckItem={acknowledgeItem}
@@ -65,16 +95,8 @@ export default function Dashboard({
         />
       </motion.div>
 
-      <motion.div className="dash-actions" variants={item}>
-        <button className="btn btn-primary btn-sm" onClick={() => setMileageModalOpen(true)}>
-          {t('dashboard.updateMileage')}
-        </button>
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/maintenance')}>
-          {t('dashboard.openMaintenance', 'Onderhoud openen')}
-        </button>
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate('/budget')}>
-          {t('dashboard.openBudget', 'Budgetplan')}
-        </button>
+      {/* ── one secondary action that isn't already in the nav ── */}
+      <motion.div className="dash-foot" variants={item}>
         <button className="btn btn-secondary btn-sm" onClick={exportChecklist}>
           {t('settings.exportChecklist', 'Garage checklist')}
         </button>
