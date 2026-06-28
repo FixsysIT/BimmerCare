@@ -16,7 +16,7 @@
   background-color: #04040A;
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center 82%;
+  background-position: center center;
   border-color: var(--border-strong);
 }
 
