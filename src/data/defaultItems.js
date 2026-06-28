@@ -552,7 +552,7 @@ export function getDefaultItems(vehicleId) {
       sourceNote: 'KM is inspection indicator. Actual replacement on thickness (min 3mm). CBS monitors via wear sensor.',
       priority: PRIORITIES.CRITICAL,
       parts: [
-        { name: 'Brake Pad Set Front', oemNumber: '34116858047', altBrand: 'TRW', altNumber: 'GDB1946', estimatedPrice: 55.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Brake Pad Set Front', oemNumber: '34116858047', altBrand: 'TRW', altNumber: 'GDB1946', recommendedBrand: 'ATE / Textar / TRW', estimatedPrice: 55.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -594,7 +594,7 @@ export function getDefaultItems(vehicleId) {
       sourceNote: 'KM is inspection indicator. Replace on wear.',
       priority: PRIORITIES.CRITICAL,
       parts: [
-        { name: 'Brake Pad Set Rear', oemNumber: '34216873093', altBrand: 'TRW', altNumber: 'GDB1947', estimatedPrice: 45.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Brake Pad Set Rear', oemNumber: '34216873093', altBrand: 'TRW', altNumber: 'GDB1947', recommendedBrand: 'ATE / Textar / TRW', estimatedPrice: 45.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -636,7 +636,7 @@ export function getDefaultItems(vehicleId) {
       sourceNote: 'Measure disc thickness. Min thickness stamped on disc. Usually done with pad replacement.',
       priority: PRIORITIES.CRITICAL,
       parts: [
-        { name: 'Brake Disc Front (×2)', oemNumber: '34116860907', altBrand: 'Brembo', altNumber: '09.C398.13', estimatedPrice: 85.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Brake Disc Front (×2)', oemNumber: '34116860907', altBrand: 'Brembo', altNumber: '09.C398.13', recommendedBrand: 'ATE / Zimmermann / Brembo', estimatedPrice: 85.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -657,7 +657,7 @@ export function getDefaultItems(vehicleId) {
       sourceNote: 'Rear discs last longer than front. Measure thickness.',
       priority: PRIORITIES.CRITICAL,
       parts: [
-        { name: 'Brake Disc Rear (×2)', oemNumber: '34216864903', altBrand: 'Brembo', altNumber: '08.B413.11', estimatedPrice: 65.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Brake Disc Rear (×2)', oemNumber: '34216864903', altBrand: 'Brembo', altNumber: '08.B413.11', recommendedBrand: 'ATE / Zimmermann / Brembo', estimatedPrice: 65.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {

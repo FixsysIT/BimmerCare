@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CATEGORY_ICONS } from '../../utils/constants';
+import { CATEGORY_ICONS, LABOUR_RATE_EXCL_BTW } from '../../utils/constants';
 import { tItem, tPartName } from '../../utils/translate';
 import { copyToClipboard } from '../../utils/dataExport';
 import './PartsPage.css';
@@ -95,7 +95,7 @@ export default function PartsPage({ maintenanceItems }) {
                 {brand && (
                   <div className="part-row">
                     <span className="part-label">{t('parts.brand')}</span>
-                    {part.altNumber ? (
+                    {part.altNumber && !brand.includes('/') ? (
                       <button
                         type="button"
                         className="part-value part-copy"
@@ -119,7 +119,10 @@ export default function PartsPage({ maintenanceItems }) {
                 {part.labourHours > 0 && (
                   <div className="part-row">
                     <span className="part-label">{t('parts.labour')}</span>
-                    <span className="part-value">{t('parts.labourValue', { hours: part.labourHours.toLocaleString('nl-NL') })}</span>
+                    <span className="part-value">{t('parts.labourValue', {
+                      hours: part.labourHours.toLocaleString('nl-NL'),
+                      cost: Math.round(part.labourHours * LABOUR_RATE_EXCL_BTW),
+                    })}</span>
                   </div>
                 )}
                 {buyNr && (

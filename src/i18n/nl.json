@@ -356,7 +356,7 @@
     "alternative": "Alternatief",
     "brand": "Aanbevolen merk",
     "labour": "Arbeid",
-    "labourValue": "~{{hours}} u (indicatie)",
+    "labourValue": "~{{hours}} u · ~€{{cost}} (indicatie)",
     "price": "Richtprijs",
     "bmwfansLink": "BMWFans Link",
     "buy": "Zelf kopen",

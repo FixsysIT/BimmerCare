@@ -1,3 +1,6 @@
+// Indicatief uurtarief onafhankelijke garage, excl. BTW (voor arbeidskosten-schatting).
+export const LABOUR_RATE_EXCL_BTW = 140;
+
 // Categories for maintenance items
 export const CATEGORIES = {
   MOTOR: 'Motor',

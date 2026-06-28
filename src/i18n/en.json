@@ -356,7 +356,7 @@
     "alternative": "Alternative",
     "brand": "Recommended brand",
     "labour": "Labour",
-    "labourValue": "~{{hours}} h (estimate)",
+    "labourValue": "~{{hours}} h · ~€{{cost}} (estimate)",
     "price": "Est. Price",
     "bmwfansLink": "BMWFans Link",
     "buy": "Buy yourself",
