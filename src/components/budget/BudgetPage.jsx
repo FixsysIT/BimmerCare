@@ -59,7 +59,12 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
     const raw = rawById(s.id);
     const date = raw.date || new Date().toISOString();
     const mileage = vehicle?.currentMileage || 0;
-    
+    // labour is a per-visit cost, not attributable to one part — keep item cost
+    // learning clean (parts only) and carry the labour amount in the note
+    const labor = Number(raw.labor) || 0;
+    const notes = [raw.note, labor > 0 ? `${t('budget.laborLabel')}: €${Math.round(labor)}` : '']
+      .filter(Boolean).join(' · ');
+
     s.entries.forEach((e) => {
       if (e.job.custom) return;
       
@@ -73,7 +78,7 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
           date,
           mileage,
           garage: 'BimmerCare',
-          notes: raw.note || ''
+          notes
         });
       });
     });
@@ -548,11 +553,24 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
               )}
             </div>
             {!s.locked && (
-              <input
-                type="number" className="bp-session-money"
-                placeholder={`${t('budget.projected')}: ${eur(s.pot)}`}
-                value={raw.money ?? ''} onChange={(e) => updateSession(s.id, { money: e.target.value })}
-              />
+              <div className="bp-session-moneyrow">
+                <label className="bp-mfield">
+                  <span>{t('budget.moneyLabel')}</span>
+                  <input
+                    type="number" className="bp-session-money"
+                    placeholder={`${t('budget.projected')}: ${eur(s.pot)}`}
+                    value={raw.money ?? ''} onChange={(e) => updateSession(s.id, { money: e.target.value })}
+                  />
+                </label>
+                <label className="bp-mfield">
+                  <span>{t('budget.laborLabel')}</span>
+                  <input
+                    type="number" className="bp-session-money" placeholder="0"
+                    title={t('budget.laborHint')}
+                    value={raw.labor ?? ''} onChange={(e) => updateSession(s.id, { labor: e.target.value })}
+                  />
+                </label>
+              </div>
             )}
             {s.locked
               ? (!((prefs.collapsedSessions || {})[s.id]) && raw.note ? <div className="bp-note-static">{raw.note}</div> : null)
@@ -568,10 +586,16 @@ export default function BudgetPage({ itemsWithStatus, settings = {}, setSettings
                 {t('budget.manualMode')}
               </label>
             )}
+            <div className="bp-session-total">
+              <span className="bp-total-label">{t('budget.toPay')}</span>
+              <strong className="bp-total-amount">{eur(s.cost)}</strong>
+              {s.labor > 0 && (
+                <span className="bp-total-split">{t('budget.partsPlusLabor', { parts: eur(s.parts), labor: eur(s.labor) })}</span>
+              )}
+            </div>
             <div className="bp-month-sub">
               {s.locked && <span className="bp-final-badge">✓ {t('budget.final')}</span>}
               {s.overridden ? t('budget.youHave', { amount: eur(s.money) }) : t('budget.projectedPot', { amount: eur(s.pot) })}
-              {' · '}{t('budget.spent', { amount: eur(s.cost) })}
               {' · '}<strong className={s.left < 0 ? 'bp-neg' : 'bp-pos'}>{t('budget.left', { amount: eur(s.left) })}</strong>
             </div>
 

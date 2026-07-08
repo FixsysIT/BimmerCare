@@ -545,6 +545,7 @@ export function generateBudgetReport(plan, settings, vehicle, t, today = new Dat
       out.push('');
       out.push(`### ${raw.name || dateLabel(s.date)}${raw.name && s.date ? ` — ${dateLabel(s.date)}` : ''}`);
       out.push(L('sessionMoney', { have: eur(s.money), spent: eur(s.cost), left: eur(s.left) }));
+      if (s.labor > 0) out.push(L('sessionLabor', { parts: eur(s.parts), labor: eur(s.labor) }));
       const booked = s.entries.filter((e) => !e.rider);
       const riders = s.entries.filter((e) => e.rider);
       if (booked.length) {

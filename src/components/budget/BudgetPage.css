@@ -251,6 +251,15 @@
   background: var(--bg-surface, #0d0f19); border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px; padding: 0.45rem 0.5rem; color: var(--text-primary, #fff); font-size: 0.9rem;
 }
+.bp-session-moneyrow { display: flex; gap: 0.6rem; }
+.bp-mfield { flex: 1; min-width: 0; }
+.bp-mfield > span { font-size: 0.7rem; color: var(--text-muted); }
+.bp-mfield .bp-session-money { margin: 0.15rem 0 0.4rem; }
+/* prominent "what do I pay this visit" line */
+.bp-session-total { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; margin: 0.35rem 0 0.1rem; }
+.bp-total-label { font-size: 0.8rem; color: var(--text-muted); }
+.bp-total-amount { font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; }
+.bp-total-split { font-size: 0.75rem; color: var(--text-muted); }
 .bp-manual-toggle { margin: 0.45rem 0; }
 .bp-session-bar { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .bp-session-bar .bp-appt-override { margin-left: auto; }

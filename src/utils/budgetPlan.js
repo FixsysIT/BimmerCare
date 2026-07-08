@@ -198,10 +198,13 @@ function assignToSessions(jobs, settings, today, pinned) {
     .map((s) => {
       const overridden = s.money !== '' && s.money != null && !Number.isNaN(Number(s.money));
       const proj = projectedMoney(s.date, settings, today);
+      // labour is a per-visit garage cost: reserve it up front (spent starts at
+      // labour) so auto-fill only spends what's left after the labour bill
+      const labor = Number(s.labor) || 0;
       return {
         id: s.id, date: s.date, note: s.note, monthsUntil: proj.monthsUntil,
         money: overridden ? Number(s.money) : proj.money, overridden,
-        locked: !!s.locked, manual: !!s.manual, entries: [], spent: 0,
+        locked: !!s.locked, manual: !!s.manual, entries: [], labor, spent: labor,
       };
     });
   const byId = new Map(sessions.map((s) => [s.id, s]));
@@ -237,7 +240,8 @@ function assignToSessions(jobs, settings, today, pinned) {
 
   sessions.forEach((s, i) => {
     s.left = Math.round(avail(i));
-    s.cost = s.spent;
+    s.cost = s.spent;           // total to pay this visit = parts + labour
+    s.parts = s.spent - s.labor;
     // pot SHOWN to the user = realistic money going into THIS visit: the savings
     // curve minus what earlier (projected) visits already committed. Typed sessions
     // are islands (priorSpend skips them), so their pot is exactly what was typed.
