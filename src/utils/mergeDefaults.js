@@ -73,10 +73,12 @@ export function mergeDefaultItems(existing, defaults) {
       changed = true;
     }
 
-    // Additieve velden: vul indicatieve arbeidsuren aan als ze nog ontbreken.
-    if (def && (next.labourHours === undefined || next.labourHours === null) && def.labourHours != null) {
-      next.labourHours = def.labourHours;
-      changed = true;
+    // Additieve velden: aanvullen als ze nog ontbreken (nooit user-edits overschrijven).
+    for (const k of ['labourHours', 'inspectionOkValidMonths']) {
+      if (def && (next[k] === undefined || next[k] === null) && def[k] != null) {
+        next[k] = def[k];
+        changed = true;
+      }
     }
 
     // Verrijk parts met nieuwe merk-adviezen + ontbrekende default-parts (per OEM).

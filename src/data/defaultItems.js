@@ -1236,8 +1236,9 @@ export function getDefaultItems(vehicleId) {
       visibilityLayer: 'inspection', inspectionGroup: 'Remmen',
       intervalKm: null, intervalMonths: null, warningKm: null, warningDays: null,
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
+      inspectionOkValidMonths: 24, // APK kijkt jaarlijks mee; eigen bewuste check om de 2 jaar volstaat
       estimatedTotalCost: 120, source: SOURCES.CONDITION_DIAGNOSIS,
-      sourceNote: 'Leeftijdsitem. Inspecteer op scheuren/uitdroging. Vaak APK-opmerking.',
+      sourceNote: 'Leeftijdsitem. Inspecteer op scheuren/uitdroging. APK controleert jaarlijks mee; vaak APK-opmerking.',
       priority: PRIORITIES.CRITICAL, parts: [],
     }),
     item(vehicleId, {
@@ -1246,8 +1247,9 @@ export function getDefaultItems(vehicleId) {
       visibilityLayer: 'inspection', inspectionGroup: 'Remmen',
       intervalKm: null, intervalMonths: null, warningKm: null, warningDays: null,
       bmwIntervalKm: null, bmwIntervalMonths: null, communityIntervalKm: null, communityIntervalMonths: null,
+      inspectionOkValidMonths: 36, // EPB: functietest = APK-rollenbank (jaarlijks); visueel kan alleen met achterschijven eraf
       estimatedTotalCost: 200, source: SOURCES.CONDITION_DIAGNOSIS,
-      sourceNote: 'Vaak vergeten. Inspecteer op slechte handremwerking, vastzitten, slijtage.',
+      sourceNote: 'EPB (drum-in-hat): schoenen klemmen alleen statisch, slijten nauwelijks. Functietest = APK-rollenbank; visueel alleen bij demontage achterschijven — meenemen als achterremmen toch open gaan.',
       priority: PRIORITIES.PREVENTIVE, parts: [],
     }),
     item(vehicleId, {

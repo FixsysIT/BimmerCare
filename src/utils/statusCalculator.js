@@ -62,7 +62,9 @@ function conditionEventStatus(item, e, currentDate) {
   if (r.status !== STATUS.GREEN) return r; // worn/replace_needed/etc. already actionable
   const base = e.createdAt || e.date;
   if (!base) return r;
-  const limit = item.intervalMonths ?? INSPECTION_OK_VALID_MONTHS;
+  // per-item validity of a clean look (e.g. brake hoses: APK already eyeballs
+  // them yearly, so an own re-inspect nudge every 12 months is just noise)
+  const limit = item.inspectionOkValidMonths ?? item.intervalMonths ?? INSPECTION_OK_VALID_MONTHS;
   const due = format(addMonths(new Date(base), limit), 'yyyy-MM-dd');
   const remainingDays = differenceInDays(new Date(due), currentDate);
   r.dueByDate = due;

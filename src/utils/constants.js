@@ -139,7 +139,7 @@ export const APP_VERSION = '1.2';
 
 // Catalog version — bump when default items/metadata change, so existing
 // stored data can be merged up via Settings → "Catalogus bijwerken".
-export const CATALOG_VERSION = '2026.05.29-p2';
+export const CATALOG_VERSION = '2026.07.08-epb';
 
 // Storage keys
 export const STORAGE_KEYS = {
