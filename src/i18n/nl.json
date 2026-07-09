@@ -359,7 +359,8 @@
     "per1000km": "Per 1.000 km",
     "byCategory": "Per Categorie",
     "costLog": "Kostenlog",
-    "noData": "Nog geen kostendata"
+    "noData": "Nog geen kostendata",
+    "editInProjects": "Aanpassen kan op de Klussen-pagina"
   },
   "invoices": {
     "title": "Facturen (PDF)",
@@ -537,7 +538,8 @@
     "Elektrisch": "Elektrisch",
     "Airco": "Airco",
     "Exterieur": "Exterieur",
-    "N53-Specifiek": "N53-Specifiek"
+    "N53-Specifiek": "N53-Specifiek",
+    "Klussen": "Klussen"
   },
   "items": {
     "General Diagnostic Scan": "Foutgeheugen uitlezen (jaarlijks)",

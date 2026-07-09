@@ -18,7 +18,7 @@ const SEED = [
   'CarPlay',
   'Sfeerverlichting',
   'Binnenspiegel',
-].map((name) => ({ id: uuidv4(), name, status: 'idea', cost: 0, notes: '' }));
+].map((name) => ({ id: uuidv4(), name, status: 'idea', cost: 0, notes: '', addedAt: new Date().toISOString() }));
 
 export default function ProjectsPage() {
   const { t } = useTranslation();
@@ -37,7 +37,11 @@ export default function ProjectsPage() {
     setProjects((prev) => {
       const cur = prev || [];
       const exists = cur.some((p) => p.id === editing.id);
-      const clean = { ...editing, name: editing.name.trim(), cost: parseFloat(editing.cost) || 0 };
+      // 'Klaar' telt mee als kostenpost op de Kosten-pagina (aggregateCosts) —
+      // stempel het moment van afronden zodat de datum stabiel blijft, en wis
+      // 'm weer als de klus wordt teruggezet zodat 'ie ook weer uit Kosten valt.
+      const doneAt = editing.status === 'done' ? (editing.doneAt || new Date().toISOString()) : null;
+      const clean = { ...editing, name: editing.name.trim(), cost: parseFloat(editing.cost) || 0, doneAt };
       return exists ? cur.map((p) => (p.id === editing.id ? clean : p)) : [...cur, clean];
     });
     setEditing(null);
@@ -61,7 +65,7 @@ export default function ProjectsPage() {
         <button
           type="button"
           className="btn btn-primary btn-sm"
-          onClick={() => setEditing({ id: uuidv4(), name: '', status: 'idea', cost: 0, notes: '' })}
+          onClick={() => setEditing({ id: uuidv4(), name: '', status: 'idea', cost: 0, notes: '', addedAt: new Date().toISOString() })}
         >
           + {t('projects.add')}
         </button>

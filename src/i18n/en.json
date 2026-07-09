@@ -359,7 +359,8 @@
     "per1000km": "Per 1,000 km",
     "byCategory": "By Category",
     "costLog": "Cost Log",
-    "noData": "No cost data yet"
+    "noData": "No cost data yet",
+    "editInProjects": "Edit this on the Projects page"
   },
   "invoices": {
     "title": "Invoices (PDF)",
@@ -537,7 +538,8 @@
     "Elektrisch": "Electrical",
     "Airco": "A/C",
     "Exterieur": "Exterior",
-    "N53-Specifiek": "N53-Specific"
+    "N53-Specifiek": "N53-Specific",
+    "Klussen": "Projects"
   },
   "items": {
     "General Diagnostic Scan": "Diagnostic Scan (yearly)",

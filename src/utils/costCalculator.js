@@ -17,9 +17,13 @@ function entryCost(entry) {
 }
 
 /**
- * Aggregate costs (excl. BTW) from all maintenance items.
+ * Aggregate costs (excl. BTW) from all maintenance items, plus finished
+ * hobby projects (`projects`, category 'Klussen') so the total reflects all
+ * car spend, not just maintenance. Project entries carry `isProject: true`
+ * and no `itemId`/mileage — they aren't real history entries and are edited
+ * on the Projects page, not here.
  */
-export function aggregateCosts(maintenanceItems) {
+export function aggregateCosts(maintenanceItems, projects = []) {
   let total = 0;
   const byCategory = {};
   const allEntries = [];
@@ -44,6 +48,25 @@ export function aggregateCosts(maintenanceItems) {
         calculatedCost: round2(cost),
       });
     }
+  }
+
+  for (const p of projects) {
+    if (p.status !== 'done' || !(p.cost > 0)) continue;
+    total += p.cost;
+
+    if (!byCategory.Klussen) byCategory.Klussen = { total: 0, count: 0 };
+    byCategory.Klussen.total += p.cost;
+    byCategory.Klussen.count += 1;
+
+    allEntries.push({
+      id: p.id,
+      date: (p.doneAt || p.addedAt || new Date().toISOString()).slice(0, 10),
+      notes: p.notes,
+      itemName: p.name,
+      itemCategory: 'Klussen',
+      isProject: true,
+      calculatedCost: round2(p.cost),
+    });
   }
 
   // Newest first

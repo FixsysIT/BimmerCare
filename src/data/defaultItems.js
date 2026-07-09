@@ -1043,7 +1043,7 @@ export function getDefaultItems(vehicleId) {
     }),
     item(vehicleId, {
       name: 'Cabin Filter (×2)',
-      category: 'Elektrisch',
+      category: 'Airco',
       intervalType: INTERVAL_TYPES.KM_DOMINANT,
       replacementStrategy: 'interval',
       intervalKm: 20000,
@@ -1065,7 +1065,7 @@ export function getDefaultItems(vehicleId) {
     }),
     item(vehicleId, {
       name: 'A/C Condenser + Dryer',
-      category: 'Elektrisch',
+      category: 'Airco',
       intervalType: INTERVAL_TYPES.CONDITION,
       replacementStrategy: 'on-failure',
       intervalKm: null,

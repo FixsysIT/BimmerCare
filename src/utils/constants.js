@@ -31,6 +31,9 @@ export const CATEGORY_ICONS = {
   Airco: '❄️',
   Exterieur: '🪟',
   'N53-Specifiek': '🔬',
+  // Niet in CATEGORIES (geen onderhoudsitem heeft deze) — alleen gebruikt door
+  // afgeronde klussen (ProjectsPage) die als kostenpost meetellen op Kosten.
+  Klussen: '🔨',
 };
 
 // Visibility layers — keep the dashboard usable as the catalog grows.
@@ -139,7 +142,7 @@ export const APP_VERSION = '1.2';
 
 // Catalog version — bump when default items/metadata change, so existing
 // stored data can be merged up via Settings → "Catalogus bijwerken".
-export const CATALOG_VERSION = '2026.07.08-epb';
+export const CATALOG_VERSION = '2026.07.09-aircocat';
 
 // Storage keys
 export const STORAGE_KEYS = {

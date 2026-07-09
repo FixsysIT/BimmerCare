@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { aggregateCosts, costPer1000Km, costPerMonth } from '../../utils/costCalculator';
-import { CATEGORY_ICONS } from '../../utils/constants';
+import { CATEGORY_ICONS, STORAGE_KEYS } from '../../utils/constants';
 import { tItem, tCategory } from '../../utils/translate';
+import { useStorage } from '../../hooks/useStorage';
 import EventLogModal from '../maintenance/EventLogModal';
 import InvoiceVault from './InvoiceVault';
 import './CostsPage.css';
 
 export default function CostsPage({ maintenanceItems, vehicle, currentMileage, updateHistoryEntry }) {
   const { t } = useTranslation();
+  const [projects] = useStorage(STORAGE_KEYS.PROJECTS, null);
 
-  const costs = useMemo(() => aggregateCosts(maintenanceItems), [maintenanceItems]);
+  const costs = useMemo(() => aggregateCosts(maintenanceItems, projects || []), [maintenanceItems, projects]);
   const [catFilter, setCatFilter] = useState(null); // clicked category → filter the log
   const [editEntry, setEditEntry] = useState(null);  // cost-log entry being edited
 
@@ -87,25 +89,32 @@ export default function CostsPage({ maintenanceItems, vehicle, currentMileage, u
           )}
         </div>
         <div className="cost-log">
-          {logEntries.map((entry, i) => (
-            <button
-              key={entry.id || `${entry.date}-${i}`}
-              type="button"
-              className="log-entry log-entry-btn"
-              onClick={() => entry.id && setEditEntry(entry)}
-              title={t('costs.editEntry', 'Aanpassen')}
-            >
-              <div className="log-left">
-                <span className="log-item">{tItem(t, entry.itemName)}</span>
-                <span className="log-detail">
-                  {entry.date} — {entry.mileage?.toLocaleString()} km
-                  {entry.garage ? ` — ${entry.garage}` : ''}
-                </span>
-                {entry.notes && <span className="log-note">{entry.notes}</span>}
-              </div>
-              <span className="log-amount">€{entry.calculatedCost.toFixed(2)}</span>
-            </button>
-          ))}
+          {logEntries.map((entry, i) => {
+            const clickable = !entry.isProject && !!entry.id;
+            return (
+              <button
+                key={entry.id || `${entry.date}-${i}`}
+                type="button"
+                className="log-entry log-entry-btn"
+                onClick={() => clickable && setEditEntry(entry)}
+                disabled={!clickable}
+                title={clickable ? t('costs.editEntry', 'Aanpassen') : t('costs.editInProjects')}
+              >
+                <div className="log-left">
+                  <span className="log-item">
+                    {entry.isProject && '🔨 '}{tItem(t, entry.itemName)}
+                  </span>
+                  <span className="log-detail">
+                    {entry.date}
+                    {entry.mileage != null ? ` — ${entry.mileage.toLocaleString()} km` : ''}
+                    {entry.garage ? ` — ${entry.garage}` : ''}
+                  </span>
+                  {entry.notes && <span className="log-note">{entry.notes}</span>}
+                </div>
+                <span className="log-amount">€{entry.calculatedCost.toFixed(2)}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

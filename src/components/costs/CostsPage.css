@@ -123,6 +123,14 @@
   background: var(--bg-elevated);
 }
 
+.log-entry-btn:disabled {
+  cursor: default;
+}
+
+.log-entry-btn:disabled:hover {
+  background: none;
+}
+
 .log-left {
   display: flex;
   flex-direction: column;
