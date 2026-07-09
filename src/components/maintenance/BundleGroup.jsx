@@ -11,9 +11,9 @@ import { formatMaintenanceStatus } from '../../utils/statusFormat';
 export default function BundleGroup({ title, attachments = {}, currentMileage, children }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
-  const { context = [], addons = [], inspect = [], reminders = [], notNeeded = [] } = attachments;
+  const { context = [], addons = [], inspect = [], reminders = [], notNeeded = [], consumables = [] } = attachments;
   const hasAttachments = context.length > 0 || addons.length > 0 || inspect.length > 0
-    || reminders.length > 0 || notNeeded.length > 0;
+    || reminders.length > 0 || notNeeded.length > 0 || consumables.length > 0;
 
   const ItemRow = ({ a, tag, tagClass }) => (
     <div className="bundle-attach-row">
@@ -59,6 +59,16 @@ export default function BundleGroup({ title, attachments = {}, currentMileage, c
                 <span key={name} className="bundle-attach-row bundle-inspect-row">
                   <span className="bundle-attach-tag bundle-tag-inspect">{t('register.tagInspect')}</span>
                   <span className="bundle-attach-name">{tItem(t, name)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          {consumables.length > 0 && (
+            <div className="bundle-attach-block">
+              <span className="bundle-attach-label bundle-label-inspect">{t('register.companionConsumables')}</span>
+              {consumables.map((c, i) => (
+                <span key={i} className="bundle-attach-row bundle-inspect-row">
+                  <span>🧴 {c[lang] || c.en}</span>
                 </span>
               ))}
             </div>

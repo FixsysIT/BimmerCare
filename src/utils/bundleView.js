@@ -1,5 +1,6 @@
 import { getBundles, ROLES } from '../data/bundles';
 import { getCompanions, getReminders } from './companions';
+import { getConsumables } from '../data/consumables';
 
 /**
  * VISUAL grouping only. Builds clusters from the bundle registry so the
@@ -105,6 +106,8 @@ export function clusterAttachments(memberNames, allItems, currentMileage = null)
   const notNeeded = new Map(); // context/addon currently OK → full item (for remaining text)
   const reminders = [];
   const seenReminder = new Set();
+  const consumables = [];      // advies-only boodschappenregels ({nl,en}) van alle members
+  const seenConsumable = new Set();
   const row = (c) => ({ name: c.name, estimatedTotalCost: c.estimatedTotalCost, reasonI18n: c.reasonI18n });
 
   for (const name of memberNames) {
@@ -128,6 +131,10 @@ export function clusterAttachments(memberNames, allItems, currentMileage = null)
       const key = r.nl || r.en;
       if (!seenReminder.has(key)) { seenReminder.add(key); reminders.push(r); }
     }
+    for (const c of getConsumables(name)) {
+      const key = c.nl || c.en;
+      if (!seenConsumable.has(key)) { seenConsumable.add(key); consumables.push(c); }
+    }
   }
   // a companion recommended via one member shouldn't also appear as "not needed"
   for (const n of [...context.keys(), ...addons.keys()]) notNeeded.delete(n);
@@ -138,5 +145,6 @@ export function clusterAttachments(memberNames, allItems, currentMileage = null)
     inspect: [...inspect.keys()],
     notNeeded: [...notNeeded.values()],
     reminders,
+    consumables,
   };
 }
