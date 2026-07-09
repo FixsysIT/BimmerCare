@@ -6,6 +6,7 @@ import MaintenancePage from './components/maintenance/MaintenancePage';
 import BudgetPage from './components/budget/BudgetPage';
 import CostsPage from './components/costs/CostsPage';
 import PartsPage from './components/parts/PartsPage';
+import ProjectsPage from './components/projects/ProjectsPage';
 import SettingsPage from './components/settings/SettingsPage';
 import { useVehicle } from './hooks/useVehicle';
 import { useMaintenance } from './hooks/useMaintenance';
@@ -31,6 +32,12 @@ export default function App() {
   useEffect(() => {
     if (!vehicleLoading && !vehicle) initVehicle();
   }, [vehicleLoading, vehicle, initVehicle]);
+
+  // Vraag persistent storage aan zodat de browser IndexedDB (incl. de
+  // factuurkluis) niet mag opruimen bij schijfdruk. Fire-and-forget.
+  useEffect(() => {
+    navigator.storage?.persist?.().catch(() => {});
+  }, []);
 
   const {
     items, itemsWithStatus, statusCounts, urgentItems,
@@ -138,6 +145,7 @@ export default function App() {
           <Route path="parts" element={
             <PartsPage maintenanceItems={items} settings={settings} />
           } />
+          <Route path="projects" element={<ProjectsPage />} />
           <Route path="settings" element={
             <SettingsPage
               vehicle={vehicle}

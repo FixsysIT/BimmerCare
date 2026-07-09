@@ -150,6 +150,8 @@ export const STORAGE_KEYS = {
   CHANGE_COUNT: 'bimmercare_change_count',
   STATUS_EVENTS: 'bimmercare_status_events',
   STATUS_SNAPSHOT: 'bimmercare_status_snapshot',
+  INVOICES: 'bimmercare_invoices',
+  PROJECTS: 'bimmercare_projects',
 };
 
 // Max status-transition events kept (newest wins).

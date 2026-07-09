@@ -1,0 +1,96 @@
+.projects-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.projects-subtitle {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-top: -0.5rem;
+}
+
+.projects-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.projects-totals {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.project-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.project-row:hover {
+  border-color: var(--m-blue, #2E6DB4);
+}
+
+.project-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.project-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.project-notes {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-cost {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.project-status {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.project-status-idea { color: var(--text-muted); }
+.project-status-ordered { color: var(--m-blue, #2E6DB4); }
+.project-status-busy { color: var(--status-orange, #E8A33D); }
+.project-status-done { color: var(--status-green, #3FA45B); }
+
+.project-actions {
+  align-items: center;
+}
+
+.project-delete {
+  margin-right: auto;
+  color: var(--status-red, #E2453B);
+  font-size: 1.1rem;
+}

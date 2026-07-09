@@ -4,6 +4,7 @@ import { aggregateCosts, costPer1000Km, costPerMonth } from '../../utils/costCal
 import { CATEGORY_ICONS } from '../../utils/constants';
 import { tItem, tCategory } from '../../utils/translate';
 import EventLogModal from '../maintenance/EventLogModal';
+import InvoiceVault from './InvoiceVault';
 import './CostsPage.css';
 
 export default function CostsPage({ maintenanceItems, vehicle, currentMileage, updateHistoryEntry }) {
@@ -34,6 +35,7 @@ export default function CostsPage({ maintenanceItems, vehicle, currentMileage, u
       <div className="costs-page">
         <h1 className="page-title">{t('costs.title')}</h1>
         <p className="empty-state">{t('costs.noData')}</p>
+        <InvoiceVault />
       </div>
     );
   }
@@ -106,6 +108,8 @@ export default function CostsPage({ maintenanceItems, vehicle, currentMileage, u
           ))}
         </div>
       </div>
+
+      <InvoiceVault />
 
       {editEntry && (
         <EventLogModal

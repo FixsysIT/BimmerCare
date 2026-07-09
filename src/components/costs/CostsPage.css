@@ -154,3 +154,61 @@
   font-size: 0.9375rem;
   flex-shrink: 0;
 }
+
+/* ── Factuurkluis (PDF-uploads) ── */
+.invoice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.invoice-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.invoice-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+}
+
+.invoice-row:last-child {
+  border-bottom: none;
+}
+
+.invoice-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.invoice-meta {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.invoice-delete {
+  color: var(--status-red, #E2453B);
+}
+
+.invoice-note {
+  margin-top: 0.6rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}

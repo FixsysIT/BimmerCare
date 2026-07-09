@@ -9,6 +9,7 @@
     "budget": "Budget plan",
     "costs": "Costs",
     "parts": "Parts",
+    "projects": "Projects",
     "settings": "Settings"
   },
   "budget": {
@@ -359,6 +360,31 @@
     "byCategory": "By Category",
     "costLog": "Cost Log",
     "noData": "No cost data yet"
+  },
+  "invoices": {
+    "title": "Invoices (PDF)",
+    "upload": "Upload",
+    "view": "View",
+    "empty": "No invoices yet. Upload PDFs and they are stored safely with the rest of your car data.",
+    "confirmDelete": "Delete invoice \"{{name}}\"?",
+    "storedLocal": "Stored locally on this device (IndexedDB). Not included in the JSON backup: keep the original yourself too."
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Hobby jobs and upgrades, separate from maintenance",
+    "add": "Add project",
+    "name": "Name",
+    "cost": "Cost (excl. VAT)",
+    "notes": "Notes",
+    "status": "Status",
+    "statusIdea": "Idea",
+    "statusOrdered": "Ordered",
+    "statusBusy": "In progress",
+    "statusDone": "Done",
+    "confirmDelete": "Delete project \"{{name}}\"?",
+    "empty": "No projects yet.",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "parts": {
     "title": "Parts",

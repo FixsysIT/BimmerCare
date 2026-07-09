@@ -46,6 +46,16 @@ const COOLANT_MIX = [
 ];
 
 export const CONSUMABLES = {
+  // ── Banden ──────────────────────────────────────────
+  // Nieuwe banden komen zonder bouten: banden gaan op de bestaande velgen,
+  // wielbouten blijven zitten. Verroeste bouten dus zelf (laten) vervangen.
+  'Tires (×4)': [
+    {
+      nl: 'Wielbouten: check op roest bij montage, verroest = vervangen (20 stuks M14×1,25, ±€2 per stuk, zit niet bij nieuwe banden)',
+      en: 'Wheel bolts: check for rust during fitting, rusted = replace (20 pcs M14×1.25, ±€2 each, not included with new tyres)',
+    },
+  ],
+
   // ── Remmen ──────────────────────────────────────────
   'Brake Discs Front': [BRAKE_CLEANER_2, BRAKE_PASTE, DISC_SET_SCREW],
   'Brake Discs Rear': [BRAKE_CLEANER_2, BRAKE_PASTE, DISC_SET_SCREW],

@@ -9,6 +9,7 @@
     "budget": "Budgetplan",
     "costs": "Kosten",
     "parts": "Onderdelen",
+    "projects": "Klussen",
     "settings": "Instellingen"
   },
   "budget": {
@@ -359,6 +360,31 @@
     "byCategory": "Per Categorie",
     "costLog": "Kostenlog",
     "noData": "Nog geen kostendata"
+  },
+  "invoices": {
+    "title": "Facturen (PDF)",
+    "upload": "Uploaden",
+    "view": "Bekijken",
+    "empty": "Nog geen facturen. Upload PDF's, dan staan ze veilig bij de rest van je autodata.",
+    "confirmDelete": "Factuur \"{{name}}\" verwijderen?",
+    "storedLocal": "Lokaal opgeslagen op dit apparaat (IndexedDB). Zit niet in de JSON-backup: bewaar het origineel ook zelf."
+  },
+  "projects": {
+    "title": "Klussen",
+    "subtitle": "Hobby en upgrades, los van het onderhoud",
+    "add": "Klus toevoegen",
+    "name": "Naam",
+    "cost": "Kosten (excl. BTW)",
+    "notes": "Notities",
+    "status": "Status",
+    "statusIdea": "Idee",
+    "statusOrdered": "Besteld",
+    "statusBusy": "Bezig",
+    "statusDone": "Klaar",
+    "confirmDelete": "Klus \"{{name}}\" verwijderen?",
+    "empty": "Nog geen klussen.",
+    "save": "Opslaan",
+    "cancel": "Annuleren"
   },
   "parts": {
     "title": "Onderdelen",
