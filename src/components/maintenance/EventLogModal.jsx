@@ -45,7 +45,7 @@ export default function EventLogModal({ isOpen, onClose, item, currentMileage, r
           <label>{t('register.notes')}</label>
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} />
         </div>
-        <CompanionPicker companions={companions} selected={companionIds} onChange={setCompanionIds} reminders={reminders} />
+        <CompanionPicker companions={companions} selected={companionIds} onChange={setCompanionIds} reminders={reminders} itemName={item.name} />
         <div className="form-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>{t('register.cancel')}</button>
           <button type="submit" className="btn btn-primary">{t('register.save')}</button>

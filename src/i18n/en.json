@@ -320,6 +320,7 @@
     "companionContext": "Strongly advised (if condition applies)",
     "companionAddon": "Add-on (optional)",
     "companionInspect": "Inspect only",
+    "companionConsumables": "Consumables (order along)",
     "bundleContext": "Strongly advised — if worn/old/brittle",
     "bundleAddon": "Add-on (optional, not counted)",
     "bundleInspect": "Inspect (check only)",

@@ -71,7 +71,7 @@ export default function MaintenanceModal({ isOpen, onClose, item, currentMileage
           <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} />
         </div>
 
-        <CompanionPicker companions={companions} selected={companionIds} onChange={setCompanionIds} reminders={reminders} />
+        <CompanionPicker companions={companions} selected={companionIds} onChange={setCompanionIds} reminders={reminders} itemName={item.name} />
 
         <div className="form-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>{t('register.cancel')}</button>

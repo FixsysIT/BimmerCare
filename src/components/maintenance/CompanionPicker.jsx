@@ -1,16 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { tItem } from '../../utils/translate';
 import { ROLES } from '../../data/bundles';
+import { getConsumables } from '../../data/consumables';
 
 /* Do-together picker, grouped by role:
    - mustReplace      → checkbox, ticked by default, logs replacement
    - conditionalAddon → checkbox, unticked, +reason +~cost, logs only when ticked
    - inspectOnly      → hint text only, no checkbox, logs nothing
    `selected` is the array of ticked companion item ids. Reminders are free
-   operations (e.g. battery coding), shown as a warning line. */
-export default function CompanionPicker({ companions = [], selected, onChange, reminders = [] }) {
+   operations (e.g. battery coding), shown as a warning line. `itemName` is the
+   stable English key of the item being serviced; it drives the consumables
+   advice section (shopping-list hints with quantities, nothing is logged). */
+export default function CompanionPicker({ companions = [], selected, onChange, reminders = [], itemName = '' }) {
   const { t, i18n } = useTranslation();
-  if (!companions.length && !reminders.length) return null;
+  const consumables = getConsumables(itemName);
+  if (!companions.length && !reminders.length && !consumables.length) return null;
 
   const lang = i18n.language?.startsWith('nl') ? 'nl' : 'en';
   const must = companions.filter((c) => c.role === ROLES.MUST);
@@ -70,6 +74,15 @@ export default function CompanionPicker({ companions = [], selected, onChange, r
           <span className="companion-section-label companion-inspect">{t('register.companionInspect')}</span>
           {inspect.map((c) => (
             <span key={c.id} className="companion-hint-line">🔍 {tItem(t, c.name)}</span>
+          ))}
+        </div>
+      )}
+
+      {consumables.length > 0 && (
+        <div className="companion-section">
+          <span className="companion-section-label companion-inspect">{t('register.companionConsumables')}</span>
+          {consumables.map((c, i) => (
+            <span key={i} className="companion-hint-line">🧴 {c[lang] || c.en}</span>
           ))}
         </div>
       )}

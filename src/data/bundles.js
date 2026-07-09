@@ -74,7 +74,8 @@ export const DEFAULT_BUNDLES = [
   {
     id: 'front-brake-pads-sensor',
     title: { nl: 'Remblokken voor', en: 'Front brake pads' },
-    trigger: ['Brake Pads Front'],
+    // Discs ook als trigger: bij schijven gaan de blokken (en dus de sensor) vrijwel altijd mee.
+    trigger: ['Brake Pads Front', 'Brake Discs Front'],
     adds: [{ name: 'Brake Wear Sensor Front', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Nieuwe blokken vereisen vaak een nieuwe wear-sensor om de waarschuwing te resetten.',
@@ -94,7 +95,7 @@ export const DEFAULT_BUNDLES = [
   {
     id: 'rear-brake-pads-sensor',
     title: { nl: 'Remblokken achter', en: 'Rear brake pads' },
-    trigger: ['Brake Pads Rear'],
+    trigger: ['Brake Pads Rear', 'Brake Discs Rear'],
     adds: [{ name: 'Brake Wear Sensor Rear', role: ROLES.CONTEXT }],
     reason: {
       nl: 'Nieuwe blokken vereisen vaak een nieuwe wear-sensor om de waarschuwing te resetten.',
