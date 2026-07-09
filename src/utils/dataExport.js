@@ -10,7 +10,7 @@ import { bundleMemberships } from './companions';
 /**
  * Generate export JSON object from app data.
  */
-export function createExportData(vehicle, maintenanceItems, settings) {
+export function createExportData(vehicle, maintenanceItems, settings, extra = {}) {
   return {
     exportVersion: EXPORT_VERSION,
     exportDate: new Date().toISOString(),
@@ -18,6 +18,11 @@ export function createExportData(vehicle, maintenanceItems, settings) {
     vehicle,
     maintenanceItems,
     settings,
+    // Additief sinds juli 2026 — oudere backups missen deze velden, import
+    // laat ze dan met rust (undefined-check) i.p.v. huidige data te wissen.
+    projects: extra.projects ?? [],
+    statusEvents: extra.statusEvents ?? [],
+    statusSnapshot: extra.statusSnapshot ?? null,
   };
 }
 

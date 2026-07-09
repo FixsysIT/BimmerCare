@@ -94,5 +94,15 @@ export function useStatusEvents(itemsWithStatus, currentMileage) {
     setEvents((prev) => (prev || []).map((e) => (e.itemId === itemId ? { ...e, acknowledged: true } : e)));
   }, [setEvents]);
 
-  return { events: events || [], acknowledge, acknowledgeAll, acknowledgeItem };
+  // Restore both halves of the diff pair on a JSON import — the events log AND
+  // the snapshot it was diffed against. Without this, importing an older/newer
+  // backup left the LIVE snapshot in place, so the very next render diffed the
+  // freshly-imported statuses against a snapshot from a different point in
+  // time and could fire bogus transition events.
+  const restoreEvents = useCallback((evts, snap) => {
+    setEvents(evts || []);
+    setSnapshot(snap ?? null);
+  }, [setEvents, setSnapshot]);
+
+  return { events: events || [], snapshot, acknowledge, acknowledgeAll, acknowledgeItem, restoreEvents };
 }

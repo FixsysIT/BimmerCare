@@ -7,7 +7,7 @@ import { STORAGE_KEYS, BACKUP_DEFAULTS } from '../utils/constants';
  * Auto-backup hook.
  * Tracks changes, shows reminders, optionally auto-downloads.
  */
-export function useAutoBackup(vehicle, maintenanceItems, settings) {
+export function useAutoBackup(vehicle, maintenanceItems, settings, extra = {}) {
   const [lastBackup, setLastBackup] = useStorage(STORAGE_KEYS.LAST_BACKUP, null);
   const [changeCount, setChangeCount] = useStorage(STORAGE_KEYS.CHANGE_COUNT, 0);
 
@@ -19,11 +19,11 @@ export function useAutoBackup(vehicle, maintenanceItems, settings) {
   // Manual export
   const exportBackup = useCallback(() => {
     if (!vehicle || !maintenanceItems) return;
-    const data = createExportData(vehicle, maintenanceItems, settings);
+    const data = createExportData(vehicle, maintenanceItems, settings, extra);
     downloadJSON(data);
     setLastBackup(new Date().toISOString());
     setChangeCount(0);
-  }, [vehicle, maintenanceItems, settings, setLastBackup, setChangeCount]);
+  }, [vehicle, maintenanceItems, settings, extra, setLastBackup, setChangeCount]);
 
   // Check if backup reminder should show
   const shouldRemind = useCallback(() => {
@@ -37,7 +37,7 @@ export function useAutoBackup(vehicle, maintenanceItems, settings) {
   // Auto-download if enabled
   useEffect(() => {
     if (settings?.autoBackupEnabled && vehicle && maintenanceItems && changeCount > 0) {
-      const data = createExportData(vehicle, maintenanceItems, settings);
+      const data = createExportData(vehicle, maintenanceItems, settings, extra);
       downloadJSON(data);
       setLastBackup(new Date().toISOString());
       setChangeCount(0);

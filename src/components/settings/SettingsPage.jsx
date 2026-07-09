@@ -34,6 +34,8 @@ export default function SettingsPage({
   addItem,
   startBaseline,
   statusEvents = [],
+  setProjects,
+  restoreEvents,
 }) {
   const { t, i18n } = useTranslation();
   const fileRef = useRef(null);
@@ -127,6 +129,12 @@ export default function SettingsPage({
     setVehicle(importPreview.vehicle);
     setItems(importPreview.maintenanceItems);
     if (importPreview.settings) setSettings(importPreview.settings);
+    // Additief sinds juli 2026 — oudere backups missen deze velden; alleen
+    // overschrijven als het bestand ze bevat, anders huidige data met rust laten.
+    if (importPreview.projects !== undefined) setProjects?.(importPreview.projects);
+    if (importPreview.statusEvents !== undefined || importPreview.statusSnapshot !== undefined) {
+      restoreEvents?.(importPreview.statusEvents, importPreview.statusSnapshot);
+    }
     setImportPreview(null);
     showToast('Data imported');
   };
@@ -435,6 +443,7 @@ export default function SettingsPage({
           <p style={{ color: 'var(--text-secondary)' }}>
             Vehicle: {importPreview.vehicle?.model} — {importPreview.vehicle?.currentMileage?.toLocaleString()} km<br />
             Items: {importPreview.maintenanceItems?.length}<br />
+            {importPreview.projects !== undefined && <>Projects: {importPreview.projects.length}<br /></>}
             Export date: {importPreview.exportDate}
           </p>
           <p style={{ color: 'var(--status-orange)', fontSize: '0.875rem' }}>

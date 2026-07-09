@@ -62,8 +62,11 @@ export default function App() {
     setSettings({ ...settings, catalogVersionApplied: CATALOG_VERSION });
   }, [itemsLoading, settingsLoading, items, vehicle, settings, setItems, setSettings]);
 
-  const { lastBackup, shouldRemind, trackChange, exportBackup } = useAutoBackup(vehicle, items, settings);
-  const { events: statusEvents, acknowledgeItem } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);
+  const [projects, setProjects] = useStorage(STORAGE_KEYS.PROJECTS, null);
+  const { events: statusEvents, snapshot: statusSnapshot, acknowledgeItem, restoreEvents } = useStatusEvents(itemsWithStatus, vehicle?.currentMileage);
+  const { lastBackup, shouldRemind, trackChange, exportBackup } = useAutoBackup(vehicle, items, settings, {
+    projects: projects || [], statusEvents, statusSnapshot,
+  });
 
   const handleRegister = (itemId, entry) => {
     registerMaintenance(itemId, entry);
@@ -163,6 +166,8 @@ export default function App() {
               addItem={addItem}
               startBaseline={startBaseline}
               statusEvents={statusEvents}
+              setProjects={setProjects}
+              restoreEvents={restoreEvents}
             />
           } />
         </Route>
