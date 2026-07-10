@@ -2,7 +2,7 @@
 
 # BimmerCare
 
-**The maintenance cockpit for one car — a 2010 BMW F10 523i, N53 engine.**
+**The maintenance cockpit for the BMW F10 with the N53 engine — 523i · 525i · 528i · 530i, 2009–2011.**
 
 Offline-first PWA. Your service history drives everything. All data stays on your device.
 
@@ -21,11 +21,15 @@ Offline-first PWA. Your service history drives everything. All data stays on you
 
 ---
 
-BimmerCare tracks the upkeep of **one specific car**, not a generic garage fleet.
-Every item in the catalog carries BMW's official interval next to the community /
-ZF recommendation, the OEM part number, and a cost estimate. Nothing is tracked
-twice: your **service history is the single source of truth**, and status,
-urgency and planning are all derived from it.
+BimmerCare tracks the upkeep of the **N53-engined BMW F10**, not a generic garage
+fleet. Every item in the catalog carries BMW's official interval next to the
+community / ZF recommendation, the OEM part number, and a cost estimate. Nothing
+is tracked twice: your **service history is the single source of truth**, and
+status, urgency and planning are all derived from it.
+
+The catalog was built and tuned on a 2010 523i, but the parts and intervals
+apply across the N53 range — the intervals, mileage and history you log are your
+car's own.
 
 ## Check Control
 
@@ -83,13 +87,20 @@ Clickable status rings on the dashboard drill straight into the matching list.
 - **Full JSON backup** — export and re-import everything, including projects and
   dashboard alerts.
 
-## Built for the N53
+## Which cars it fits
 
-The catalog is tuned to the F10 523i's N53B25 engine and its known quirks —
+The catalog is built around the **N53** straight-six and its known quirks —
 misfire-prone coils, walnut-blasting the intake, DISA valves, NOx sensors,
 electromechanical steering (no hydraulic fluid to change). Each entry weighs
 BMW's "lifetime / 25k" line against what the community actually does to keep
 these engines alive.
+
+| Group | Fits |
+|-------|------|
+| **Engine** parts & intervals | Pre-LCI F10 / F11 with the N53: **523i · 525i** (N53B25) and **528i · 530i** (N53B30), roughly **2009–2011**. Not the N20 520i, the N55 535i, or the diesels. |
+| **Chassis** parts (suspension, brakes, driveline) | The wider F10 / F11 range. Watch two things: **xDrive** front axles differ from RWD, and **brake sizes** vary by engine and M-sport package. |
+
+Your mileage, service history and planning stay specific to your own car.
 
 ## Run it
 
