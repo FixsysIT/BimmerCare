@@ -62,8 +62,35 @@ export default function Dashboard({
 
   if (!vehicle) return null;
 
+  // Fresh visit: default demo car, no mileage set yet. Guide the newcomer to
+  // set up their own car instead of dropping them on a 0 km stranger's dashboard.
+  const isFirstRun = (vehicle.currentMileage || 0) === 0;
+
   return (
     <motion.div className="dashboard" variants={container} initial="hidden" animate="show">
+      {isFirstRun && (
+        <motion.div className="card welcome-card" variants={item}>
+          <div className="welcome-head">
+            <span className="welcome-badge">{t('onboarding.demoBadge')}</span>
+            <h2 className="welcome-title">{t('onboarding.welcomeTitle')}</h2>
+          </div>
+          <p className="welcome-body">{t('onboarding.welcomeBody')}</p>
+          <ol className="welcome-steps">
+            <li>{t('onboarding.stepMileage')}</li>
+            <li>{t('onboarding.stepProfile')}</li>
+            <li>{t('onboarding.stepLog')}</li>
+          </ol>
+          <div className="welcome-actions">
+            <button className="btn btn-primary" onClick={() => setMileageModalOpen(true)}>
+              {t('onboarding.setMileage')}
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate('/settings')}>
+              {t('onboarding.openSettings')}
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Binnacle: tach + odo, framed over the real car ── */}
       <motion.div className="card binnacle" variants={item} style={{ backgroundImage: `url(${carPhoto})` }}>
         <div className="binnacle-grid">

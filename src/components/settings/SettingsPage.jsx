@@ -93,7 +93,7 @@ export default function SettingsPage({
       phone: profile.phone,
       odometerAtPurchase: parseInt(profile.odometerAtPurchase, 10) || vehicle.odometerAtPurchase,
     });
-    showToast('Profile saved');
+    showToast(t('settings.profileSaved'));
   };
 
   const handleCorrectKm = () => {
@@ -119,7 +119,7 @@ export default function SettingsPage({
       setImportPreview(result.data);
       setImportError('');
     } catch {
-      setImportError('Could not read file');
+      setImportError(t('settings.readFileError'));
     }
     e.target.value = '';
   };
@@ -136,7 +136,7 @@ export default function SettingsPage({
       restoreEvents?.(importPreview.statusEvents, importPreview.statusSnapshot);
     }
     setImportPreview(null);
-    showToast('Data imported');
+    showToast(t('settings.dataImported'));
   };
 
   // ── CSV round-trip ──────────────────────────────────────────
@@ -184,7 +184,7 @@ export default function SettingsPage({
       setImportError('');
       setCsvPreview(result);
     } catch {
-      setImportError('Could not read CSV file');
+      setImportError(t('settings.readCsvError'));
     }
   };
 
@@ -255,7 +255,7 @@ export default function SettingsPage({
     });
     setAddModalOpen(false);
     setNewItem({ name: '', category: 'Motor', intervalType: 'km-dominant', intervalKm: '', intervalMonths: '', warningKm: '', warningDays: '', source: 'custom', priority: 'preventive' });
-    showToast('Item added');
+    showToast(t('settings.itemAdded'));
   };
 
   const toggleLang = () => {
@@ -439,15 +439,15 @@ export default function SettingsPage({
 
       {/* JSON import preview modal */}
       {importPreview && (
-        <Modal isOpen={true} onClose={() => setImportPreview(null)} title="Import Preview" size="medium">
+        <Modal isOpen={true} onClose={() => setImportPreview(null)} title={t('settings.importPreviewTitle')} size="medium">
           <p style={{ color: 'var(--text-secondary)' }}>
-            Vehicle: {importPreview.vehicle?.model} — {importPreview.vehicle?.currentMileage?.toLocaleString()} km<br />
-            Items: {importPreview.maintenanceItems?.length}<br />
-            {importPreview.projects !== undefined && <>Projects: {importPreview.projects.length}<br /></>}
-            Export date: {importPreview.exportDate}
+            {t('settings.ipVehicle')}: {importPreview.vehicle?.model} — {importPreview.vehicle?.currentMileage?.toLocaleString()} km<br />
+            {t('settings.ipItems')}: {importPreview.maintenanceItems?.length}<br />
+            {importPreview.projects !== undefined && <>{t('settings.ipProjects')}: {importPreview.projects.length}<br /></>}
+            {t('settings.ipExportDate')}: {importPreview.exportDate}
           </p>
           <p style={{ color: 'var(--status-orange)', fontSize: '0.875rem' }}>
-            ⚠️ This will replace all current data.
+            ⚠️ {t('settings.ipReplaceWarn')}
           </p>
           <div className="form-actions">
             <button className="btn btn-ghost" onClick={() => setImportPreview(null)}>{t('common.cancel')}</button>
@@ -552,18 +552,18 @@ export default function SettingsPage({
       <Modal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} title={t('settings.addItem')} size="medium">
         <div className="form">
           <div className="form-group">
-            <label>Name</label>
+            <label>{t('settings.fieldName')}</label>
             <input value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} required />
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Category</label>
+              <label>{t('settings.fieldCategory')}</label>
               <select value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}>
                 {Object.values(CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label>Interval Type</label>
+              <label>{t('settings.fieldIntervalType')}</label>
               <select value={newItem.intervalType} onChange={(e) => setNewItem({ ...newItem, intervalType: e.target.value })}>
                 {Object.values(INTERVAL_TYPES).map((it) => <option key={it} value={it}>{it}</option>)}
               </select>
@@ -571,11 +571,11 @@ export default function SettingsPage({
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>Interval KM</label>
+              <label>{t('settings.fieldIntervalKm')}</label>
               <input type="number" value={newItem.intervalKm} onChange={(e) => setNewItem({ ...newItem, intervalKm: e.target.value })} />
             </div>
             <div className="form-group">
-              <label>Interval Months</label>
+              <label>{t('settings.fieldIntervalMonths')}</label>
               <input type="number" value={newItem.intervalMonths} onChange={(e) => setNewItem({ ...newItem, intervalMonths: e.target.value })} />
             </div>
           </div>
