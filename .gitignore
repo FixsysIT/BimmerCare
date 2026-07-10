@@ -21,6 +21,11 @@ dist-ssr
 coverage/
 .cache/
 
+# Local-only agent instructions (personal working style, kept out of the repo)
+CLAUDE.md
+.agents/
+graphify-out/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

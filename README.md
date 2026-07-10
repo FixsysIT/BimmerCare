@@ -2,101 +2,129 @@
 
 # BimmerCare
 
-**Offline-first onderhoudsapp voor een BMW F10 523i · N53 · 2010**
+**The maintenance cockpit for one car — a 2010 BMW F10 523i, N53 engine.**
 
-Houdt service, intervallen, inspecties en diagnoses bij — BMW-officiële naast
-community-intervallen, met OEM-onderdelen, kostenramingen en een eigen budgetplanner.
-Persoonlijk, geen account, geen server: alle data blijft lokaal.
+Offline-first PWA. Your service history drives everything. All data stays on your device.
 
-![version](https://img.shields.io/badge/version-1.2-0066b1)
-![PWA](https://img.shields.io/badge/PWA-offline--first-5a2ca0)
-![React](https://img.shields.io/badge/React-19-149eca)
-![Vite](https://img.shields.io/badge/Vite-8-646cff)
-![data](https://img.shields.io/badge/data-100%25%20lokaal-1f9d55)
+&nbsp;
 
-<img src="./src/assets/f10-hero.jpg" alt="BMW F10 523i" width="720" />
+![version](https://img.shields.io/badge/version-1.2-0066b1?style=flat-square)
+![PWA](https://img.shields.io/badge/offline--first-PWA-5a2ca0?style=flat-square)
+![React 19](https://img.shields.io/badge/React-19-149eca?style=flat-square)
+![data](https://img.shields.io/badge/data-100%25%20on--device-1f9d55?style=flat-square)
+
+&nbsp;
+
+<img src="./src/assets/f10-hero-airport.jpg" alt="BMW F10 523i" width="760" />
 
 </div>
 
 ---
 
-## Overzicht
+BimmerCare tracks the upkeep of **one specific car**, not a generic garage fleet.
+Every item in the catalog carries BMW's official interval next to the community /
+ZF recommendation, the OEM part number, and a cost estimate. Nothing is tracked
+twice: your **service history is the single source of truth**, and status,
+urgency and planning are all derived from it.
 
-BimmerCare is een Progressive Web App die het onderhoud van één specifieke auto
-beheert. Geen generieke garage-tool: de catalogus is afgestemd op de **F10 523i met
-N53-motor**, met per onderdeel de officiële BMW-aanbeveling, de community-/ZF-aanbeveling,
-OEM-nummers en een kostenraming. De **service-historie is de enige bron van waarheid** —
-status, urgentie en planning worden daaruit afgeleid, niets wordt dubbel bijgehouden.
+## Check Control
 
-## Functionaliteit
+The dashboard reads like the car's instrument cluster. Every item resolves to
+one of six states — the way a Check Control lamp lights up when something needs
+attention.
 
-### Onderhoud bijhouden
-- **Onderhoudslog** — service-historie per item drijft alle status-berekening aan.
-- **Status-dashboard** — 6-status taxonomie (Nu doen · Binnenkort · Inspectie nodig ·
-  Monitor · OK · Geen data) met klikbare status-ringen die naar de juiste lijst diepen.
-- **Layers** — Actief onderhoud / Inspectiepunten / Diagnose-Monitor houden het dashboard
-  schoon naarmate de catalogus groeit.
-- **Quick actions** — per kaart direct registreren, een inspectie- of diagnose-resultaat
-  loggen, of de timer resetten zonder een vervanging te claimen.
+| | State | What it means |
+|---|-------|---------------|
+| 🔴 | **Now** | Overdue. Do it. |
+| 🟠 | **Soon** | Due shortly — plan it in. |
+| 🔵 | **Inspect** | Needs a look; no fixed interval. |
+| 🟣 | **Monitor** | Watch it — a known symptom or on-failure part. |
+| 🟢 | **OK** | Done and within interval. |
+| ⚪ | **No data** | Never logged. Set a baseline to start the clock. |
 
-### Plannen & budget
-- **Budgetplan** — spaar-planner met eigen inplanmomenten: geef een naam, kies een datum
-  en hoeveel geld je dan hebt (getypt of geschat uit budget + maandinleg). Klussen
-  verdelen zich automatisch op urgentie, of stel een moment zelf samen. Klussen/momenten
-  vastzetten, verwijderen, en aanvullen met vrije posten incl. arbeid. Inspecties liften
-  gratis mee met logisch gekoppeld werk.
-- **Advies-export** — kopieer het hele budgetplan als leesbare markdown naar het klembord
-  voor een second opinion (bijv. via ChatGPT): klopt elk bezoek, kan iets samen, wat in
-  een aparte afspraak.
-- **Do-together bundels** — onderdelen die samen horen (vooronderstel + uitlijning,
-  oliezone) worden gegroepeerd met een companion-picker en als één klus gepland.
+Clickable status rings on the dashboard drill straight into the matching list.
 
-### Inspectie & data
-- **Inspectiepakketten** — kant-en-klare checklists (jaarlijkse BMW-inspectie,
-  nulmeting 180k, misfire-diagnose N53, koelprobleem-diagnose).
-- **Garage checklist export** — compacte, printbare markdown-werkorder.
-- **Catalogus-migratie zonder history-wipe** — nieuwe standaard-items + metadata mergen in
-  een bestaande lijst zonder historie of statussen te raken.
-- **CSV round-trip** — intervallen en onderdelen exporteren, bewerken (Excel / Sheets / LLM)
-  en terug importeren, gekoppeld op id.
+## What it does
 
-## Tech-stack
+### Track
 
-| Laag        | Keuze |
-|-------------|-------|
-| UI          | React 19 · react-router 7 · framer-motion |
-| Build       | Vite 8 · vite-plugin-pwa |
-| i18n        | react-i18next (NL primair · EN fallback) |
-| Opslag      | localforage (IndexedDB / localStorage) — geen backend |
-| Datum/tijd  | date-fns |
+- **Maintenance log** — one history per item feeds every status calculation.
+- **Quick actions** — register a service, log an inspection or diagnosis result,
+  or reset an interval timer without claiming a replacement.
+- **Layers** — *Active*, *Inspection* and *Diagnosis* views keep the dashboard
+  readable as the catalog grows past 60 items.
+- **Do-together bundles** — parts that belong to one job (front suspension +
+  alignment, the oil zone, the belt drive) group together with a companion
+  picker and plan as a single visit. Items stay independent; the bundle is only
+  the relationship.
 
-## Aan de slag
+### Plan & budget
+
+- **Budget planner** — create named saving sessions with a date and how much
+  you'll have by then. Jobs distribute by urgency or you compose a session
+  yourself; inspections ride along related work for free. Lock a session, add
+  free line items (incl. labour), and pin per-job prices.
+- **Parts & shops** — grouped per job, with OEM / alternative numbers as
+  one-click copy chips, prefilled search links to Winparts and Motointegrator,
+  a recommended brand, and indicative labour hours and cost.
+- **Advice export** — copy the whole plan as readable markdown for a second
+  opinion: does every visit make sense, what can go together, what needs its own
+  appointment.
+
+### Inspect & keep data safe
+
+- **Inspection packages** — ready-made checklists: annual BMW inspection, a 180k
+  baseline, N53 misfire diagnosis, cooling-system diagnosis.
+- **Garage checklist export** — a compact, printable work order.
+- **Non-destructive catalog upgrades** — new default items and metadata merge
+  into your list without touching history, status, or anything you edited.
+- **CSV round-trip** — export intervals and parts, edit them in Excel / Sheets /
+  an LLM, and import them back.
+- **Full JSON backup** — export and re-import everything, including projects and
+  dashboard alerts.
+
+## Built for the N53
+
+The catalog is tuned to the F10 523i's N53B25 engine and its known quirks —
+misfire-prone coils, walnut-blasting the intake, DISA valves, NOx sensors,
+electromechanical steering (no hydraulic fluid to change). Each entry weighs
+BMW's "lifetime / 25k" line against what the community actually does to keep
+these engines alive.
+
+## Run it
 
 ```bash
 npm install
-npm run dev      # dev server met HMR
-npm run build    # productie-build naar dist/
-npm run preview  # build lokaal previewen
-npm run lint     # eslint
+npm run dev       # dev server with HMR
+npm run build     # production build to dist/
+npm run preview   # preview the build locally
+npm run lint      # eslint
 ```
+
+## Data & privacy
+
+Everything lives on your device through IndexedDB / localStorage — **no account,
+no server, no telemetry.** Install it as a PWA and it works fully offline. The
+only data that ever leaves is what you choose to export.
 
 ## Releases
 
-| Tag        | Inhoud |
-|------------|--------|
-| `v1.0-mvp` | Eerste stabiele MVP. Blijft onaangeraakt op commit `bd563a9`. |
-| `v1.1`     | History-derived status · "Defect bevestigd" (confirmed failure) actie · onderhoudsparts-data. |
-| `v1.2`     | Budgetplan (sessie-spaarplanner) · do-together bundels · gehumaniseerde kaartstatus. |
+| Tag | Highlights |
+|-----|------------|
+| `v1.0-mvp` | First stable MVP. Pinned to `bd563a9`, never moved. |
+| `v1.1` | History-derived status · "Confirmed failure" action · parts data. |
+| `v1.2` | Budget planner · do-together bundles · humanised card status. |
 
-## Documentatie
+## Docs
 
-| Bestand | Inhoud |
-|---------|--------|
-| [`CLAUDE.md`](./CLAUDE.md)   | Projectbrein: architectuurregels, werkstijl, open TODO's. |
-| [`PRODUCT.md`](./PRODUCT.md) | Volledige productspecificatie. |
+| File | What's inside |
+|------|---------------|
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Data model, catalog rules, bundle roles, stack. |
+| [`PRODUCT.md`](./PRODUCT.md) | Full product specification. |
+| [`CHANGELOG.md`](./CHANGELOG.md) | Version history. |
 
 ---
 
 <div align="center">
-<sub>Persoonlijk project · alle rechten voorbehouden · niet voor herdistributie.</sub>
+<sub>Personal project · all rights reserved · not for redistribution.</sub>
 </div>
