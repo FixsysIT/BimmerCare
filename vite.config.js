@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: 'BimmerCare',
         short_name: 'BimmerCare',
-        description: 'Maintenance tracker for the BMW F10 N53 (523i, 525i, 528i, 530i · 2009-2011)',
+        description: 'Maintenance tracker for the BMW F10 N53 (523i, 525i, 528i, 530i · 2010-2011)',
         theme_color: '#0D1117',
         background_color: '#0D1117',
         display: 'standalone',

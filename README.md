@@ -2,7 +2,7 @@
 
 # BimmerCare
 
-**The maintenance cockpit for the BMW F10 with the N53 engine — 523i · 525i · 528i · 530i, 2009–2011.**
+**The maintenance cockpit for the BMW F10 with the N53 engine — 523i · 525i · 528i · 530i, 2010–2011.**
 
 Offline-first PWA. Your service history drives everything. All data stays on your device.
 
@@ -97,7 +97,7 @@ these engines alive.
 
 | Group | Fits |
 |-------|------|
-| **Engine** parts & intervals | Pre-LCI F10 / F11 with the N53: **523i · 525i** (N53B25) and **528i · 530i** (N53B30), roughly **2009–2011**. Not the N20 520i, the N55 535i, or the diesels. |
+| **Engine** parts & intervals | Pre-LCI F10 / F11 with the N53: **523i · 525i** (N53B25) and **528i · 530i** (N53B30), roughly **2010–2011**. Not the N20 520i, the N55 535i, or the diesels. |
 | **Chassis** parts (suspension, brakes, driveline) | The wider F10 / F11 range. Watch two things: **xDrive** front axles differ from RWD, and **brake sizes** vary by engine and M-sport package. |
 
 Your mileage, service history and planning stay specific to your own car.
