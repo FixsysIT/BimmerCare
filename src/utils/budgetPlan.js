@@ -1,5 +1,5 @@
 import { differenceInCalendarMonths, addMonths } from 'date-fns';
-import { clusterIdOf, clusterTitle, relatedNames } from './bundleView';
+import { relatedNames } from './bundleView';
 
 /**
  * Budget Plan engine — SAVINGS-TIMELINE planner (planning only).
@@ -44,7 +44,6 @@ const DIAGNOSIS_GATED = new Set([
 ]);
 const ALIGNMENT_AFFECTING = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)', 'Steering Rack'];
 const ALIGNMENT_BLOCKERS = ['Control Arms / Ball Joints', 'Tie Rod Ends (×2)'];
-const OIL_LEAK_ITEMS = new Set(['Oil Pan Gasket', 'Oil Filter Housing Gasket']);
 
 const APK_SAFETY_ITEMS = new Set([
   'Brake Pads Front', 'Brake Pads Rear', 'Brake Discs Front', 'Brake Discs Rear',
@@ -88,38 +87,19 @@ function makeJob(id, title, members, extra = {}) {
 }
 
 function buildJobs(items) {
-  const byCluster = new Map();
-  const singles = [];
-  for (const it of items) {
-    const cid = clusterIdOf(it.name);
-    if (cid) { if (!byCluster.has(cid)) byCluster.set(cid, []); byCluster.get(cid).push(it); }
-    else singles.push(it);
-  }
-  const jobs = [];
-  for (const [cid, members] of byCluster) jobs.push(makeJob(`cluster:${cid}`, clusterTitle(cid), members));
-  for (const it of singles) jobs.push(makeJob(`item:${it.name}`, null, [it]));
-  return jobs;
+  // One job per item — ALWAYS. Every part carries its own cost + labour and the
+  // user decides the order. The maintenance page still shows do-together bundles
+  // and the companion picker; the budget planner just never auto-groups paid work
+  // (e.g. control arms / tie rod ends / wheel alignment stay separately plannable).
+  return items.map((it) => makeJob(`item:${it.name}`, null, [it]));
 }
 
-/** Couple an oil service with an open oil-zone leak repair (open the zone once). */
+/** Oil service + an open oil-zone leak stay SEPARATE jobs (user plans/orders each
+ *  with its own cost + labour). We only flag a severe oil service as cannotWait. */
 function coupleOilLeak(jobs) {
-  const oilIdx = jobs.findIndex((j) => j.members.length === 1 && j.memberNames[0] === 'Engine Oil + Filter');
-  if (oilIdx < 0) return jobs;
-  const oilJob = jobs[oilIdx];
-  if (!isOpenUrg(oilJob.urgency)) return jobs;
-
-  const gasketJobs = jobs.filter((j) => j.memberNames.some((n) => OIL_LEAK_ITEMS.has(n)) && isOpenUrg(j.urgency));
-  if (!gasketJobs.length) return jobs;
-
-  const oilSevere = (oilJob.members[0].calculatedStatus?.status === 'red');
-  if (oilSevere) { oilJob.cannotWait = true; return jobs; }
-
-  const members = [...gasketJobs.flatMap((j) => j.members), ...oilJob.members];
-  const combined = makeJob('combined:oil-leak', {
-    nl: 'Carterpakking + motorolie + oliefilter', en: 'Oil pan gasket + oil + filter',
-  }, members, { reasonKey: 'oilCombine' });
-  const drop = new Set([oilJob.id, ...gasketJobs.map((j) => j.id)]);
-  return [...jobs.filter((j) => !drop.has(j.id)), combined];
+  const oilJob = jobs.find((j) => j.members.length === 1 && j.memberNames[0] === 'Engine Oil + Filter');
+  if (oilJob && oilJob.members[0].calculatedStatus?.status === 'red') oilJob.cannotWait = true;
+  return jobs;
 }
 
 function applyBlockers(jobs, items) {
