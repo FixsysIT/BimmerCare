@@ -14,6 +14,58 @@
   gap: 0.75rem;
 }
 
+/* Grouped view: one block per maintenance item (its parts belong together). */
+.parts-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.part-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.part-group-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--m-stripe, var(--bmw-blue-light));
+}
+
+.part-group-title {
+  display: block;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.part-group-meta {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.part-group-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.part-group-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.part-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.35;
+}
+
 .part-card {
   display: flex;
   flex-direction: column;

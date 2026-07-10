@@ -186,6 +186,48 @@ export const DEFAULT_BUNDLES = [
     },
   },
   {
+    id: 'oilpan-engine-support',
+    trigger: ['Oil Pan Gasket'],
+    adds: [{ name: 'Engine Mounts (×2)', role: ROLES.INSPECT }],
+    reason: {
+      nl: 'Motor wordt ondersteund/subframe zakt voor de carterpan. Inspecteer de motorsteunrubbers meteen.',
+      en: 'Engine is supported / subframe lowered for the oil pan. Inspect the engine mounts while you are there.',
+    },
+  },
+  {
+    id: 'belt-extra-checks',
+    trigger: ['Serpentine Belt'],
+    adds: [],
+    reason: {
+      nl: 'Riem eraf: controleer meteen de omliggende poelies en lekkage.',
+      en: 'Belt off: check the surrounding pulleys and for leaks.',
+    },
+    reminder: {
+      nl: '🔍 Controleer bij de riem: dynamopoelie (vrijloop/speling) én lekkage bóven de riem (klepdeksel/oliefilterhuis dat op de riem druppelt).',
+      en: '🔍 While the belt is off: check the alternator pulley (freewheel/play) and for leaks above the belt (valve cover / oil filter housing dripping onto it).',
+    },
+  },
+  {
+    id: 'pre-alignment-inspection',
+    title: { nl: 'Vóór uitlijnen controleren', en: 'Pre-alignment inspection' },
+    trigger: ['Wheel Alignment'],
+    adds: [
+      { name: 'Tie Rod Ends (×2)', role: ROLES.INSPECT },
+      { name: 'Strut Mounts / Top Mounts', role: ROLES.INSPECT },
+      { name: 'Shock Absorbers Front (×2)', role: ROLES.INSPECT },
+      { name: 'Shock Absorbers Rear (×2)', role: ROLES.INSPECT },
+      { name: 'Rear Subframe Bushings', role: ROLES.INSPECT },
+    ],
+    reason: {
+      nl: 'Uitlijnen op versleten onderdelen is zinloos. Check eerst op speling.',
+      en: 'Aligning worn parts is pointless. Check for play first.',
+    },
+    reminder: {
+      nl: '🔍 Ook checken vóór uitlijnen: binnenste spoorstangen op speling.',
+      en: '🔍 Also check before alignment: inner tie rods for play.',
+    },
+  },
+  {
     id: 'ignition-service',
     trigger: ['Spark Plugs (×6)'],
     adds: [{ name: 'Ignition Coils (×6)', role: ROLES.CONTEXT }],

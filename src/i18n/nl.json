@@ -400,7 +400,12 @@
     "buy": "Zelf kopen",
     "copyHint": "Klik om nummer te kopiëren",
     "copied": "Gekopieerd",
-    "noParts": "Geen onderdelendata"
+    "noParts": "Geen onderdelendata",
+    "replaceEvery": "Vervangen:",
+    "freqBmw": "BMW",
+    "freqAdvice": "advies",
+    "freqCondition": "op slijtage / inspectie",
+    "freqOnFailure": "bij defect"
   },
   "settings": {
     "title": "Instellingen",
@@ -506,8 +511,14 @@
     "Engine Oil 5W-30 (7L)": "Motorolie 5W-30 (7L)",
     "Drain Plug Gasket": "Aftappluggepakking",
     "Belt Tensioner": "Riemspanner",
+    "Belt Tensioner Bolt (aluminium)": "Spannerbout (aluminium)",
+    "Deflection / Idler Pulley": "Omlooprol / looprol",
     "Rear Main Seal": "Achterste krukaskeerring",
     "Oil Pan Gasket": "Carterpakking",
+    "Oil Pan Bolt Set (33×, aluminium)": "Carterpanboutenset (33×, aluminium)",
+    "Oil Pan Bolt M8×36 Torx (aluminium)": "Carterpanbout M8×36 Torx (aluminium)",
+    "Oil Pan Bolt M8×50 Torx (aluminium)": "Carterpanbout M8×50 Torx (aluminium)",
+    "Oil Drain Plug Seal": "Afdichtring olieaftapplug",
     "Engine Mount (×2)": "Motorsteunrubber (×2)",
     "Transmission Mount": "Versnellingsbaksteun",
     "Vacuum Hose Kit": "Vacuümslangenset",
@@ -525,6 +536,28 @@
     "CV Boot Kit": "Aandrijfashoesset",
     "A/C Condenser": "Aircocondensor",
     "A/C Dryer": "Aircodroger"
+  },
+  "partInfo": {
+    "Oil Filter": "Filtert metaaldeeltjes en roet uit de motorolie. Vervang elke oliebeurt.",
+    "Engine Oil 5W-30 (7L)": "Motorolie. Enige harde eis voor de N53: BMW Longlife-04 (ACEA C3) op het etiket. Shell Helix Ultra ECT C3 5W-30 (fabrieksvulling) of Liqui Moly Top Tec 4100 5W-40 zijn beide top tier; 5W-40 = iets dikkere film warm (fijn bij hoge km). ±7 L incl. filter.",
+    "Drain Plug Gasket": "Afdichtring (kroonring) onder de olie-aftapplug. Elke oliebeurt nieuw, anders lekt de plug.",
+    "Oil Pan Gasket": "Pakking tussen carterpan en motorblok. Vervangen bij olielek onderlangs de motor.",
+    "Oil Pan Bolt Set (33×, aluminium)": "De 33 aluminium bouten die de carterpan vasthouden. Torque-to-yield: rekken bij aandraaien, dus altijd nieuw bij demontage.",
+    "Oil Pan Bolt M8×36 Torx (aluminium)": "Aparte aluminium hoekbout van de carterpan (M8×36). Ook eenmalig, altijd nieuw meenemen.",
+    "Oil Pan Bolt M8×50 Torx (aluminium)": "Langste aluminium hoekbout van de carterpan (M8×50). Ook eenmalig, altijd nieuw meenemen.",
+    "Oil Drain Plug Seal": "Afdichtring onder de olie-aftapplug (carter-variant). Voorkomt lekken, elke keer nieuw.",
+    "Spark Plug (×6)": "Bougies. Ontsteken het benzine-luchtmengsel. N53 = 6 stuks, vervang als set.",
+    "Ignition Coil (×6)": "Bobines. Leveren de hoogspanning aan de bougies. Veelvoorkomend defect op de N53 (misfire).",
+    "Serpentine Belt": "Poly-V-riem, maat 8PK1786 (Continental). Drijft dynamo, waterpomp en airco aan. Knapt = auto staat stil.",
+    "Belt Tensioner": "Riemspanner. Houdt de poly-V-riem strak. INA 534 0432 10 of SKF VKM 38363. Gaat mee met de riem.",
+    "Belt Tensioner Bolt (aluminium)": "Aluminium spannerbout (BMW 11287530315). Torque-to-yield, altijd nieuw bij demontage van de spanner.",
+    "Deflection / Idler Pulley": "Omlooprol/looprol van de multiriem. INA 532 0659 10 of SKF VKM 38277. Meenemen bij riemvervanging.",
+    "Engine Mount (×2)": "Motorsteunrubbers. Hydraulisch gevuld, dempen trillingen. Versleten = trillen bij stationair, klap bij optrekken."
+  },
+  "itemNotes": {
+    "Engine Oil + Filter": "N53 wil om de 10.000 km / 12 mnd verse olie (BMW zegt 25k, community 10k voor motorleven). BMW Longlife-04 5W-30 of 5W-40, ±7 L incl. filter. Aftapplugring staat onder Carterpakking.",
+    "Oil Pan Gasket": "Alleen bij zichtbaar olielek uit de carterpan. Subframe soms iets zakken. Aluminium bouten zijn torque-to-yield: hele boutenset + aftapplugring vernieuwen. Motor extern reinigen na de klus; motorsteunen inspecteren terwijl de motor ondersteund is.",
+    "Serpentine Belt": "BMW 80k/6 jr. Controleer op scheurtjes. Goedkope verzekering, geknapte riem = stranden. Spanrol/looprol meenemen; dynamopoelie en lekkage boven de riem checken."
   },
   "categories": {
     "Motor": "Motor",

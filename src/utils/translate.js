@@ -16,3 +16,14 @@ export function tPartName(t, name) {
   const translated = t(`partNames.${name}`, { defaultValue: '' });
   return translated || name;
 }
+
+/** Short "what is this part" description (NL/EN). Empty when none defined. */
+export function tPartInfo(t, name) {
+  return t(`partInfo.${name}`, { defaultValue: '' });
+}
+
+/** Translated item note for the parts page. Empty when no NL/EN note defined
+ *  (so raw English sourceNotes never leak onto the shopping page). */
+export function tItemNote(t, name) {
+  return t(`itemNotes.${name}`, { defaultValue: '' });
+}

@@ -142,7 +142,7 @@ export const APP_VERSION = '1.2';
 
 // Catalog version — bump when default items/metadata change, so existing
 // stored data can be merged up via Settings → "Catalogus bijwerken".
-export const CATALOG_VERSION = '2026.07.09-aircocat';
+export const CATALOG_VERSION = '2026.07.11-beltfix';
 
 // Storage keys
 export const STORAGE_KEYS = {

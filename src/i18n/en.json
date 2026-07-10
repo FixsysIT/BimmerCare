@@ -400,7 +400,12 @@
     "buy": "Buy yourself",
     "copyHint": "Click to copy number",
     "copied": "Copied",
-    "noParts": "No parts data"
+    "noParts": "No parts data",
+    "replaceEvery": "Replace:",
+    "freqBmw": "BMW",
+    "freqAdvice": "advice",
+    "freqCondition": "on wear / inspection",
+    "freqOnFailure": "on failure"
   },
   "settings": {
     "title": "Settings",
@@ -525,6 +530,28 @@
     "CV Boot Kit": "CV Boot Kit",
     "A/C Condenser": "A/C Condenser",
     "A/C Dryer": "A/C Dryer"
+  },
+  "partInfo": {
+    "Oil Filter": "Filters metal particles and soot out of the engine oil. Replace every oil service.",
+    "Engine Oil 5W-30 (7L)": "Engine oil. The only hard requirement for the N53: BMW Longlife-04 (ACEA C3) on the label. Shell Helix Ultra ECT C3 5W-30 (factory fill) or Liqui Moly Top Tec 4100 5W-40 are both top tier; 5W-40 = slightly thicker film when hot (good at high mileage). ±7 L incl. filter.",
+    "Drain Plug Gasket": "Crush washer under the oil drain plug. Renew every oil service or the plug leaks.",
+    "Oil Pan Gasket": "Gasket between the oil pan and engine block. Replace on an oil leak from under the engine.",
+    "Oil Pan Bolt Set (33×, aluminium)": "The 33 aluminium bolts holding the oil pan. Torque-to-yield: they stretch when tightened, so always use new ones on removal.",
+    "Oil Pan Bolt M8×36 Torx (aluminium)": "Separate aluminium corner bolt of the oil pan (M8×36). Single-use, always renew.",
+    "Oil Pan Bolt M8×50 Torx (aluminium)": "Longest aluminium corner bolt of the oil pan (M8×50). Single-use, always renew.",
+    "Oil Drain Plug Seal": "Sealing ring under the oil drain plug (pan variant). Prevents leaks, renew each time.",
+    "Spark Plug (×6)": "Spark plugs. Ignite the air-fuel mixture. N53 = 6 pcs, replace as a set.",
+    "Ignition Coil (×6)": "Ignition coils. Deliver high voltage to the plugs. Common N53 failure (misfire).",
+    "Serpentine Belt": "Poly-V belt, size 8PK1786 (Continental). Drives alternator, water pump and A/C. Snaps = car stranded.",
+    "Belt Tensioner": "Belt tensioner. Keeps the poly-V belt tight. INA 534 0432 10 or SKF VKM 38363. Goes with the belt.",
+    "Belt Tensioner Bolt (aluminium)": "Aluminium tensioner bolt (BMW 11287530315). Torque-to-yield, always renew when the tensioner comes off.",
+    "Deflection / Idler Pulley": "Idler/deflection pulley of the belt drive. INA 532 0659 10 or SKF VKM 38277. Take it with a belt change.",
+    "Engine Mount (×2)": "Engine mounts. Hydraulic-filled, damp vibration. Worn = idle shake, clunk on acceleration."
+  },
+  "itemNotes": {
+    "Engine Oil + Filter": "The N53 wants fresh oil every 10,000 km / 12 mo (BMW says 25k, community 10k for engine life). BMW Longlife-04 5W-30 or 5W-40, ±7 L incl. filter. Drain plug seal lives under Oil Pan Gasket.",
+    "Oil Pan Gasket": "Only on a visible oil leak from the pan. Subframe may need lowering. Aluminium bolts are torque-to-yield: renew the full bolt set + drain plug seal. Clean the engine externally afterwards; inspect the engine mounts while the engine is supported.",
+    "Serpentine Belt": "BMW 80k/6 yr. Check for cracks. Cheap insurance, a snapped belt = stranded. Take the tensioner/idler; check the alternator pulley and for leaks above the belt."
   },
   "categories": {
     "Motor": "Engine",

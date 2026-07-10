@@ -162,7 +162,6 @@ export function getDefaultItems(vehicleId) {
       parts: [
         { name: 'Oil Filter', oemNumber: '11427953129', altBrand: 'MANN', altNumber: 'HU 816 x', estimatedPrice: 12.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'BMW' },
         { name: 'Engine Oil 5W-30 (7L)', oemNumber: '83212365946', altBrand: 'Shell', altNumber: 'Helix Ultra ECT C3 5W-30', estimatedPrice: 55.00, bmwfansUrl: '', source: 'BMW' },
-        { name: 'Drain Plug Gasket', oemNumber: '07119963252', altBrand: '', altNumber: '', estimatedPrice: 2.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -331,8 +330,9 @@ export function getDefaultItems(vehicleId) {
       priority: PRIORITIES.PREVENTIVE,
       dateBehavior: 'hard',
       parts: [
-        { name: 'Serpentine Belt', oemNumber: '11287628661', altBrand: 'Continental', altNumber: '6PK1538', estimatedPrice: 25.00, bmwfansUrl: '', source: 'BMW' },
-        { name: 'Belt Tensioner', oemNumber: '11287571015', altBrand: 'INA', altNumber: '534 0264 10', estimatedPrice: 45.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Serpentine Belt', oemNumber: '11287628658', altBrand: 'Continental', altNumber: '8PK1786', estimatedPrice: 25.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Belt Tensioner', oemNumber: '11287571015', altBrand: 'INA', altNumber: '534 0432 10', estimatedPrice: 45.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Belt Tensioner Bolt (aluminium)', oemNumber: '11287530315', altBrand: '', altNumber: '', estimatedPrice: 3.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -371,10 +371,14 @@ export function getDefaultItems(vehicleId) {
       communityIntervalMonths: null,
       estimatedTotalCost: 500,
       source: SOURCES.CONDITION_DIAGNOSIS,
-      sourceNote: 'Only replace on visible oil leak from oil pan. Subframe may need lowering.',
+      sourceNote: 'Only replace on visible oil leak from oil pan. Subframe may need lowering. Aluminium pan bolts are torque-to-yield — renew the full bolt set + drain plug seal. Clean the engine externally after the repair; inspect engine mounts while the engine is supported.',
       priority: PRIORITIES.PREVENTIVE,
       parts: [
         { name: 'Oil Pan Gasket', oemNumber: '11137570705', altBrand: 'Elring', altNumber: '', estimatedPrice: 30.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Oil Pan Bolt Set (33×, aluminium)', oemNumber: '11132210959', altBrand: '', altNumber: '', estimatedPrice: 20.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Oil Pan Bolt M8×36 Torx (aluminium)', oemNumber: '11137559537', altBrand: '', altNumber: '', estimatedPrice: 2.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Oil Pan Bolt M8×50 Torx (aluminium)', oemNumber: '11137582340', altBrand: '', altNumber: '', estimatedPrice: 2.00, bmwfansUrl: '', source: 'BMW' },
+        { name: 'Oil Drain Plug Seal', oemNumber: '07119963151', altBrand: '', altNumber: '', estimatedPrice: 2.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {
@@ -733,6 +737,10 @@ export function getDefaultItems(vehicleId) {
     item(vehicleId, {
       name: 'Power Steering Fluid',
       category: 'Transmissie',
+      // ARCHIVED: F10 523i (N53, RWD) uses electromechanical power steering (EPS) —
+      // no hydraulic pump, reservoir or fluid. Not applicable to this car. Kept in
+      // the catalog (archived) instead of deleted so the reason stays visible.
+      isDisabled: true,
       intervalType: INTERVAL_TYPES.KM_DOMINANT,
       replacementStrategy: 'interval',
       intervalKm: 100000,
@@ -745,7 +753,7 @@ export function getDefaultItems(vehicleId) {
       communityIntervalMonths: 60,
       estimatedTotalCost: 50,
       source: SOURCES.COMMUNITY_PREVENTIVE,
-      sourceNote: 'BMW says lifetime. Community recommends change every 100k. CHF 11S only.',
+      sourceNote: 'N.v.t. — deze F10 heeft elektromechanische stuurbekrachtiging (EPS), geen hydraulische stuurolie. Gearchiveerd.',
       priority: PRIORITIES.COMFORT,
       dateBehavior: 'advisory',
       parts: [
@@ -767,7 +775,7 @@ export function getDefaultItems(vehicleId) {
       communityIntervalMonths: null,
       estimatedTotalCost: 1500,
       source: SOURCES.CONDITION_DIAGNOSIS,
-      sourceNote: 'Replace on leak or excessive play. Expensive job. Symptoms: power steering fluid loss, wandering steering.',
+      sourceNote: 'Electromechanical rack (EPS). Replace on excessive play, notchy/dead assist, or fault codes. Expensive job. Symptoms: wandering steering, intermittent assist loss.',
       replacementOkValidKm: 150000,
       priority: PRIORITIES.PREVENTIVE,
       parts: [
@@ -1226,8 +1234,9 @@ export function getDefaultItems(vehicleId) {
       sourceNote: 'Spanrol + looprol(len). Inspecteer op speling/geluid. Meenemen bij multiriem-vervanging.',
       priority: PRIORITIES.PREVENTIVE,
       parts: [
-        { name: 'Belt Tensioner', oemNumber: '11287571015', altBrand: 'INA', altNumber: '534 0264 10', estimatedPrice: 45.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'BMW' },
-        { name: 'Deflection / Idler Pulley', oemNumber: '', altBrand: 'INA', altNumber: '', estimatedPrice: 30.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'estimate', sourceNote: 'verify before ordering' },
+        { name: 'Belt Tensioner', oemNumber: '11287571015', altBrand: 'INA', altNumber: '534 0432 10', estimatedPrice: 45.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'BMW' },
+        { name: 'Deflection / Idler Pulley', oemNumber: '', altBrand: 'INA', altNumber: '532 0659 10', estimatedPrice: 30.00, bmwfansUrl: 'https://nl.bmwfans.info/parts-catalog/F10/Europe/523i-N53/L/jul2010/browse/', source: 'BMW' },
+        { name: 'Belt Tensioner Bolt (aluminium)', oemNumber: '11287530315', altBrand: '', altNumber: '', estimatedPrice: 3.00, bmwfansUrl: '', source: 'BMW' },
       ],
     }),
     item(vehicleId, {

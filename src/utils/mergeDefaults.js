@@ -87,6 +87,34 @@ export function mergeDefaultItems(existing, defaults) {
       if (partsChanged) { next.parts = parts; changed = true; }
     }
 
+    // Special migration: Power Steering Fluid is n/a on this EPS car → archive it
+    // on existing installs too. Only if the user never toggled it (isDisabled unset),
+    // so a deliberate enable is never overridden.
+    if (next.name === 'Power Steering Fluid' && next.isDisabled === undefined) {
+      next.isDisabled = true;
+      changed = true;
+    }
+
+    // Part corrections (2026-07-11): mergeParts only ADDS/enriches, it never fixes
+    // a changed number or removes an obsolete part. These items had wrong/moved
+    // part data, so reconcile their parts to the catalog once. Guard on an
+    // obsolete marker so it runs a single time and never clobbers a clean store.
+    if (def) {
+      const stored = Array.isArray(next.parts) ? next.parts : [];
+      const has = (pred) => stored.some(pred);
+      const obsolete =
+        // Engine Oil: drain plug seal moved to the oil pan (carter) block
+        (next.name === 'Engine Oil + Filter' && has((p) => p.oemNumber === '07119963252')) ||
+        // Serpentine Belt: wrong belt number 11287628661 → 11287628658 / 8PK1786
+        (next.name === 'Serpentine Belt' && has((p) => p.oemNumber === '11287628661')) ||
+        // Idler/Tensioner: old INA tensioner altNumber 534 0264 10 → 534 0432 10
+        (next.name === 'Idler Pulley / Tensioner' && has((p) => p.altNumber === '534 0264 10'));
+      if (obsolete) {
+        next.parts = def.parts;
+        changed = true;
+      }
+    }
+
     // Special migration: NOx Sensor to 250k (NOXEM 402)
     if (def && next.name === 'NOx Sensor' && next.replacementOkValidKm === 100000) {
       next.replacementOkValidKm = 250000;

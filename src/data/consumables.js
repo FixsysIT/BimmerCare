@@ -54,6 +54,10 @@ export const CONSUMABLES = {
       nl: 'Wielbouten: check op roest bij montage, verroest = vervangen (20 stuks M14×1,25, ±€2 per stuk, zit niet bij nieuwe banden)',
       en: 'Wheel bolts: check for rust during fitting, rusted = replace (20 pcs M14×1.25, ±€2 each, not included with new tyres)',
     },
+    {
+      nl: 'Wielslot (slotbouten): 1 set van 4 met adapter (velgbeveiliging tegen diefstal, meebestellen bij nieuwe velgen/banden)',
+      en: 'Wheel lock (locking bolt set): 1 set of 4 with key adapter (anti-theft, order with new wheels/tyres)',
+    },
   ],
 
   // ── Remmen ──────────────────────────────────────────
