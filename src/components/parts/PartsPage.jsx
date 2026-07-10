@@ -6,9 +6,9 @@ import { copyToClipboard } from '../../utils/dataExport';
 import './PartsPage.css';
 
 // Shop deep-links: prefill the search with the part number so Saddik can order himself.
-// Verified June 2026: both params resolve to a real result/product page.
+// Winparts uses ?zoek= (confirmed July 2026 — ?q= was ignored), Motointegrator ?phrase=.
 const shopUrl = {
-  winparts: (nr) => `https://www.winparts.nl/zoekresultaten?q=${encodeURIComponent(nr)}`,
+  winparts: (nr) => `https://www.winparts.nl/zoekresultaten?zoek=${encodeURIComponent(nr)}`,
   motointegrator: (nr) => `https://www.motointegrator.nl/producten/?phrase=${encodeURIComponent(nr)}`,
 };
 
